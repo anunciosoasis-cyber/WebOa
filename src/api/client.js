@@ -25,10 +25,12 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // Si el backend devuelve 401, limpiar sesión y redirigir al login
+// Excepto si el error viene del propio endpoint /login (credenciales incorrectas)
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const isLoginEndpoint = error.config?.url?.includes('/login');
+        if (error.response?.status === 401 && !isLoginEndpoint) {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_user');
             window.location.href = '/login';
