@@ -12,6 +12,7 @@ const oasisDesignerAlias = existsSync(externalDesignerSrc)
   : resolve(__dirname, 'src/stubs/oasis-designer/index.jsx');
 
 export default defineConfig({
+  base: './', // <--- 🌟 ¡ESTA ES LA LÍNEA MÁGICA PARA QUE HOSTINGER NO SE QUEDE EN BLANCO!
   plugins: [
     react(),
     VitePWA({
