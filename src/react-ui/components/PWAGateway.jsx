@@ -55,9 +55,9 @@ const PWAGateway = () => {
         );
     }
 
-    // Regla PWA (app instalada): redirigir a admin o login
+    // Regla PWA (app instalada): si hay sesión ir a admin; si no, mantener acceso a la home pública.
     if (isPWA) {
-        return session ? <Navigate to="/admin" replace /> : <Navigate to="/login" replace />;
+        return session ? <Navigate to="/admin" replace /> : <Home />;
     }
 
     // Modo Web convencional: mostrar la LandingPage (Home)

@@ -3,6 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '../../api/client';
 
+const ANNOUNCEMENTS_REFRESH_MS = 30000;
+const ANNOUNCEMENTS_UPDATED_EVENT = 'oasis:announcements-updated';
+const ANNOUNCEMENTS_UPDATED_KEY = 'oasis_announcements_updated_at';
+
 const Announcements = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -49,20 +53,47 @@ const Announcements = () => {
         };
     };
 
+    const loadAnnouncements = useCallback(async () => {
+        try {
+            const { data } = await apiClient.get('/announcements');
+            const list = Array.isArray(data) ? data : (data?.data || []);
+            setItems(list);
+        } catch {
+            setItems([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
-        const load = async () => {
-            try {
-                const { data } = await apiClient.get('/announcements');
-                const list = Array.isArray(data) ? data : (data?.data || []);
-                setItems(list);
-            } catch (error) {
-                setItems([]);
-            } finally {
-                setLoading(false);
+        loadAnnouncements();
+
+        const intervalId = window.setInterval(loadAnnouncements, ANNOUNCEMENTS_REFRESH_MS);
+        const handleFocus = () => loadAnnouncements();
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadAnnouncements();
             }
         };
-        load();
-    }, []);
+        const handleStorage = (event) => {
+            if (event.key === ANNOUNCEMENTS_UPDATED_KEY) {
+                loadAnnouncements();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('storage', handleStorage);
+        window.addEventListener(ANNOUNCEMENTS_UPDATED_EVENT, loadAnnouncements);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener(ANNOUNCEMENTS_UPDATED_EVENT, loadAnnouncements);
+        };
+    }, [loadAnnouncements]);
 
     useEffect(() => {
         if (selectedId) {

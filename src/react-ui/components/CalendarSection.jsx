@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../ThemeContext';
 import apiClient from '../../api/client';
 import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const EVENTS_REFRESH_MS = 30000;
+const ANNOUNCEMENTS_UPDATED_EVENT = 'oasis:announcements-updated';
+const ANNOUNCEMENTS_UPDATED_KEY = 'oasis_announcements_updated_at';
 
 const CalendarSection = () => {
     const { theme } = useTheme();
@@ -75,15 +79,45 @@ const CalendarSection = () => {
         };
     };
 
-    useEffect(() => {
+    const loadEvents = useCallback(() => {
         apiClient.get('/announcements')
             .then(({ data }) => {
                 const resData = Array.isArray(data) ? data : (data?.data || []);
                 const normalizedEvents = resData.map(normalizeAnnouncement);
                 setEvents(normalizedEvents.filter(ev => ev.date));
             })
-            .catch(err => console.error("Calendar Fetch Error:", err));
+            .catch(err => console.error('Calendar Fetch Error:', err));
     }, []);
+
+    useEffect(() => {
+        loadEvents();
+
+        const intervalId = window.setInterval(loadEvents, EVENTS_REFRESH_MS);
+        const handleFocus = () => loadEvents();
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadEvents();
+            }
+        };
+        const handleStorage = (event) => {
+            if (event.key === ANNOUNCEMENTS_UPDATED_KEY) {
+                loadEvents();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('storage', handleStorage);
+        window.addEventListener(ANNOUNCEMENTS_UPDATED_EVENT, loadEvents);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener(ANNOUNCEMENTS_UPDATED_EVENT, loadEvents);
+        };
+    }, [loadEvents]);
 
     const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
     const getFirstDayOfMonth = (y, m) => {
