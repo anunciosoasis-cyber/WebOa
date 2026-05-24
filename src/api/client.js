@@ -1,8 +1,7 @@
 import axios from 'axios';
-import { supabase } from '../common/supabaseClient';
 
-// En desarrollo usamos el localhost de NestJS. 
-// En producción, es OBLIGATORIO configurar VITE_API_URL en Hostinger con la URL de Render.
+// En desarrollo usamos el localhost de NestJS.
+// En producción configurar VITE_API_URL en Hostinger con la URL de Render.
 let base = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 if (!base.endsWith('/api')) {
     base = base.replace(/\/$/, '') + '/api';
@@ -16,28 +15,23 @@ const apiClient = axios.create({
     },
 });
 
-/**
- * Interceptor de REQUEST — inyecta el JWT de Supabase en cada llamada.
- * supabase.auth.getSession() devuelve el token desde memoria (no hace red),
- * y lo renueva automáticamente si está por expirar (autoRefreshToken: true).
- */
-apiClient.interceptors.request.use(async (config) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-        config.headers.Authorization = `Bearer ${session.access_token}`;
+// Inyecta el JWT del backend (guardado en localStorage) en cada request
+apiClient.interceptors.request.use((config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 });
 
-/**
- * Interceptor de RESPONSE — si el backend devuelve 401, la sesión de
- * Supabase probablemente expiró o fue revocada. Forzar sign-out.
- */
+// Si el backend devuelve 401, limpiar sesión y redirigir al login
 apiClient.interceptors.response.use(
     (response) => response,
-    async (error) => {
+    (error) => {
         if (error.response?.status === 401) {
-            await supabase.auth.signOut();
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            window.location.href = '/login';
         }
         return Promise.reject(error);
     }
