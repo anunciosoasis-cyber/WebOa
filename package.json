@@ -1,0 +1,46 @@
+{
+    "name": "oasis-frontend",
+    "version": "1.0.0",
+    "description": "React Vite frontend for OASIS project",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "generate-icons": "node scripts/generate-pwa-icons.cjs"
+    },
+    "dependencies": {
+        "@oasis/designer": "file:../../bases para dev/editor grafico/oasis-designer-standalone",
+        "@popperjs/core": "^2.11.8",
+        "@supabase/supabase-js": "^2.106.1",
+        "axios": "^1.13.5",
+        "bootstrap": "^5.3.8",
+        "browser-image-compression": "^2.0.2",
+        "fabric": "^7.3.1",
+        "framer-motion": "^11.18.2",
+        "html2canvas": "^1.4.1",
+        "jspdf": "^2.5.1",
+        "konva": "^10.3.0",
+        "lucide-react": "^0.575.0",
+        "pdfjs-dist": "5.4.296",
+        "pptxgenjs": "^3.9.0",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
+        "react-draggable": "^4.5.0",
+        "react-konva": "^19.2.3",
+        "react-pageflip": "^2.0.3",
+        "react-pdf": "^10.4.1",
+        "react-router-dom": "^7.13.0",
+        "xlsx": "^0.18.5",
+        "zustand": "^4.4.7"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react": "^5.1.4",
+        "autoprefixer": "^10.4.27",
+        "postcss": "^8.5.6",
+        "sharp": "^0.34.5",
+        "tailwindcss": "^3.4.19",
+        "vite": "^6.1.1",
+        "vite-plugin-pwa": "^1.2.0"
+    }
+}
