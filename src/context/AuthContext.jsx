@@ -6,17 +6,63 @@ const AuthContext = createContext({});
 const TOKEN_KEY = 'auth_token';
 const USER_KEY  = 'auth_user';
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser]     = useState(() => {
-    try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch { return null; }
-  });
-  const [loading, setLoading] = useState(false);
+const parseStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY));
+  } catch {
+    return null;
+  }
+};
 
-  // Sincronizar estado si otra pestaña cierra sesión
+const decodeJwtPayload = (token) => {
+  try {
+    const payload = token?.split('.')?.[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='));
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+};
+
+const getUserFromStorage = () => {
+  const storedUser = parseStoredUser();
+  if (storedUser && typeof storedUser === 'object') {
+    return storedUser;
+  }
+
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+
+  // Fallback para mantener sesión entre pestañas aunque falte auth_user.
+  return {
+    id: payload.sub,
+    username: payload.username || '',
+    role: payload.role || '',
+    email: payload.email || '',
+    name: payload.name || payload.username || 'Usuario',
+  };
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(() => getUserFromStorage());
+  const [loading, setLoading] = useState(true);
+
+  // Hidratación inicial para asegurar persistencia al abrir nueva pestaña.
+  useEffect(() => {
+    setUser(getUserFromStorage());
+    setLoading(false);
+  }, []);
+
+  // Sincronizar sesión entre pestañas para login/logout.
   useEffect(() => {
     const onStorage = (e) => {
-      if (e.key === TOKEN_KEY && !e.newValue) {
-        setUser(null);
+      if (e.key === TOKEN_KEY || e.key === USER_KEY) {
+        setUser(getUserFromStorage());
       }
     };
     window.addEventListener('storage', onStorage);
