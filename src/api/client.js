@@ -30,10 +30,13 @@ apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         const isLoginEndpoint = error.config?.url?.includes('/login');
+        const isAdminRoute = window.location.pathname.startsWith('/admin');
         if (error.response?.status === 401 && !isLoginEndpoint) {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_user');
-            window.location.href = '/login';
+            if (isAdminRoute) {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }
