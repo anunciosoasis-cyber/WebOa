@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Calendar, ChevronLeft, ChevronRight, Clock, User, MapPin } from 'lucide-react';
 import apiClient from '../../api/client';
 
 const ANNOUNCEMENTS_REFRESH_MS = 30000;
@@ -38,14 +38,23 @@ const Announcements = () => {
             form = ann.formData;
         }
 
+        let annTitle = pickFirst(ann?.title, form?.title, 'ANUNCIO');
+        let annSubtitle = pickFirst(form?.subtitle, form?.title2, ann?.subtitle, '');
+
+        if (annTitle && typeof annTitle === 'string' && annTitle.includes('|||')) {
+            const parts = annTitle.split('|||');
+            annTitle = parts[0];
+            annSubtitle = parts[1] || annSubtitle;
+        }
+
         return {
             id: ann?.id,
             tag: pickFirst(ann?.tag, form?.tag, 'OASIS'),
-            title: pickFirst(ann?.title, form?.title, 'ANUNCIO'),
-            subtitle: pickFirst(form?.title2, ann?.subtitle, ''),
+            title: annTitle,
+            subtitle: annSubtitle,
             title3: pickFirst(form?.title3, ''),
-            speaker: pickFirst(form?.speaker, ann?.description, ''),
-            content: pickFirst(ann?.content, form?.content, ann?.description, ''),
+            speaker: pickFirst(form?.speaker, ann?.speaker, ann?.description, ''),
+            content: pickFirst(ann?.content, form?.content, ''),
             date: pickFirst(ann?.date, form?.date, ''),
             time: pickFirst(ann?.time, form?.time, ''),
             location: pickFirst(ann?.location, form?.location, ''),
@@ -144,6 +153,180 @@ const Announcements = () => {
 
     return (
         <div style={{ position: 'relative', width: '100%' }}>
+            <style>{`
+                .announcement-modal-container {
+                    position: relative;
+                    width: 96vw;
+                    max-width: 1400px;
+                    height: 92vh;
+                    background: #0a0a0a;
+                    border-radius: 32px;
+                    display: flex;
+                    flex-direction: row;
+                    overflow: hidden;
+                    box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+                }
+                .announcement-modal-left {
+                    flex: 1 1 50%;
+                    height: 100%;
+                    position: relative;
+                    background: #000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                }
+                .announcement-modal-right {
+                    flex: 1 1 50%;
+                    min-width: 320px;
+                    max-width: 520px;
+                    padding: 60px 50px;
+                    background: #0a0a0a;
+                    color: white;
+                    border-left: 1px solid rgba(255,255,255,0.08);
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .announcement-close-btn {
+                    position: absolute;
+                    top: 25px;
+                    left: 25px;
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    background: rgba(255,255,255,0.1);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    color: white;
+                    cursor: pointer;
+                    display: grid;
+                    place-items: center;
+                    backdrop-filter: blur(10px);
+                    z-index: 20;
+                    transition: background 0.2s;
+                }
+                .announcement-close-btn:hover {
+                    background: rgba(255,255,255,0.2);
+                }
+                .announcement-title {
+                    font-size: 3rem;
+                    font-weight: 900;
+                    margin: 0 0 10px 0;
+                    line-height: 1.1;
+                }
+                .announcement-subtitle {
+                    color: #F59E0B;
+                    font-size: 3rem;
+                    font-weight: 900;
+                    margin: 0 0 20px 0;
+                    line-height: 1.1;
+                }
+                .announcement-info-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    justify-content: center;
+                    text-align: left;
+                    height: 100%;
+                    padding-top: 20px;
+                }
+                .announcement-meta-row {
+                    display: flex;
+                    gap: 15px;
+                    margin-bottom: 20px;
+                    align-items: center;
+                    justify-content: flex-start;
+                    flex-wrap: wrap;
+                }
+                .announcement-badge {
+                    background: #F59E0B;
+                    color: black;
+                    padding: 6px 14px;
+                    border-radius: 10px;
+                    font-size: 0.75rem;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                }
+                .announcement-meta-item {
+                    color: rgba(255,255,255,0.7);
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .announcement-speaker {
+                    color: #FFFFFF;
+                    font-size: 1.2rem;
+                    font-weight: 700;
+                    margin: 0 0 15px 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 8px;
+                }
+                .announcement-location {
+                    color: #F59E0B;
+                    font-size: 1.1rem;
+                    font-weight: 800;
+                    margin: 0 0 20px 0;
+                    text-transform: uppercase;
+                    letter-spacing: 0.8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 8px;
+                }
+                .announcement-content-scroll {
+                    overflow-y: auto;
+                    color: rgba(255,255,255,0.8);
+                    line-height: 1.6;
+                    font-size: 1.05rem;
+                    max-width: 100%;
+                    margin: 0;
+                    padding-right: 10px;
+                }
+
+                @media (max-width: 992px) {
+                    .announcement-modal-container {
+                        flex-direction: column;
+                        height: 90vh;
+                        border-radius: 20px;
+                        overflow-y: auto;
+                    }
+                    .announcement-modal-left {
+                        flex: none;
+                        width: 100%;
+                        height: 40vh;
+                        min-height: 250px;
+                    }
+                    .announcement-modal-right {
+                        flex: none;
+                        width: 100%;
+                        max-width: 100%;
+                        height: auto;
+                        min-height: 50vh;
+                        padding: 40px 25px 30px;
+                        border-left: none;
+                        border-top: 1px solid rgba(255,255,255,0.08);
+                        justify-content: flex-end;
+                    }
+                    .announcement-title {
+                        font-size: 2rem;
+                        margin-bottom: 5px;
+                    }
+                    .announcement-subtitle {
+                        font-size: 2rem;
+                        margin-bottom: 15px;
+                    }
+                    .announcement-close-btn {
+                        top: 15px;
+                        left: 15px;
+                        width: 40px;
+                        height: 40px;
+                    }
+                }
+            `}</style>
             <div style={gridStyle}>
                 {items.map((ann) => {
                     const cardData = normalizeAnnouncement(ann);
@@ -168,6 +351,9 @@ const Announcements = () => {
                             style={islandOverlay}
                         >
                             <span style={islandTitleSmall}>{cardData.title}</span>
+                            {!!cardData.subtitle && (
+                                <span style={{ ...islandTitleSmall, fontSize: '0.75rem', color: '#F59E0B' }}>{cardData.subtitle}</span>
+                            )}
                         </motion.div>
                     </motion.div>
                     );
@@ -190,10 +376,10 @@ const Announcements = () => {
                         <motion.div
                             layoutId={`card-${selectedId}`}
                             transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                            style={modalContentContainer}
+                            className="announcement-modal-container"
                         >
                             {/* IZQUIERDA: IMAGEN */}
-                            <div style={modalLeft}>
+                            <div className="announcement-modal-left">
                                 <motion.img
                                     layoutId={`img-${selectedId}`}
                                     src={resolveImageUrl(selectedData.image)}
@@ -207,14 +393,14 @@ const Announcements = () => {
                                         e.stopPropagation();
                                         setSelectedId(null);
                                     }}
-                                    style={closeBtnStyle}
+                                    className="announcement-close-btn"
                                 >
                                     <X size={24} />
                                 </motion.button>
                             </div>
 
                             {/* DERECHA: TEXTO (DARK MODE) */}
-                            <div style={modalRightPane}>
+                            <div className="announcement-modal-right">
                                 <AnimatePresence mode="wait">
                                     <motion.div
                                         key={selectedId}
@@ -224,20 +410,22 @@ const Announcements = () => {
                                         transition={{ duration: 0.25, ease: "easeOut" }}
                                         style={infoWrapper}
                                     >
-                                        <div style={badgeRow}>
-                                            <span style={badgeStyle}>{selectedData.tag}</span>
-                                            {!!selectedData.date && <span style={dateTextStyle}><Calendar size={14} /> {selectedData.date}</span>}
-                                            {!!selectedData.time && <span style={dateTextStyle}>{selectedData.time}</span>}
-                                        </div>
+                                        <div className="announcement-info-container">
+                                            <div className="announcement-meta-row">
+                                                {!!selectedData.tag && <span className="announcement-badge">{selectedData.tag}</span>}
+                                                {!!selectedData.date && <span className="announcement-meta-item"><Calendar size={16} color="#F59E0B" /> {selectedData.date}</span>}
+                                                {!!selectedData.time && <span className="announcement-meta-item"><Clock size={16} color="#F59E0B" /> {selectedData.time}</span>}
+                                            </div>
 
-                                        <h2 style={titleStyle}>{selectedData.title}</h2>
-                                        {!!selectedData.subtitle && <p style={subtitleStyle}>{selectedData.subtitle}</p>}
-                                        {!!selectedData.title3 && <p style={subtleTextStyle}>{selectedData.title3}</p>}
-                                        {!!selectedData.speaker && <p style={speakerStyle}>{selectedData.speaker}</p>}
+                                            <h2 className="announcement-title">{selectedData.title}</h2>
+                                            {!!selectedData.subtitle && <h2 className="announcement-subtitle">{selectedData.subtitle}</h2>}
+                                            {!!selectedData.speaker && <p className="announcement-speaker"><User size={18} color="#F59E0B" /> {selectedData.speaker}</p>}
+                                            {!!selectedData.location && <p className="announcement-location"><MapPin size={18} color="#F59E0B" /> {selectedData.location}</p>}
 
-                                        <div style={scrollAreaStyle}>
-                                            {!!selectedData.content && <p style={textContentStyle}>{selectedData.content}</p>}
-                                            {!!selectedData.location && <p style={metaLineStyle}>{selectedData.location}</p>}
+                                            <div className="announcement-content-scroll">
+                                                {!!selectedData.title3 && <p style={subtleTextStyle}>{selectedData.title3}</p>}
+                                                {!!selectedData.content && <p style={textContentStyle}>{selectedData.content}</p>}
+                                            </div>
                                         </div>
 
                                         <div style={navigationContainerStyle}>
@@ -293,7 +481,11 @@ const islandOverlay = {
     position: 'absolute',
     bottom: 0, left: 0, right: 0,
     padding: '30px 20px 20px',
-    background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)'
+    background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '2px'
 };
 
 const islandTitleSmall = {

@@ -21,7 +21,7 @@ const AdminLayout = () => {
     const { signOut, user, role } = useAuth();
     const { isMobile, isDesktop } = useAppMode();
     const { mode, toggleMode } = useTheme();
-    const [isCollapsed, setIsCollapsed] = useState(true);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const [logo, setLogo] = useState(null);
 
     React.useEffect(() => {
@@ -39,6 +39,17 @@ const AdminLayout = () => {
         accent: '#F59E0B',
         glassBorder: mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
         textMain: mode === 'dark' ? '#FFFFFF' : '#120C1F'
+    };
+
+    // Tema Morado Oscuro para el Menú Lateral
+    const sidebarColors = {
+        bg: mode === 'dark' ? '#160a26' : '#2a144a', // Morado oscuro profundo y elegante
+        text: 'rgba(255, 255, 255, 0.65)',
+        textActive: '#F59E0B',
+        accent: '#F59E0B',
+        hoverBg: 'rgba(255, 255, 255, 0.04)',
+        activeBg: 'rgba(255, 255, 255, 0.08)',
+        border: 'rgba(255, 255, 255, 0.05)'
     };
 
     const allLinks = [
@@ -73,12 +84,13 @@ const AdminLayout = () => {
                     initial={false}
                     animate={{ width: sidebarWidth }}
                     style={{
-                        background: mode === 'dark' ? oasisColors.deepPurple : '#FFF',
-                        borderRight: `1px solid ${oasisColors.glassBorder}`,
+                        background: sidebarColors.bg,
+                        borderRight: `1px solid ${sidebarColors.border}`,
                         position: 'fixed', left: 0, top: 0, bottom: 0,
                         zIndex: 1000,
                         display: 'flex', flexDirection: 'column',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        boxShadow: '4px 0 24px rgba(0,0,0,0.1)'
                     }}
                 >
                     {/* Header Marca */}
@@ -103,9 +115,12 @@ const AdminLayout = () => {
                             onClick={() => setIsCollapsed(!isCollapsed)}
                             style={{
                                 width: '24px', height: '24px', borderRadius: '6px',
-                                background: 'transparent', border: `1px solid ${oasisColors.glassBorder}`,
-                                color: oasisColors.accent, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                background: sidebarColors.hoverBg, border: `1px solid ${sidebarColors.border}`,
+                                color: sidebarColors.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                transition: 'all 0.2s'
                             }}
+                            onMouseEnter={e => { e.currentTarget.style.background = sidebarColors.activeBg; e.currentTarget.style.color = '#FFF'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = sidebarColors.hoverBg; e.currentTarget.style.color = sidebarColors.text; }}
                         >
                             {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
                         </button>
@@ -120,28 +135,31 @@ const AdminLayout = () => {
                                     display: 'flex', alignItems: 'center', gap: '15px',
                                     padding: '12px', borderRadius: '10px',
                                     textDecoration: 'none',
-                                    background: active ? (mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') : 'transparent',
-                                    color: active ? oasisColors.accent : (mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.5)'),
+                                    background: active ? sidebarColors.activeBg : 'transparent',
+                                    color: active ? sidebarColors.textActive : sidebarColors.text,
                                     transition: 'all 0.2s ease',
                                     justifyContent: isCollapsed ? 'center' : 'flex-start',
                                     position: 'relative'
-                                }}>
+                                }}
+                                onMouseEnter={e => { if (!active) e.currentTarget.style.background = sidebarColors.hoverBg; e.currentTarget.style.color = '#FFF'; }}
+                                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = sidebarColors.text; } else { e.currentTarget.style.color = sidebarColors.textActive; } }}
+                                >
                                     <Icon size={18} strokeWidth={active ? 2.5 : 2} />
                                     {!isCollapsed && <span style={{ fontWeight: active ? 700 : 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</span>}
-                                    {active && <motion.div layoutId="activeInd" style={{ position: 'absolute', left: 0, width: '2px', height: '15px', background: oasisColors.accent, borderRadius: '0 2px 2px 0' }} />}
+                                    {active && <motion.div layoutId="activeInd" style={{ position: 'absolute', left: 0, width: '3px', height: '18px', background: sidebarColors.accent, borderRadius: '0 3px 3px 0' }} />}
                                 </Link>
                             );
                         })}
                     </nav>
 
                     {/* Footer / Utilities */}
-                    <div style={{ padding: '20px 10px', borderTop: `1px solid ${oasisColors.glassBorder}`, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ padding: '20px 10px', borderTop: `1px solid ${sidebarColors.border}`, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'space-around', alignItems: 'center', marginBottom: '10px' }}>
-                            <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: oasisColors.accent, cursor: 'pointer' }}>
+                            <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: sidebarColors.accent, cursor: 'pointer' }}>
                                 {mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                             </button>
                             {!isCollapsed && (
-                                <button onClick={() => window.open('/', '_blank')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+                                <button onClick={() => window.open('/', '_blank')} style={{ background: 'none', border: 'none', color: sidebarColors.text, cursor: 'pointer' }}>
                                     <ExternalLink size={16} />
                                 </button>
                             )}

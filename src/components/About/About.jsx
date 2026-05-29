@@ -38,7 +38,7 @@ const About = () => {
   return (
     <div>
       <AboutHero 
-        title={settings?.about_hero_title || "¿Quiénes Somos?"}
+        title="¿Quiénes Somos?"
         content={settings?.about_hero_content || "Oasis Medellín es una comunidad vibrante dedicada a la fe, la familia y el servicio. Descubre nuestra historia, valores y el equipo que hace posible este sueño."} 
       />
       <AboutValues settings={settings} />

@@ -30,11 +30,11 @@ const Footer = () => {
         footerWrapper: {
             position: 'relative',
             width: '100vw',
-            minHeight: '650px',
+            minHeight: isMobile ? 'auto' : '650px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: isMobile ? '60px 20px' : '120px 20px', // Usamos isMobile con seguridad
+            padding: isMobile ? '30px 15px' : '120px 20px', // Usamos isMobile con seguridad
             overflow: 'hidden',
             backgroundImage: 'url("https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=3840&auto=format&fit=crop")',
             backgroundSize: 'cover',
@@ -56,7 +56,7 @@ const Footer = () => {
             backdropFilter: 'blur(30px) saturate(160%)',
             WebkitBackdropFilter: 'blur(30px) saturate(160%)',
             borderRadius: isMobile ? '30px' : '50px',
-            padding: isMobile ? '40px 25px' : '70px 60px 50px',
+            padding: isMobile ? '30px 20px' : '70px 60px 50px',
             borderTop: `1px solid ${colors.crystalBorder}`,
             borderLeft: `1px solid ${colors.crystalBorder}`,
             boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)',
@@ -105,7 +105,7 @@ const Footer = () => {
 
             <div style={styles.footerIsla} className="crystal-island">
                 <div className="container-fluid">
-                    <div className="row g-5">
+                    <div className={isMobile ? "row g-3" : "row g-5"}>
                         <div className="col-lg-4 col-md-12 text-center text-lg-start">
                             <div className="d-flex align-items-center justify-content-center justify-content-lg-start mb-4">
                                 <img src={logoImg} alt="OASIS" style={{ height: '40px', marginRight: '15px', filter: 'brightness(0) invert(1)' }} />
@@ -146,7 +146,7 @@ const Footer = () => {
                         </div>
                     </div>
 
-                    <div style={{ marginTop: '70px', paddingTop: '30px', borderTop: `1px solid ${colors.crystalBorder}`, textAlign: 'center' }}>
+                    <div style={{ marginTop: isMobile ? '30px' : '70px', paddingTop: isMobile ? '20px' : '30px', borderTop: `1px solid ${colors.crystalBorder}`, textAlign: 'center' }}>
                         <small style={{ color: 'rgba(255,255,255,0.3)', fontWeight: '800', letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.65rem' }}>
                             © 2026 OASIS ECOSYSTEM
                         </small>

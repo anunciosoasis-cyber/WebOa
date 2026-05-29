@@ -194,22 +194,22 @@ const Solicitudes = () => {
             </header>
 
             {/* KPI Section */}
-            <div className="row g-4 mb-5">
+            <div className="row g-3 mb-5">
                 {[
                     { label: 'Total Peticiones', value: stats.total, icon: Inbox, color: OASIS_COLORS.accent },
                     { label: 'Pendientes', value: stats.pendiente, icon: Clock, color: OASIS_COLORS.accent },
                     { label: 'Gestionadas', value: stats.gestionada, icon: CheckCircle2, color: OASIS_COLORS.success },
                     { label: 'Sin Respuesta', value: stats.sin_respuesta, icon: AlertCircle, color: OASIS_COLORS.error },
                 ].map((s, idx) => (
-                    <div key={idx} className="col-md-3">
-                        <GlassCard style={{ padding: '25px', borderRadius: '25px', border: `1px solid ${OASIS_COLORS.glassBorder}` }}>
-                            <div className="d-flex align-items-center gap-3">
-                                <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: `${s.color}15`, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <s.icon size={24} />
+                    <div key={idx} className="col-6 col-md-3">
+                        <GlassCard style={{ padding: '20px', borderRadius: '25px', border: `1px solid ${OASIS_COLORS.glassBorder}`, height: '100%', display: 'flex', alignItems: 'center' }}>
+                            <div className="d-flex align-items-center justify-content-center justify-content-md-start gap-3 w-100">
+                                <div style={{ minWidth: '45px', height: '45px', borderRadius: '15px', background: `${s.color}15`, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <s.icon size={22} />
                                 </div>
-                                <div>
-                                    <div style={{ fontSize: '1.8rem', fontWeight: 900, color: isDark ? '#fff' : OASIS_COLORS.deepPurple, lineHeight: 1 }}>{s.value}</div>
-                                    <div style={{ fontSize: '0.6rem', fontWeight: 900, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '1px', color: isDark ? '#fff' : '#64748b' }}>{s.label}</div>
+                                <div className="text-start">
+                                    <div style={{ fontSize: '1.6rem', fontWeight: 900, color: isDark ? '#fff' : OASIS_COLORS.deepPurple, lineHeight: 1 }}>{s.value}</div>
+                                    <div className="d-none d-md-block mt-1" style={{ fontSize: '0.6rem', fontWeight: 900, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '1px', color: isDark ? '#fff' : '#64748b' }}>{s.label}</div>
                                 </div>
                             </div>
                         </GlassCard>

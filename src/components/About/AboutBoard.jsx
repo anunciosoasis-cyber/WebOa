@@ -69,7 +69,7 @@ const AboutBoard = ({ boardMembers = [], onSelectMember, getImageUrl }) => {
     const [isPaused, setIsPaused] = useState(false);
 
     // Si no llegan datos del backend, usamos nuestra data pictórica
-    const displayMembers = boardMembers.length > 0 ? boardMembers : DEPARTAMENTOS_OASIS;
+    const displayMembers = boardMembers || [];
 
     const getBadgeLabel = (type) => {
         if (type === 'pastor') return 'Pastor';

@@ -71,6 +71,7 @@ const AdminAbout = () => {
     const [memberForm, setMemberForm] = useState({ name: '', role: '', type: 'individual', description: '', imageUrl: '', fullscreenImageUrl: '' });
     const [showMemberForm, setShowMemberForm] = useState(false);
     const [memberFormSaving, setMemberFormSaving] = useState(false);
+    const [isUploadingGallery, setIsUploadingGallery] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const { showToast } = useToast();
@@ -382,26 +383,49 @@ const AdminAbout = () => {
                     <GlassCard style={{ padding: '40px', borderRadius: '35px', border: `1px solid ${OASIS_COLORS.glassBorder}` }}>
                         <div className="d-flex justify-content-between align-items-center mb-5">
                             <SectionHeader icon={ImageIcon} title="GALERÍA" subtitle="Momentos Oasis" isDark={isDark} />
-                            <label className="btn rounded-pill px-4 fw-bold" style={{ background: `${OASIS_COLORS.success}15`, color: OASIS_COLORS.success, border: `1px solid ${OASIS_COLORS.success}`, fontSize: '0.7rem' }}>
-                                <Upload size={16} className="me-2" /> SUBIR FOTOS
-                                <input type="file" hidden multiple onChange={async e => {
+                            <label className={`btn rounded-pill px-4 fw-bold ${isUploadingGallery ? 'disabled opacity-50' : ''}`} style={{ background: `${OASIS_COLORS.success}15`, color: OASIS_COLORS.success, border: `1px solid ${OASIS_COLORS.success}`, fontSize: '0.7rem', cursor: isUploadingGallery ? 'not-allowed' : 'pointer' }}>
+                                <Upload size={16} className="me-2" /> {isUploadingGallery ? 'SUBIENDO...' : 'SUBIR FOTOS'}
+                                <input type="file" hidden multiple accept="image/*" onChange={async e => {
+                                    if (isUploadingGallery) return;
                                     const files = Array.from(e.target.files);
-                                    for (const file of files) {
-                                        const url = await uploadFile(file);
-                                        await apiClient.post('/gallery-items', { imageUrl: url, order: galleryItems.length });
+                                    if (!files.length) return;
+                                    
+                                    setIsUploadingGallery(true);
+                                    try {
+                                        for (const file of files) {
+                                            const url = await uploadFile(file);
+                                            await apiClient.post('/gallery-items', { imageUrl: url, order: galleryItems.length });
+                                        }
+                                        await fetchData();
+                                    } catch (err) {
+                                        console.error('Error al subir fotos', err);
+                                    } finally {
+                                        e.target.value = '';
+                                        setIsUploadingGallery(false);
                                     }
-                                    fetchData();
                                 }} />
                             </label>
                         </div>
 
                         <div className="row g-3">
                             {galleryItems.map(item => (
-                                <div key={item.id} className="col-md-4 col-lg-2">
-                                    <div className="rounded-4 overflow-hidden position-relative group shadow-sm border" style={{ borderColor: OASIS_COLORS.glassBorder, aspectRatio: '1/1' }}>
-                                        <img src={getImageUrl(item.imageUrl)} className="w-100 h-100 object-fit-cover" alt="" />
-                                        <button onClick={() => handleGalleryDelete(item.id)} className="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle" style={{ width: '24px', height: '24px', padding: 0 }}><X size={14} /></button>
+                                <div key={item.id} className="col-md-4 col-lg-3">
+                                    <div className="rounded-4 overflow-hidden position-relative group shadow-sm border mb-2" style={{ borderColor: OASIS_COLORS.glassBorder, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '180px' }}>
+                                        <img src={getImageUrl(item.imageUrl)} className="w-100 h-100" style={{ objectFit: 'contain' }} alt="" />
+                                        <button onClick={() => handleGalleryDelete(item.id)} className="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle" style={{ width: '24px', height: '24px', padding: 0, zIndex: 10 }}><X size={14} /></button>
                                     </div>
+                                    <input 
+                                        type="text"
+                                        className="form-control form-control-sm oasis-input"
+                                        placeholder="Comentario..."
+                                        value={item.title || ''}
+                                        onChange={(e) => setGalleryItems(prev => prev.map(g => g.id === item.id ? { ...g, title: e.target.value } : g))}
+                                        onBlur={async (e) => {
+                                            try { await apiClient.post('/gallery-items', { ...item, title: e.target.value }); } 
+                                            catch (err) { console.error('Error guardando comentario', err); }
+                                        }}
+                                        style={{ fontSize: '0.75rem', textAlign: 'center' }}
+                                    />
                                 </div>
                             ))}
                         </div>

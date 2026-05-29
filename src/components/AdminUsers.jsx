@@ -118,9 +118,9 @@ const AdminUsers = () => {
                     </h1>
                 </div>
                 <button 
-                    onClick={() => { resetForm(); setShowForm(!showForm); }}
+                    onClick={(e) => { e.preventDefault(); resetForm(); setShowForm(!showForm); }}
                     className="btn rounded-pill px-4 shadow-sm fw-bold border-0 text-dark d-flex align-items-center gap-2" 
-                    style={{ background: OASIS_COLORS.accent, height: '48px' }}
+                    style={{ background: OASIS_COLORS.accent, height: '48px', position: 'relative', zIndex: 50 }}
                 >
                     {showForm ? <X size={18} /> : <UserPlus size={18} />}
                     {showForm ? 'CERRAR' : 'NUEVO USUARIO'}

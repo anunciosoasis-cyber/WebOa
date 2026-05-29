@@ -21,7 +21,7 @@ const AboutGallery = ({ galleryItems = [], getImageUrl }) => {
     const [activeHeart, setActiveHeart] = useState(null);
     const [selectedReel, setSelectedReel] = useState(null);
 
-    const items = galleryItems.length > 0 ? galleryItems : OASIS_MOMENTS;
+    const items = galleryItems || [];
 
     const handleLike = (id, e) => {
         if (e) e.stopPropagation();
@@ -94,16 +94,19 @@ const AboutGallery = ({ galleryItems = [], getImageUrl }) => {
                         style={{
                             position: 'relative',
                             background: '#000',
-                            borderRadius: '30px',
+                            borderRadius: '20px',
                             overflow: 'hidden',
                             cursor: 'pointer',
                             boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
+                            breakInside: 'avoid',
+                            marginBottom: '25px',
+                            display: 'block'
                         }}
                     >
                         <img 
                             src={getImageUrl ? getImageUrl(item.imageUrl || item.img) : item.img} 
                             alt={item.title} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, transition: '0.8s' }} 
+                            style={{ width: '100%', height: 'auto', display: 'block', opacity: 0.85, transition: '0.8s' }} 
                             className="bento-img"
                         />
 
@@ -122,11 +125,11 @@ const AboutGallery = ({ galleryItems = [], getImageUrl }) => {
                         {/* Overlay Social Media (Instagram style) */}
                         <div className="bento-overlay">
                             <div style={{ marginBottom: '15px' }}>
-                                <h4 style={{ color: '#fff', fontSize: item.size === 'big' ? '1.5rem' : '1.1rem', fontWeight: 800, margin: 0 }}>
-                                    {item.title}
+                                <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
+                                    {item.title || ''}
                                 </h4>
                                 <span style={{ color: COLORS.accent, fontSize: '0.8rem', fontWeight: 700 }}>
-                                    {item.tag}
+                                    {item.tag || ''}
                                 </span>
                             </div>
                             
@@ -174,21 +177,13 @@ const AboutGallery = ({ galleryItems = [], getImageUrl }) => {
 
             <style>{`
                 .bento-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    grid-auto-rows: 220px;
-                    grid-auto-flow: dense;
-                    gap: 25px;
+                    column-count: 3;
+                    column-gap: 25px;
                     max-width: 1400px;
                     margin: 0 auto;
                 }
 
                 .bento-item { transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
-
-                /* Definición de tamaños Bento */
-                .bento-big { grid-column: span 2; grid-row: span 2; }
-                .bento-medium { grid-column: span 2; grid-row: span 1; }
-                .bento-small { grid-column: span 1; grid-row: span 1; }
 
                 .bento-overlay {
                     position: absolute; inset: 0; padding: 30px;
@@ -204,8 +199,8 @@ const AboutGallery = ({ galleryItems = [], getImageUrl }) => {
 
                 /* REEL MODAL - Estilos Premium */
                 .reel-modal { position: fixed; inset: 0; background: rgba(8, 5, 13, 0.98); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px); padding: 20px; }
-                .reel-content { width: 100%; maxWidth: 900px; height: 80vh; background: #000; border-radius: 40px; overflow: hidden; display: flex; border: 1px solid rgba(255,255,255,0.1); }
-                .reel-content img { width: 60%; height: 100%; object-fit: cover; }
+                .reel-content { width: 100%; maxWidth: 1000px; height: 85vh; background: #050505; border-radius: 40px; overflow: hidden; display: flex; border: 1px solid rgba(255,255,255,0.1); }
+                .reel-content img { width: 60%; height: 100%; object-fit: contain; background: #000; }
                 .reel-info { width: 40%; padding: 50px; display: flex; flex-direction: column; color: #fff; position: relative; }
                 .close-reel { position: absolute; top: 30px; right: 30px; background: none; border: none; color: #fff; cursor: pointer; }
                 .reel-tag { color: ${COLORS.accent}; font-weight: 900; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 3px; }
@@ -215,8 +210,8 @@ const AboutGallery = ({ galleryItems = [], getImageUrl }) => {
                 .reel-action-btn:hover { background: ${COLORS.accent}; color: ${COLORS.midnight}; }
 
                 @media (max-width: 992px) {
-                    .bento-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 180px; gap: 15px; }
-                    .bento-big, .bento-medium { grid-column: span 2; }
+                    .bento-grid { column-count: 2; column-gap: 15px; }
+                    .bento-item { margin-bottom: 15px; }
                     .reel-content { flex-direction: column; height: auto; max-height: 95vh; }
                     .reel-content img { width: 100%; height: 350px; }
                     .reel-info { width: 100%; padding: 25px; }

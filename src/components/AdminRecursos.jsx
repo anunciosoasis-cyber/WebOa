@@ -231,12 +231,13 @@ const AdminRecursos = () => {
                     </h1>
                 </div>
                 <button
-                    onClick={() => {
+                    onClick={(e) => {
+                        e.preventDefault();
                         if (!showForm) resetForm();
                         setShowForm(!showForm);
                     }}
                     className="btn rounded-pill px-4 shadow-sm fw-bold border-0 text-dark d-flex align-items-center gap-2"
-                    style={{ background: OASIS_COLORS.accent, height: '48px' }}
+                    style={{ background: OASIS_COLORS.accent, height: '48px', position: 'relative', zIndex: 50 }}
                 >
                     {showForm ? <X size={20} /> : <Plus size={20} strokeWidth={2.5} />}
                     {showForm ? 'CANCELAR' : 'NUEVO RECURSO'}

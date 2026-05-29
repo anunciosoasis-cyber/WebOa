@@ -389,7 +389,7 @@ const AdminForms = () => {
                         GESTIÓN DE <span style={{ color: OASIS_COLORS.accent }}>EVENTOS</span>
                     </h1>
                 </div>
-                <button className="btn rounded-pill px-4 shadow-sm fw-bold border-0 text-dark d-flex align-items-center gap-2" style={{ background: OASIS_COLORS.accent, height: '48px' }} onClick={handleCreateNew}>
+                <button className="btn rounded-pill px-4 shadow-sm fw-bold border-0 text-dark d-flex align-items-center gap-2" style={{ background: OASIS_COLORS.accent, height: '48px', position: 'relative', zIndex: 50 }} onClick={(e) => { e.preventDefault(); handleCreateNew(); }}>
                     <Plus size={20} strokeWidth={2.5} /> NUEVO FORMULARIO
                 </button>
             </header>

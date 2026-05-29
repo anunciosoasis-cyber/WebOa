@@ -359,7 +359,7 @@ const AdminCulto = () => {
     };
 
     return (
-        <div className="container-fluid pb-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+        <div className="container-fluid pb-5 px-3 px-md-5 pt-4 pt-md-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh' }}>
 
             {/* VENTANA EMERGENTE: CONTADOR DE ESCUELA SABÁTICA */}
             <AnimatePresence>
@@ -482,14 +482,14 @@ const AdminCulto = () => {
             </AnimatePresence>
 
             {/* Header del Modulo */}
-            <header className="mb-5 d-flex justify-content-between align-items-end">
+            <header className="mb-5 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-end gap-4">
                 <div>
                     <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Real-time Production</span>
                     <h1 style={{ fontFamily: 'Moonrising', fontSize: '2.5rem', margin: '5px 0 0', color: isDark ? '#fff' : OASIS_COLORS.deepPurple }}>
                         ORDEN DEL <span style={{ color: OASIS_COLORS.accent }}>CULTO</span>
                     </h1>
                 </div>
-                <div className="d-flex gap-3 align-items-center">
+                <div className="d-flex flex-wrap gap-2 align-items-center w-100 w-lg-auto">
                     <div className="px-3 py-2 rounded-pill d-flex align-items-center gap-2" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0,0,0,0.15)' }}>
                         <CalendarIcon size={14} color={OASIS_COLORS.accent} />
                         <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className={`border-0 bg-transparent fw-bold x-small ${isDark ? 'text-white' : 'text-dark'}`} style={{ outline: 'none' }} />
@@ -503,19 +503,19 @@ const AdminCulto = () => {
                         <Timer size={18} /> CONTADOR
                     </button>
                     {viewMode === 'live' ? (
-                        <div className="d-flex gap-3">
-                            <button onClick={() => setShowProjection(true)} className="btn rounded-pill px-4 fw-bold d-flex align-items-center gap-2" style={{ background: OASIS_COLORS.accent, color: '#fff', border: `1px solid ${OASIS_COLORS.accent}` }}>
+                        <div className="d-flex flex-wrap gap-2 w-100 mt-2 mt-md-0">
+                            <button onClick={() => setShowProjection(true)} className="btn rounded-pill px-4 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 flex-grow-1" style={{ background: OASIS_COLORS.accent, color: '#fff', border: `1px solid ${OASIS_COLORS.accent}` }}>
                                 <Monitor size={18} /> PROYECTAR
                             </button>
-                            <button onClick={() => setViewMode('planning')} className="btn rounded-pill px-4 fw-bold" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, color: isDark ? '#fff' : '#000' }}>
+                            <button onClick={() => setViewMode('planning')} className="btn rounded-pill px-4 py-2 fw-bold flex-grow-1" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, color: isDark ? '#fff' : '#000', fontSize: '0.8rem' }}>
                                 VOLVER A PLANIFICACIÓN
                             </button>
-                            <button onClick={endService} className="btn rounded-pill px-4 fw-bold" style={{ background: '#FF444415', color: '#FF4444', border: '1px solid #FF4444' }}>
+                            <button onClick={endService} className="btn rounded-pill px-4 py-2 fw-bold flex-grow-1" style={{ background: '#FF444415', color: '#FF4444', border: '1px solid #FF4444', fontSize: '0.8rem' }}>
                                 FINALIZAR CULTO
                             </button>
                         </div>
                     ) : (
-                        <button onClick={startService} className="btn rounded-pill px-4 fw-bold text-dark d-flex align-items-center gap-2" style={{ background: OASIS_COLORS.accent }}>
+                        <button onClick={startService} className="btn rounded-pill px-4 py-2 fw-bold text-dark d-flex align-items-center justify-content-center gap-2 flex-grow-1 w-100 mt-2 mt-md-0" style={{ background: OASIS_COLORS.accent }}>
                             <CirclePlay size={18} /> {serviceStartTime ? 'VOLVER AL VIVO' : 'INICIAR VIVO'}
                         </button>
                     )}
@@ -528,14 +528,14 @@ const AdminCulto = () => {
                 {viewMode === 'live' ? (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="row g-4">
                         <div className="col-12">
-                            <GlassCard style={{ padding: '60px', borderRadius: '40px', border: `1px solid ${timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.accent}26`, background: `radial-gradient(circle at top right, ${timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.accent}26, transparent)`, boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
-                                <div className="row align-items-center">
+                            <GlassCard className="p-4 p-md-5" style={{ borderRadius: '40px', border: `1px solid ${timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.accent}26`, background: `radial-gradient(circle at top right, ${timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.accent}26, transparent)`, boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+                                <div className="row align-items-center g-4">
                                     <div className="col-md-5 text-center">
                                         <div className="position-relative d-inline-block">
-                                            <CircularProgress percentage={timeMetrics.percentage} size={280} isOvertime={timeMetrics.isOvertime} />
+                                            <CircularProgress percentage={timeMetrics.percentage} size={240} isOvertime={timeMetrics.isOvertime} />
                                             <div className="position-absolute top-50 start-50 translate-middle w-100">
                                                 <div style={{
-                                                    fontSize: '4rem',
+                                                    fontSize: '3.2rem',
                                                     fontWeight: 900,
                                                     color: timeMetrics.isOvertime ? OASIS_COLORS.error : (isDark ? '#fff' : '#000'),
                                                     fontFamily: 'Moonrising',
@@ -579,11 +579,11 @@ const AdminCulto = () => {
                                             </div>
                                         </div>
 
-                                        <div className="d-flex gap-3">
-                                            <button onClick={() => setIsPaused(!isPaused)} className="btn rounded-pill px-5 py-3 fw-bold flex-grow-1" style={{ background: isPaused ? OASIS_COLORS.accent : OASIS_COLORS.glassWhite, color: isPaused ? '#000' : (isDark ? '#fff' : '#000'), border: `1px solid ${OASIS_COLORS.glassBorder}`, boxShadow: '0 10px 20px rgba(0,0,0,0.15)' }}>
+                                        <div className="d-flex flex-column flex-sm-row gap-3">
+                                            <button onClick={() => setIsPaused(!isPaused)} className="btn rounded-pill px-4 px-md-5 py-3 fw-bold flex-grow-1" style={{ background: isPaused ? OASIS_COLORS.accent : OASIS_COLORS.glassWhite, color: isPaused ? '#000' : (isDark ? '#fff' : '#000'), border: `1px solid ${OASIS_COLORS.glassBorder}`, boxShadow: '0 10px 20px rgba(0,0,0,0.15)' }}>
                                                 {isPaused ? <Play className="me-2" /> : <Pause className="me-2" />} {isPaused ? 'REANUDAR' : 'PAUSAR'}
                                             </button>
-                                            <button onClick={() => { setCurrentActivityIndex(p => p + 1); setElapsedSeconds(0); }} className="btn rounded-pill px-5 py-3 fw-bold flex-grow-1 text-dark" style={{ background: OASIS_COLORS.accent }}>
+                                            <button onClick={() => { setCurrentActivityIndex(p => p + 1); setElapsedSeconds(0); }} className="btn rounded-pill px-4 px-md-5 py-3 fw-bold flex-grow-1 text-dark" style={{ background: OASIS_COLORS.accent }}>
                                                 <SkipForward className="me-2" /> SIGUIENTE ACTO
                                             </button>
                                         </div>
@@ -596,14 +596,14 @@ const AdminCulto = () => {
                     /* El modo planificación permanece igual */
                     <div className="row g-4">
                         <div className="col-lg-8" id="timeline-printable">
-                            <GlassCard style={{ padding: '40px', borderRadius: '35px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff', boxShadow: isDark ? 'none' : '0 15px 35px rgba(0,0,0,0.15)' }}>
-                                <div className="d-flex justify-content-between align-items-center mb-5">
+                            <GlassCard className="p-4 p-md-5" style={{ borderRadius: '35px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff', boxShadow: isDark ? 'none' : '0 15px 35px rgba(0,0,0,0.15)' }}>
+                                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
                                     <SectionHeader icon={ListChecks} title="ORDEN DEL CULTO" subtitle="Cronograma detallado" isDark={isDark} />
-                                    <div className="d-flex gap-2">
-                                        <button onClick={() => initPlantilla()} className="btn rounded-pill px-4 fw-bold d-flex align-items-center gap-1" style={{ background: 'rgba(245,158,11,0.08)', color: OASIS_COLORS.accent, border: `1px solid rgba(245,158,11,0.3)`, fontSize: '0.7rem' }}>
+                                    <div className="d-flex flex-wrap gap-2 w-100 w-md-auto">
+                                        <button onClick={() => initPlantilla()} className="btn rounded-pill px-4 py-2 fw-bold d-flex align-items-center justify-content-center gap-1 flex-grow-1" style={{ background: 'rgba(245,158,11,0.08)', color: OASIS_COLORS.accent, border: `1px solid rgba(245,158,11,0.3)`, fontSize: '0.7rem' }}>
                                             <ListChecks size={14} /> PLANTILLA
                                         </button>
-                                        <button onClick={() => setShowForm(true)} className="btn rounded-pill px-4 fw-bold" style={{ background: `${OASIS_COLORS.accent}15`, color: OASIS_COLORS.accent, border: `1px solid ${OASIS_COLORS.accent}`, fontSize: '0.7rem' }}>
+                                        <button onClick={() => setShowForm(true)} className="btn rounded-pill px-4 py-2 fw-bold flex-grow-1" style={{ background: `${OASIS_COLORS.accent}15`, color: OASIS_COLORS.accent, border: `1px solid ${OASIS_COLORS.accent}`, fontSize: '0.7rem' }}>
                                             + AGREGAR ACTIVIDAD
                                         </button>
                                     </div>
@@ -625,9 +625,9 @@ const AdminCulto = () => {
                                                     <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: OASIS_COLORS.accent, zIndex: 2, position: 'relative', marginTop: '12px', boxShadow: `0 0 10px ${OASIS_COLORS.accent}88` }} />
                                                     {idx < filteredOrden.length - 1 && <div style={{ width: '2px', height: '100%', background: OASIS_COLORS.glassBorder, position: 'absolute', left: '5px', top: '24px' }} />}
                                                 </div>
-                                                <div className="flex-grow-1">
+                                                <div className="flex-grow-1" style={{ minWidth: 0 }}>
                                                     <div className="p-3 rounded-4 transition-all hover-glass" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 10px 20px rgba(0,0,0,0.15)' }}>
-                                                        <div className="d-flex justify-content-between align-items-center">
+                                                        <div className="d-flex justify-content-between align-items-start align-items-sm-center flex-column flex-sm-row gap-2">
                                                             <div>
                                                                 <h6 className={`mb-1 fw-bold ${isDark ? 'text-white' : 'text-dark'}`}>{item.actividad}</h6>
                                                                 <div className={`d-flex gap-3 opacity-75 ${isDark ? 'text-white-50' : 'text-secondary'}`}>
@@ -648,7 +648,7 @@ const AdminCulto = () => {
 
                         <div className="col-lg-4">
                             <div className="d-flex flex-column gap-4">
-                                <GlassCard style={{ padding: '30px', borderRadius: '30px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff', boxShadow: isDark ? 'none' : '0 15px 35px rgba(0,0,0,0.15)' }}>
+                                <GlassCard className="p-4 p-md-5" style={{ borderRadius: '30px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff', boxShadow: isDark ? 'none' : '0 15px 35px rgba(0,0,0,0.15)' }}>
                                     <SectionHeader icon={Share2} title="EXPORTAR" isDark={isDark} />
                                     <div className="d-flex flex-column gap-2">
                                         <button onClick={handleExportPDF} className="btn w-100 text-start rounded-4 p-3 d-flex align-items-center gap-3" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', color: isDark ? '#fff' : '#000', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 8px 15px rgba(0,0,0,0.15)' }}>
