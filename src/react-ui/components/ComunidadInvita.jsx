@@ -104,29 +104,31 @@ const SocialRibbon = () => {
                             </AnimatePresence>
                         </div>
 
-                        {/* TARJETAS RRSS COMPACTAS (Evita distorsión de la UI) */}
-                        {[
-                            { icon: "Youtube", color: "#FF0000", label: "YouTube", sub: "Transmisiones", link: socials.youtube },
-                            { icon: "Facebook", color: "#4267B2", label: "Facebook", sub: "Comunidad", link: socials.facebook },
-                            { icon: "Instagram", color: "#E1306C", label: "Instagram", sub: "Dosis de Fe", link: socials.instagram }
-                        ].map((item, idx) => {
-                            const Icon = LucideIcons[item.icon];
-                            return (
-                                <a key={idx} href={item.link} target="_blank" rel="noreferrer" style={cardStyle} className="social-pill-card">
-                                    <div style={{ 
-                                        background: `${item.color}15`, padding: '10px', 
-                                        borderRadius: '14px', color: item.color, display: 'flex' 
-                                    }}>
-                                        <Icon size={20} strokeWidth={2.5} />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ color: '#fff', fontWeight: '800', margin: 0, fontSize: '0.85rem' }}>{item.label}</h4>
-                                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', margin: 0 }}>{item.sub}</p>
-                                    </div>
-                                    <LucideIcons.ArrowUpRight size={14} className="arrow-small" />
-                                </a>
-                            );
-                        })}
+                        {/* CONTENEDOR TARJETAS RRSS */}
+                        <div className="social-cards-container" style={{ display: 'contents' }}>
+                            {[
+                                { icon: "Youtube", color: "#FF0000", label: "YouTube", sub: "Transmisiones", link: socials.youtube },
+                                { icon: "Facebook", color: "#4267B2", label: "Facebook", sub: "Comunidad", link: socials.facebook },
+                                { icon: "Instagram", color: "#E1306C", label: "Instagram", sub: "Dosis de Fe", link: socials.instagram }
+                            ].map((item, idx) => {
+                                const Icon = LucideIcons[item.icon];
+                                return (
+                                    <a key={idx} href={item.link} target="_blank" rel="noreferrer" style={cardStyle} className="social-pill-card">
+                                        <div style={{ 
+                                            background: `${item.color}15`, padding: '10px', 
+                                            borderRadius: '14px', color: item.color, display: 'flex' 
+                                        }} className="social-icon-wrapper">
+                                            <Icon size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <div style={{ flex: 1 }} className="social-text">
+                                            <h4 style={{ color: '#fff', fontWeight: '800', margin: 0, fontSize: '0.85rem' }}>{item.label}</h4>
+                                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', margin: 0 }}>{item.sub}</p>
+                                        </div>
+                                        <LucideIcons.ArrowUpRight size={14} className="arrow-small social-arrow" />
+                                    </a>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
@@ -145,6 +147,28 @@ const SocialRibbon = () => {
                     @media (max-width: 768px) {
                         div[style*="gridTemplateColumns"] { grid-template-columns: 1fr !important; }
                         section { padding: 50px 0 !important; }
+                        
+                        .social-cards-container {
+                            display: flex !important;
+                            flex-direction: row;
+                            justify-content: center;
+                            gap: 15px;
+                            margin-top: 10px;
+                        }
+                        
+                        .social-pill-card {
+                            padding: 15px !important;
+                            justify-content: center;
+                            width: auto;
+                        }
+                        
+                        .social-text, .social-arrow {
+                            display: none !important;
+                        }
+                        
+                        .social-icon-wrapper {
+                            padding: 12px !important;
+                        }
                     }
                 `}</style>
             </section>

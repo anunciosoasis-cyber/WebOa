@@ -106,7 +106,7 @@ const Footer = () => {
             <div style={styles.footerIsla} className="crystal-island">
                 <div className="container-fluid">
                     <div className={isMobile ? "row g-3" : "row g-5"}>
-                        <div className="col-lg-4 col-md-12 text-center text-lg-start">
+                        <div className="col-lg-4 col-12 text-center text-lg-start">
                             <div className="d-flex align-items-center justify-content-center justify-content-lg-start mb-4">
                                 <img src={logoImg} alt="OASIS" style={{ height: '40px', marginRight: '15px', filter: 'brightness(0) invert(1)' }} />
                                 <span style={styles.logoText}>OASIS</span>
@@ -116,22 +116,22 @@ const Footer = () => {
                             </p>
                         </div>
 
-                        <div className="col-lg-2 col-6 text-center text-lg-start">
-                            <h5 style={styles.columnTitle}>Explorar</h5>
-                            <Link to="/" className="f-link" style={styles.link}>Inicio</Link>
-                            <Link to="/about" className="f-link" style={styles.link}>Nosotros</Link>
-                            <Link to="/recursos" className="f-link" style={styles.link}>Recursos</Link>
+                        <div className="col-lg-2 col-12 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
+                            <h5 style={{...styles.columnTitle, textAlign: 'center'}}>Explorar</h5>
+                            <Link to="/" className="f-link" style={{...styles.link, textAlign: 'center'}}>Inicio</Link>
+                            <Link to="/about" className="f-link" style={{...styles.link, textAlign: 'center'}}>Nosotros</Link>
+                            <Link to="/recursos" className="f-link" style={{...styles.link, textAlign: 'center'}}>Recursos</Link>
                         </div>
 
-                        <div className="col-lg-2 col-6 text-center text-lg-start">
-                            <h5 style={styles.columnTitle}>Ministerio</h5>
-                            <Link to="/peticiones" className="f-link" style={styles.link}>Oración</Link>
-                            <Link to="/inscripciones" className="f-link" style={styles.link}>Eventos</Link>
-                            <Link to="/login" className="f-link" style={styles.link}>Admin</Link>
+                        <div className="col-lg-2 col-12 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
+                            <h5 style={{...styles.columnTitle, textAlign: 'center'}}>Ministerio</h5>
+                            <Link to="/peticiones" className="f-link" style={{...styles.link, textAlign: 'center'}}>Oración</Link>
+                            <Link to="/inscripciones" className="f-link" style={{...styles.link, textAlign: 'center'}}>Eventos</Link>
+                            <Link to="/login" className="f-link" style={{...styles.link, textAlign: 'center'}}>Admin</Link>
                         </div>
 
-                        <div className="col-lg-4 col-md-12 text-center text-lg-start">
-                            <h5 style={styles.columnTitle}>Conexión Social</h5>
+                        <div className="col-lg-4 col-12 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
+                            <h5 style={{...styles.columnTitle, textAlign: 'center'}}>Conexión Social</h5>
                             <div className="d-flex gap-3 justify-content-center justify-content-lg-start mb-4">
                                 <a href="https://instagram.com" target="_blank" rel="noreferrer" style={styles.socialBtn} className="social-icon">
                                     <i className="bi bi-instagram"></i>
