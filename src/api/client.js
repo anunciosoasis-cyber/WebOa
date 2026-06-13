@@ -1,13 +1,10 @@
 import axios from 'axios';
 
 // En desarrollo usamos el localhost de NestJS.
-// En producción configurar VITE_API_URL en Hostinger con la URL de Render.
-let base = import.meta.env.VITE_API_URL;
-if (!base) {
-    // Si no hay variable de entorno, autodetectar si es localhost o una IP local (para celulares)
-    const hostname = window.location.hostname;
-    base = `http://${hostname}:3000/api`;
-} else if (!base.endsWith('/api')) {
+// En producción, VITE_API_URL es quemado por Vite en tiempo de compilación desde .env.production
+const PRODUCTION_API = 'https://oasis-backend-latest.onrender.com';
+let base = import.meta.env.VITE_API_URL || PRODUCTION_API;
+if (!base.endsWith('/api')) {
     base = base.replace(/\/$/, '') + '/api';
 }
 
@@ -17,6 +14,7 @@ const apiClient = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     },
+    timeout: 15000, // 15 segundos de timeout (Render free tier puede tardar en despertar)
 });
 
 // Inyecta el JWT del backend (guardado en localStorage) en cada request
@@ -33,11 +31,6 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        // 🔥 DEBUG TEMPORAL: Mostrar la URL exacta que falló para diagnosticar el Network Error en móviles
-        if (error.message === 'Network Error' || !error.response) {
-            alert(`Network Error detectado. Intentando conectar a: ${error.config?.url || 'URL desconocida'} | BaseURL: ${error.config?.baseURL || 'Base desconocida'}`);
-        }
-        
         const isLoginEndpoint = error.config?.url?.includes('/login');
         const isAdminRoute = window.location.pathname.startsWith('/admin');
         if (error.response?.status === 401 && !isLoginEndpoint) {
