@@ -33,6 +33,11 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
+        // 🔥 DEBUG TEMPORAL: Mostrar la URL exacta que falló para diagnosticar el Network Error en móviles
+        if (error.message === 'Network Error' || !error.response) {
+            alert(`Network Error detectado. Intentando conectar a: ${error.config?.url || 'URL desconocida'} | BaseURL: ${error.config?.baseURL || 'Base desconocida'}`);
+        }
+        
         const isLoginEndpoint = error.config?.url?.includes('/login');
         const isAdminRoute = window.location.pathname.startsWith('/admin');
         if (error.response?.status === 401 && !isLoginEndpoint) {
