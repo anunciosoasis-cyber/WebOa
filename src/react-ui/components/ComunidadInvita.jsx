@@ -17,7 +17,9 @@ const SocialRibbon = () => {
 
     useEffect(() => {
         const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
-        fetch(`${apiBase}/public/settings`)
+        const endpoint = apiBase.endsWith('/api') ? `${apiBase}/public/settings` : `${apiBase}/api/public/settings`;
+
+        fetch(endpoint)
             .then(res => res.json())
             .then(data => {
                 setSocials({
@@ -82,9 +84,9 @@ const SocialRibbon = () => {
                 }} />
 
                 <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 10, padding: '0 20px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr', gap: '15px', alignItems: 'center' }}>
+                    <div className="social-grid-container">
                         {/* INFO DINÁMICA (Izquierda) */}
-                        <div style={{ paddingRight: '20px' }}>
+                        <div className="info-container" style={{ paddingRight: '20px' }}>
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={messageIndex}
@@ -141,12 +143,25 @@ const SocialRibbon = () => {
                     .arrow-small { color: ${colors.accent}; opacity: 0; transition: 0.3s; }
                     .social-pill-card:hover .arrow-small { opacity: 1; transform: translate(2px, -2px); }
 
+                    .social-grid-container {
+                        display: grid;
+                        grid-template-columns: 1.2fr 1fr 1fr 1fr;
+                        gap: 15px;
+                        align-items: center;
+                    }
+
                     @media (max-width: 1024px) {
-                        div[style*="gridTemplateColumns"] { grid-template-columns: 1fr 1fr !important; }
+                        .social-grid-container { grid-template-columns: 1fr 1fr !important; }
                     }
                     @media (max-width: 768px) {
-                        div[style*="gridTemplateColumns"] { grid-template-columns: 1fr !important; }
-                        section { padding: 50px 0 !important; }
+                        .social-grid-container { 
+                            display: flex !important;
+                            flex-direction: column !important;
+                            align-items: center;
+                            text-align: center;
+                        }
+                        .info-container { padding-right: 0 !important; }
+                        section { padding: 40px 0 !important; }
                         
                         .social-cards-container {
                             display: flex !important;

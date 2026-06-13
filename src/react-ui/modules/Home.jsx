@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../ThemeContext';
 import Hero from '../components/Hero';
+import DynamicIsland from '../components/DynamicIsland';
 import Announcements from '../components/Announcements';
 import MapSection from '../components/MapSection';
 import CalendarSection from '../components/CalendarSection';
@@ -33,8 +34,11 @@ const Home = () => {
             {/* 1. HERO PRINCIPAL */}
             <Hero />
 
+            {/* ISLA DINÁMICA DE ACCESOS RÁPIDOS */}
+            <DynamicIsland settings={settings} />
+
             {/* 2. NOVEDADES (ANUNCIOS) */}
-            <section id="novedades" style={{ padding: '100px 20px', maxWidth: '1240px', margin: '0 auto' }}>
+            <section id="novedades" style={{ padding: '30px 20px', maxWidth: '1240px', margin: '0 auto' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px', textAlign: 'center' }}>
                     <span style={{ 
                         color: '#F59E0B', 

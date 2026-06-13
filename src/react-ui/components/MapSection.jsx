@@ -19,13 +19,10 @@ const MapSection = () => {
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div style={{ 
-                padding: '40px',
                 backgroundColor: '#FFFFFF',
-                borderRadius: '40px',
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                // Sombra negra profunda y natural (Sin brillos)
                 boxShadow: '0 20px 50px -10px rgba(0,0,0,0.12)',
                 border: '1px solid rgba(0,0,0,0.03)',
                 transition: 'transform 0.3s ease'
@@ -60,14 +57,13 @@ const MapSection = () => {
                 </div>
 
                 {/* Contenedor del Mapa con Estética de Dispositivo */}
-                <div style={{
+                <div className="map-iframe-container" style={{
                     flexGrow: 1,
                     borderRadius: '24px',
                     overflow: 'hidden',
                     background: '#F0F2F5',
                     position: 'relative',
-                    border: '1px solid rgba(0,0,0,0.05)',
-                    minHeight: '350px'
+                    border: '1px solid rgba(0,0,0,0.05)'
                 }}>
                     <iframe
                         src={mapEmbedUrl}
@@ -110,6 +106,13 @@ const MapSection = () => {
             </div>
 
             <style>{`
+                .map-card-container {
+                    padding: 40px;
+                    border-radius: 40px;
+                }
+                .map-iframe-container {
+                    min-height: 350px;
+                }
                 .map-card-container:hover {
                     transform: translateY(-5px);
                 }
@@ -121,6 +124,15 @@ const MapSection = () => {
                 @font-face {
                     font-family: 'Moonrising';
                     src: url('/fonts/Moonrising.ttf');
+                }
+                @media (max-width: 768px) {
+                    .map-card-container {
+                        padding: 20px !important;
+                        border-radius: 24px !important;
+                    }
+                    .map-iframe-container {
+                        min-height: 250px !important;
+                    }
                 }
             `}</style>
         </div>

@@ -326,8 +326,15 @@ const Announcements = () => {
                         height: 40px;
                     }
                 }
+                @media (max-width: 768px) {
+                    .announcements-grid {
+                        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                        gap: 12px;
+                        padding: 10px;
+                    }
+                }
             `}</style>
-            <div style={gridStyle}>
+            <div className="announcements-grid" style={gridStyle}>
                 {items.map((ann) => {
                     const cardData = normalizeAnnouncement(ann);
                     return (

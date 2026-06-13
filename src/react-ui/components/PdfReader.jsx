@@ -101,7 +101,20 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
 
     const currentViewerUrl = useMemo(() => {
         if (!currentViewerResource?.url) return '';
-        return currentViewerResource.url.replace('http://', 'https://').replace(/\/upload\/fl_attachment:[^/]+\//, '/upload/');
+        let finalUrl = currentViewerResource.url;
+        
+        // Corregir URLs hardcodeadas de localhost a la URL de la API real en producción
+        const apiBase = (apiClient.defaults.baseURL || '').replace(/\/api\/?$/, '');
+        if (apiBase && finalUrl.includes('localhost:') && !apiBase.includes('localhost:')) {
+            finalUrl = finalUrl.replace(/https?:\/\/localhost:\d+/, apiBase);
+        }
+
+        // Forzar HTTPS solo si no es localhost
+        if (finalUrl.startsWith('http://') && !finalUrl.includes('localhost')) {
+            finalUrl = finalUrl.replace('http://', 'https://');
+        }
+
+        return finalUrl.replace(/\/upload\/fl_attachment:[^/]+\//, '/upload/');
     }, [currentViewerResource]);
 
     const currentViewerFile = useMemo(() => {

@@ -154,12 +154,11 @@ const CalendarSection = () => {
                     key={d}
                     whileHover={hasEvents ? { scale: 1.1, y: -2 } : {}}
                     onClick={() => hasEvents && setSelectedDate(isSelected ? null : dateStr)}
+                    className="cal-day-box"
                     style={{
-                        padding: '10px',
                         textAlign: 'center',
                         cursor: hasEvents ? 'pointer' : 'default',
                         borderRadius: '14px',
-                        fontSize: '0.85rem',
                         fontWeight: (hasEvents || isToday) ? '800' : '500',
                         transition: 'all 0.3s ease',
                         position: 'relative',
@@ -181,10 +180,8 @@ const CalendarSection = () => {
     const selectedDayEvents = events.filter(ev => ev.date === selectedDate);
 
     return (
-        <div style={{
+        <div className="calendar-card-container" style={{
             background: '#FFFFFF',
-            borderRadius: '40px',
-            padding: '40px',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
@@ -266,6 +263,14 @@ const CalendarSection = () => {
             </div>
 
             <style>{`
+                .calendar-card-container {
+                    padding: 40px;
+                    border-radius: 40px;
+                }
+                .cal-day-box {
+                    padding: 10px;
+                    font-size: 0.85rem;
+                }
                 .cal-nav-btn {
                     background: none; border: none; color: ${colors.deepPurple}; cursor: pointer;
                     display: flex; align-items: center; justify-content: center; transition: 0.2s;
@@ -274,6 +279,16 @@ const CalendarSection = () => {
                 @font-face {
                     font-family: 'Moonrising';
                     src: url('/fonts/Moonrising.ttf');
+                }
+                @media (max-width: 768px) {
+                    .calendar-card-container {
+                        padding: 20px;
+                        border-radius: 24px;
+                    }
+                    .cal-day-box {
+                        padding: 6px !important;
+                        font-size: 0.75rem !important;
+                    }
                 }
             `}</style>
         </div>

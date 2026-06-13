@@ -37,8 +37,11 @@ const Hero = () => {
     const timerRef = useRef(null);
 
     useEffect(() => {
+        // En producción el endpoint está bajo /api
         const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
-        fetch(`${apiBase}/public/settings`)
+        const endpoint = apiBase.endsWith('/api') ? `${apiBase}/public/settings` : `${apiBase}/api/public/settings`;
+        
+        fetch(endpoint)
             .then(res => res.json())
             .then(data => {
                 if (data.bg_image) setBgImage(data.bg_image);

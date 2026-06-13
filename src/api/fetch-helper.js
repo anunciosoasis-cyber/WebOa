@@ -24,7 +24,7 @@ export async function apiFetch(endpoint, options = {}) {
   };
 
   // Add auth token if available
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('auth_token');
   if (token) {
     defaultOptions.headers['Authorization'] = `Bearer ${token}`;
   }

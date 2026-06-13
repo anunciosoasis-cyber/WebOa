@@ -17,9 +17,11 @@ import {
     FileSpreadsheet, UserPlus, X, Check,
     ChevronUp, ChevronDown, LayoutDashboard, Share2,
     FileText, Zap, Monitor, Save, ListChecks,
-    History, CirclePlay, CircleStop, AlertTriangle, Timer
+    History, CirclePlay, CircleStop, AlertTriangle, Timer, MonitorPlay
 } from 'lucide-react';
 import CountdownLiveModal from './CountdownLiveModal';
+import AdminTransmisionInline from './AdminTransmisionInline';
+import YoutubeLivePanel from './YoutubeLivePanel';
 
 const OASIS_COLORS = {
     deepPurple: '#120C1F',
@@ -121,7 +123,7 @@ const AdminCulto = () => {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem('culto_viewMode') || 'planning');
+
     const [showCountdown, setShowCountdown] = useState(false);
     const [showProjection, setShowProjection] = useState(false);
     const [showPlantilla, setShowPlantilla]       = useState(false);
@@ -166,15 +168,13 @@ const AdminCulto = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Sync states to localStorage
     useEffect(() => {
-        localStorage.setItem('culto_viewMode', viewMode);
         if (serviceStartTime) localStorage.setItem('culto_serviceStartTime', serviceStartTime);
         else localStorage.removeItem('culto_serviceStartTime');
         localStorage.setItem('culto_currentActivityIndex', currentActivityIndex.toString());
         localStorage.setItem('culto_elapsedSeconds', elapsedSeconds.toString());
         localStorage.setItem('culto_isPaused', isPaused.toString());
-    }, [viewMode, serviceStartTime, currentActivityIndex, elapsedSeconds, isPaused]);
+    }, [serviceStartTime, currentActivityIndex, elapsedSeconds, isPaused]);
 
     useEffect(() => {
         let timer;
@@ -222,14 +222,19 @@ const AdminCulto = () => {
 
         setConfirmConfig({
             show: true, title: '¿INICIAR SERVICIO?', message: 'Se activará el panel en vivo con el control de tiempos.', type: 'warning',
-            onConfirm: () => {
-                setServiceStartTime(new Date().toISOString());
+            onConfirm: async () => {
+                const now = new Date();
+                setServiceStartTime(now.toISOString());
                 setElapsedSeconds(0);
                 setCurrentActivityIndex(0);
                 setIsPaused(false);
-                setViewMode('live');
                 setDismissedAlerts({});
                 setConfirmConfig(p => ({ ...p, show: false }));
+                try {
+                    await apiClient.post('/youtube/broadcast/start');
+                } catch(e) {
+                    console.log('No YouTube broadcast started (maybe not linked or no active event).');
+                }
             }
         });
     };
@@ -237,15 +242,19 @@ const AdminCulto = () => {
     const endService = () => {
         setConfirmConfig({
             show: true, title: '¿FINALIZAR CULTO?', message: 'Esto detendrá definitivamente el cronómetro y limpiará el progreso actual.', type: 'error',
-            onConfirm: () => {
+            onConfirm: async () => {
                 setServiceStartTime(null);
                 setElapsedSeconds(0);
                 setCurrentActivityIndex(0);
                 setIsPaused(false);
-                setViewMode('planning');
                 setDismissedAlerts({});
                 localStorage.removeItem('culto_lastTickTime');
                 setConfirmConfig(p => ({ ...p, show: false }));
+                try {
+                    await apiClient.post('/youtube/broadcast/stop');
+                } catch(e) {
+                    console.log('No YouTube broadcast stopped.');
+                }
             }
         });
     };
@@ -486,37 +495,23 @@ const AdminCulto = () => {
                 <div>
                     <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Real-time Production</span>
                     <h1 style={{ fontFamily: 'Moonrising', fontSize: '2.5rem', margin: '5px 0 0', color: isDark ? '#fff' : OASIS_COLORS.deepPurple }}>
-                        ORDEN DEL <span style={{ color: OASIS_COLORS.accent }}>CULTO</span>
+                        STUDIO <span style={{ color: OASIS_COLORS.accent }}>OASIS</span>
                     </h1>
                 </div>
-                <div className="d-flex flex-wrap gap-2 align-items-center w-100 w-lg-auto">
-                    <div className="px-3 py-2 rounded-pill d-flex align-items-center gap-2" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0,0,0,0.15)' }}>
-                        <CalendarIcon size={14} color={OASIS_COLORS.accent} />
-                        <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className={`border-0 bg-transparent fw-bold x-small ${isDark ? 'text-white' : 'text-dark'}`} style={{ outline: 'none' }} />
-                    </div>
-                    <button
-                        onClick={() => setShowCountdown(true)}
-                        className="btn rounded-pill px-4 fw-bold d-flex align-items-center gap-2"
-                        style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, color: isDark ? OASIS_COLORS.accent : OASIS_COLORS.deepPurple }}
-                        title="Contador regresivo para transmisión"
-                    >
-                        <Timer size={18} /> CONTADOR
-                    </button>
-                    {viewMode === 'live' ? (
-                        <div className="d-flex flex-wrap gap-2 w-100 mt-2 mt-md-0">
-                            <button onClick={() => setShowProjection(true)} className="btn rounded-pill px-4 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 flex-grow-1" style={{ background: OASIS_COLORS.accent, color: '#fff', border: `1px solid ${OASIS_COLORS.accent}` }}>
-                                <Monitor size={18} /> PROYECTAR
-                            </button>
-                            <button onClick={() => setViewMode('planning')} className="btn rounded-pill px-4 py-2 fw-bold flex-grow-1" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, color: isDark ? '#fff' : '#000', fontSize: '0.8rem' }}>
-                                VOLVER A PLANIFICACIÓN
-                            </button>
-                            <button onClick={endService} className="btn rounded-pill px-4 py-2 fw-bold flex-grow-1" style={{ background: '#FF444415', color: '#FF4444', border: '1px solid #FF4444', fontSize: '0.8rem' }}>
-                                FINALIZAR CULTO
-                            </button>
+                <div className="d-flex flex-wrap flex-md-nowrap gap-3 align-items-center w-100 w-lg-auto mt-3 mt-lg-0">
+                    <div className="px-4 py-3 rounded-pill d-flex align-items-center justify-content-between gap-3 w-100 w-md-auto" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 10px 25px rgba(0,0,0,0.05)', minWidth: '220px' }}>
+                        <div className="d-flex align-items-center gap-2">
+                            <CalendarIcon size={16} color={OASIS_COLORS.accent} />
+                            <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className={`border-0 bg-transparent fw-bold ${isDark ? 'text-white' : 'text-dark'}`} style={{ outline: 'none', fontSize: '0.9rem' }} />
                         </div>
+                    </div>
+                    {serviceStartTime ? (
+                        <button onClick={endService} className="btn rounded-pill px-5 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 w-100 w-md-auto transition-all" style={{ background: '#FF444415', color: '#FF4444', border: '1px solid #FF4444', fontSize: '0.9rem', boxShadow: 'none' }}>
+                            <CircleStop size={18} /> FINALIZAR CULTO
+                        </button>
                     ) : (
-                        <button onClick={startService} className="btn rounded-pill px-4 py-2 fw-bold text-dark d-flex align-items-center justify-content-center gap-2 flex-grow-1 w-100 mt-2 mt-md-0" style={{ background: OASIS_COLORS.accent }}>
-                            <CirclePlay size={18} /> {serviceStartTime ? 'VOLVER AL VIVO' : 'INICIAR VIVO'}
+                        <button onClick={startService} className="btn rounded-pill px-5 py-3 fw-bold text-dark d-flex align-items-center justify-content-center gap-2 w-100 w-md-auto transition-all hover-scale" style={{ background: OASIS_COLORS.accent, fontSize: '0.9rem', boxShadow: `0 10px 25px ${OASIS_COLORS.accent}40`, border: 'none' }}>
+                            <CirclePlay size={18} /> INICIAR VIVO
                         </button>
                     )}
                 </div>
@@ -524,144 +519,136 @@ const AdminCulto = () => {
 
             {showCountdown && <CountdownLiveModal onClose={() => setShowCountdown(false)} />}
 
-            <AnimatePresence mode="wait">
-                {viewMode === 'live' ? (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="row g-4">
-                        <div className="col-12">
-                            <GlassCard className="p-4 p-md-5" style={{ borderRadius: '40px', border: `1px solid ${timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.accent}26`, background: `radial-gradient(circle at top right, ${timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.accent}26, transparent)`, boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
-                                <div className="row align-items-center g-4">
-                                    <div className="col-md-5 text-center">
-                                        <div className="position-relative d-inline-block">
-                                            <CircularProgress percentage={timeMetrics.percentage} size={240} isOvertime={timeMetrics.isOvertime} />
-                                            <div className="position-absolute top-50 start-50 translate-middle w-100">
-                                                <div style={{
-                                                    fontSize: '3.2rem',
-                                                    fontWeight: 900,
-                                                    color: timeMetrics.isOvertime ? OASIS_COLORS.error : (isDark ? '#fff' : '#000'),
-                                                    fontFamily: 'Moonrising',
-                                                    lineHeight: 1
-                                                }}>
-                                                    {formatTime(timeMetrics.remaining)}
-                                                </div>
-                                                <p className="mb-0 opacity-50 x-small fw-bold tracking-widest mt-2" style={{ color: isDark ? '#fff' : '#000' }}>
-                                                    {timeMetrics.isOvertime ? 'TIEMPO EXCEDIDO' : 'CUENTA REGRESIVA'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-7">
-                                        <div className="d-flex align-items-center gap-2 mb-2">
-                                            <div className="rounded-circle animate-pulse" style={{ width: 8, height: 8, background: timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.success }} />
-                                            <span style={{ color: timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.success, fontWeight: 900, fontSize: '0.7rem', letterSpacing: '1px' }}>
-                                                {timeMetrics.isOvertime ? 'ALERTA DE DESVÍO' : 'EN VIVO'}
-                                            </span>
-                                        </div>
-                                        <h1 className="mb-3" style={{ fontFamily: 'Moonrising', fontSize: '2.5rem', color: isDark ? '#fff' : '#000' }}>{currentActivity?.actividad || 'PROGRAMA FINALIZADO'}</h1>
-
-                                        <div className="d-flex align-items-center gap-4 mb-5">
-                                            <div className="d-flex align-items-center gap-3">
-                                                <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <User size={20} style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }} />
-                                                </div>
-                                                <div>
-                                                    <div className="x-small opacity-50 fw-bold" style={{ color: isDark ? '#fff' : '#000' }}>RESPONSABLE</div>
-                                                    <div className="fw-bold" style={{ color: isDark ? '#fff' : '#000' }}>{currentActivity?.responsable || '—'}</div>
-                                                </div>
-                                            </div>
-                                            <div className="d-flex align-items-center gap-3">
-                                                <div style={{ width: 40, height: 40, borderRadius: 12, background: OASIS_COLORS.accent + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <Clock size={20} style={{ color: OASIS_COLORS.accent }} />
-                                                </div>
-                                                <div>
-                                                    <div className="x-small opacity-50 fw-bold" style={{ color: OASIS_COLORS.accent }}>TIEMPO ASIGNADO</div>
-                                                    <div className="fw-bold" style={{ color: isDark ? '#fff' : '#000' }}>{currentActivity?.duracionEstimada || 0} min</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="d-flex flex-column flex-sm-row gap-3">
-                                            <button onClick={() => setIsPaused(!isPaused)} className="btn rounded-pill px-4 px-md-5 py-3 fw-bold flex-grow-1" style={{ background: isPaused ? OASIS_COLORS.accent : OASIS_COLORS.glassWhite, color: isPaused ? '#000' : (isDark ? '#fff' : '#000'), border: `1px solid ${OASIS_COLORS.glassBorder}`, boxShadow: '0 10px 20px rgba(0,0,0,0.15)' }}>
-                                                {isPaused ? <Play className="me-2" /> : <Pause className="me-2" />} {isPaused ? 'REANUDAR' : 'PAUSAR'}
-                                            </button>
-                                            <button onClick={() => { setCurrentActivityIndex(p => p + 1); setElapsedSeconds(0); }} className="btn rounded-pill px-4 px-md-5 py-3 fw-bold flex-grow-1 text-dark" style={{ background: OASIS_COLORS.accent }}>
-                                                <SkipForward className="me-2" /> SIGUIENTE ACTO
-                                            </button>
+            <div className="row g-4">
+                {/* ── COLUMNA PRINCIPAL (IZQUIERDA/ARRIBA): OPERACIÓN & OBS ── */}
+                <div className="col-xl-8 col-lg-7 order-1 d-flex flex-column gap-4">
+                    {/* Tarjeta del Vivo (Contador Integrado) */}
+                    {serviceStartTime ? (
+                        <GlassCard className="p-4" style={{ borderRadius: '30px', border: `1px solid ${timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.accent}26`, background: `radial-gradient(circle at top right, ${timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.accent}26, transparent)`, boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+                            <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-4">
+                                <div className="position-relative d-inline-block flex-shrink-0">
+                                    <CircularProgress percentage={timeMetrics.percentage} size={140} isOvertime={timeMetrics.isOvertime} strokeWidth={8} />
+                                    <div className="position-absolute top-50 start-50 translate-middle w-100 text-center">
+                                        <div style={{
+                                            fontSize: '1.8rem',
+                                            fontWeight: 900,
+                                            color: timeMetrics.isOvertime ? OASIS_COLORS.error : (isDark ? '#fff' : '#000'),
+                                            fontFamily: 'Moonrising',
+                                            lineHeight: 1
+                                        }}>
+                                            {formatTime(timeMetrics.remaining)}
                                         </div>
                                     </div>
                                 </div>
-                            </GlassCard>
-                        </div>
-                    </motion.div>
-                ) : (
-                    /* El modo planificación permanece igual */
-                    <div className="row g-4">
-                        <div className="col-lg-8" id="timeline-printable">
-                            <GlassCard className="p-4 p-md-5" style={{ borderRadius: '35px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff', boxShadow: isDark ? 'none' : '0 15px 35px rgba(0,0,0,0.15)' }}>
-                                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-                                    <SectionHeader icon={ListChecks} title="ORDEN DEL CULTO" subtitle="Cronograma detallado" isDark={isDark} />
-                                    <div className="d-flex flex-wrap gap-2 w-100 w-md-auto">
-                                        <button onClick={() => initPlantilla()} className="btn rounded-pill px-4 py-2 fw-bold d-flex align-items-center justify-content-center gap-1 flex-grow-1" style={{ background: 'rgba(245,158,11,0.08)', color: OASIS_COLORS.accent, border: `1px solid rgba(245,158,11,0.3)`, fontSize: '0.7rem' }}>
-                                            <ListChecks size={14} /> PLANTILLA
-                                        </button>
-                                        <button onClick={() => setShowForm(true)} className="btn rounded-pill px-4 py-2 fw-bold flex-grow-1" style={{ background: `${OASIS_COLORS.accent}15`, color: OASIS_COLORS.accent, border: `1px solid ${OASIS_COLORS.accent}`, fontSize: '0.7rem' }}>
-                                            + AGREGAR ACTIVIDAD
-                                        </button>
+                                <div className="w-100">
+                                    <div className="d-flex align-items-center justify-content-center justify-content-md-start gap-2 mb-2">
+                                        <div className="rounded-circle animate-pulse" style={{ width: 8, height: 8, background: timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.success }} />
+                                        <span style={{ color: timeMetrics.isOvertime ? OASIS_COLORS.error : OASIS_COLORS.success, fontWeight: 900, fontSize: '0.7rem', letterSpacing: '1px' }}>
+                                            {timeMetrics.isOvertime ? 'ALERTA DE DESVÍO' : 'EN VIVO'}
+                                        </span>
                                     </div>
-                                </div>
+                                    <h2 className="mb-3" style={{ fontFamily: 'Moonrising', fontSize: '1.5rem', color: isDark ? '#fff' : '#000' }}>{currentActivity?.actividad || 'PROGRAMA FINALIZADO'}</h2>
 
-                                <div className="timeline-view">
-                                    {filteredOrden.length === 0 ? (
-                                        <div className="text-center py-5 opacity-25">
-                                            <LayoutDashboard size={48} className="mb-3" />
-                                            <p className="fw-bold">No hay actividades programadas para este día.</p>
+                                    <div className="d-flex align-items-center justify-content-center justify-content-md-start gap-4 mb-4">
+                                        <div className="text-center text-md-start">
+                                            <div className="x-small opacity-50 fw-bold" style={{ color: isDark ? '#fff' : '#000' }}>RESPONSABLE</div>
+                                            <div className="fw-bold" style={{ color: isDark ? '#fff' : '#000' }}>{currentActivity?.responsable || '—'}</div>
                                         </div>
-                                    ) : (
-                                        filteredOrden.map((item, idx) => (
-                                            <div key={item.id} className="d-flex gap-4 mb-4">
-                                                <div className="text-end pt-2" style={{ width: '70px' }}>
-                                                    <span style={{ fontWeight: 900, color: OASIS_COLORS.accent, fontSize: '0.9rem' }}>{item.hora}</span>
-                                                </div>
-                                                <div className="position-relative">
-                                                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: OASIS_COLORS.accent, zIndex: 2, position: 'relative', marginTop: '12px', boxShadow: `0 0 10px ${OASIS_COLORS.accent}88` }} />
-                                                    {idx < filteredOrden.length - 1 && <div style={{ width: '2px', height: '100%', background: OASIS_COLORS.glassBorder, position: 'absolute', left: '5px', top: '24px' }} />}
-                                                </div>
-                                                <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                                                    <div className="p-3 rounded-4 transition-all hover-glass" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 10px 20px rgba(0,0,0,0.15)' }}>
-                                                        <div className="d-flex justify-content-between align-items-start align-items-sm-center flex-column flex-sm-row gap-2">
-                                                            <div>
-                                                                <h6 className={`mb-1 fw-bold ${isDark ? 'text-white' : 'text-dark'}`}>{item.actividad}</h6>
-                                                                <div className={`d-flex gap-3 opacity-75 ${isDark ? 'text-white-50' : 'text-secondary'}`}>
-                                                                    <span className="x-small fw-bold"><User size={12} className="me-1" /> {item.responsable}</span>
-                                                                    <span className="x-small fw-bold"><Clock size={12} className="me-1" /> {item.duracionEstimada} min</span>
-                                                                </div>
-                                                            </div>
-                                                            <button onClick={async () => { await apiClient.delete(`/orden-culto/${item.id}`); fetchOrden(); }} className="btn p-2 text-danger opacity-25 hover-opacity-100"><Trash2 size={16} /></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </GlassCard>
-                        </div>
+                                        <div className="text-center text-md-start">
+                                            <div className="x-small opacity-50 fw-bold" style={{ color: OASIS_COLORS.accent }}>TIEMPO</div>
+                                            <div className="fw-bold" style={{ color: isDark ? '#fff' : '#000' }}>{currentActivity?.duracionEstimada || 0} min</div>
+                                        </div>
+                                    </div>
 
-                        <div className="col-lg-4">
-                            <div className="d-flex flex-column gap-4">
-                                <GlassCard className="p-4 p-md-5" style={{ borderRadius: '30px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff', boxShadow: isDark ? 'none' : '0 15px 35px rgba(0,0,0,0.15)' }}>
-                                    <SectionHeader icon={Share2} title="EXPORTAR" isDark={isDark} />
-                                    <div className="d-flex flex-column gap-2">
-                                        <button onClick={handleExportPDF} className="btn w-100 text-start rounded-4 p-3 d-flex align-items-center gap-3" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', color: isDark ? '#fff' : '#000', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 8px 15px rgba(0,0,0,0.15)' }}>
-                                            <div className="p-2 rounded-3" style={{ background: '#FF444420', color: '#FF4444' }}><FileText size={20} /></div>
-                                            <div><span className="d-block fw-bold small">Reporte PDF</span><span className="x-small opacity-50">Versión para impresión</span></div>
+                                    <div className="d-flex gap-2 justify-content-center justify-content-md-start mt-2">
+                                        <button onClick={() => setIsPaused(!isPaused)} className="btn rounded-circle d-flex align-items-center justify-content-center" style={{ background: isPaused ? OASIS_COLORS.accent : OASIS_COLORS.glassWhite, color: isPaused ? '#000' : (isDark ? '#fff' : '#000'), border: `1px solid ${OASIS_COLORS.glassBorder}`, width: '48px', height: '48px' }} title={isPaused ? 'Reanudar' : 'Pausar'}>
+                                            {isPaused ? <Play size={22} style={{marginLeft: '2px'}} /> : <Pause size={22} />}
+                                        </button>
+                                        <button onClick={() => { setCurrentActivityIndex(p => p + 1); setElapsedSeconds(0); }} className="btn rounded-circle d-flex align-items-center justify-content-center text-dark" style={{ background: OASIS_COLORS.accent, width: '48px', height: '48px' }} title="Siguiente Actividad">
+                                            <SkipForward size={22} />
                                         </button>
                                     </div>
-                                </GlassCard>
+                                </div>
+                            </div>
+                        </GlassCard>
+                    ) : (
+                        <GlassCard className="p-3 d-flex flex-row align-items-center justify-content-center text-center gap-3" style={{ borderRadius: '20px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff' }}>
+                            <CircleStop size={24} className="opacity-25" style={{ color: isDark ? '#fff' : '#000' }} />
+                            <div>
+                                <h6 className="fw-bold opacity-50 mb-0" style={{ color: isDark ? '#fff' : '#000', fontSize: '0.9rem' }}>Culto no iniciado</h6>
+                                <p className="x-small opacity-50 mb-0">Usa "INICIAR VIVO" para arrancar el cronómetro general.</p>
+                            </div>
+                        </GlassCard>
+                    )}
+
+                    {/* Consola Inline OBS Siempre Visible */}
+                    <AdminTransmisionInline currentActivity={currentActivity} timeMetrics={timeMetrics} serviceStartTime={serviceStartTime} />
+                </div>
+
+                {/* ── COLUMNA SECUNDARIA (DERECHA/ABAJO): TIMELINE Y PLANIFICACIÓN ── */}
+                <div className="col-xl-4 col-lg-5 order-2 d-flex flex-column gap-4">
+                    <YoutubeLivePanel isDark={isDark} />
+                    
+                    <GlassCard className="p-4 p-md-5" style={{ borderRadius: '35px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff', boxShadow: isDark ? 'none' : '0 15px 35px rgba(0,0,0,0.15)' }}>
+                        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+                            <SectionHeader icon={ListChecks} title="ORDEN DEL CULTO" subtitle="Cronograma detallado" isDark={isDark} />
+                            <div className="d-flex flex-wrap gap-2 w-100 w-md-auto">
+                                <button onClick={() => initPlantilla()} className="btn rounded-pill px-4 py-2 fw-bold d-flex align-items-center justify-content-center gap-1 flex-grow-1" style={{ background: 'rgba(245,158,11,0.08)', color: OASIS_COLORS.accent, border: `1px solid rgba(245,158,11,0.3)`, fontSize: '0.7rem' }}>
+                                    <ListChecks size={14} /> PLANTILLA
+                                </button>
+                                <button onClick={() => setShowForm(true)} className="btn rounded-pill px-4 py-2 fw-bold flex-grow-1" style={{ background: `${OASIS_COLORS.accent}15`, color: OASIS_COLORS.accent, border: `1px solid ${OASIS_COLORS.accent}`, fontSize: '0.7rem' }}>
+                                    + AGREGAR
+                                </button>
                             </div>
                         </div>
-                    </div>
-                )}
-            </AnimatePresence>
+
+                        <div className="timeline-view">
+                            {filteredOrden.length === 0 ? (
+                                <div className="text-center py-5 opacity-25">
+                                    <LayoutDashboard size={48} className="mb-3" />
+                                    <p className="fw-bold">No hay actividades programadas para este día.</p>
+                                </div>
+                            ) : (
+                                filteredOrden.map((item, idx) => (
+                                    <div key={item.id} className="d-flex gap-4 mb-4">
+                                        <div className="text-end pt-2" style={{ width: '60px' }}>
+                                            <span style={{ fontWeight: 900, color: OASIS_COLORS.accent, fontSize: '0.8rem' }}>{item.hora}</span>
+                                        </div>
+                                        <div className="position-relative">
+                                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: OASIS_COLORS.accent, zIndex: 2, position: 'relative', marginTop: '12px', boxShadow: `0 0 10px ${OASIS_COLORS.accent}88` }} />
+                                            {idx < filteredOrden.length - 1 && <div style={{ width: '2px', height: '100%', background: OASIS_COLORS.glassBorder, position: 'absolute', left: '5px', top: '24px' }} />}
+                                        </div>
+                                        <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                                            <div className="p-3 rounded-4 transition-all hover-glass" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 10px 20px rgba(0,0,0,0.15)' }}>
+                                                <div className="d-flex justify-content-between align-items-start align-items-sm-center flex-column flex-sm-row gap-2">
+                                                    <div>
+                                                        <h6 className={`mb-1 fw-bold ${isDark ? 'text-white' : 'text-dark'}`} style={{ fontSize: '0.9rem' }}>{item.actividad}</h6>
+                                                        <div className={`d-flex gap-3 opacity-75 ${isDark ? 'text-white-50' : 'text-secondary'}`}>
+                                                            <span className="x-small fw-bold"><User size={12} className="me-1" /> {item.responsable}</span>
+                                                            <span className="x-small fw-bold"><Clock size={12} className="me-1" /> {item.duracionEstimada} min</span>
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={async () => { await apiClient.delete(`/orden-culto/${item.id}`); fetchOrden(); }} className="btn p-2 text-danger opacity-25 hover-opacity-100"><Trash2 size={16} /></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </GlassCard>
+
+                    <GlassCard id="timeline-printable" className="p-4 p-md-5" style={{ borderRadius: '30px', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, background: isDark ? undefined : '#fff', boxShadow: isDark ? 'none' : '0 15px 35px rgba(0,0,0,0.15)' }}>
+                        <SectionHeader icon={Share2} title="EXPORTAR" isDark={isDark} />
+                        <div className="d-flex flex-column gap-2">
+                            <button onClick={handleExportPDF} className="btn w-100 text-start rounded-4 p-3 d-flex align-items-center gap-3" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', color: isDark ? '#fff' : '#000', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 8px 15px rgba(0,0,0,0.15)' }}>
+                                <div className="p-2 rounded-3" style={{ background: '#FF444420', color: '#FF4444' }}><FileText size={20} /></div>
+                                <div><span className="d-block fw-bold small">Reporte PDF</span><span className="x-small opacity-50">Versión para impresión</span></div>
+                            </button>
+                        </div>
+                    </GlassCard>
+                </div>
+            </div>
 
             {/* MODAL FORM DE AGREGAR ACTIVIDAD */}
             <AnimatePresence>

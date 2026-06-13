@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Lucide from 'lucide-react';
 import { useFabricEditor } from './useFabricEditor';
 import FabricCanvas from './FabricCanvas';
 import { TEMPLATES, FONTS } from './announcementPresets';
+import apiClient from '../../api/client';
 
 /**
  * ANUNCIO EDITOR V4 - VECTORIAL & LIQUID GLASS
@@ -14,6 +15,37 @@ const AnuncioEditor = () => {
     const { canvas, selectedObject, applyTemplate, setFont } = useFabricEditor('oasis-vector-canvas', dimensions);
     const [activeTab, setActiveTab] = useState('inicio');
     const [isSaving, setIsSaving] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const showToast = useCallback((message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+    }, []);
+
+    const publishAnnouncement = useCallback(async () => {
+        if (!canvas) return;
+        setIsSaving(true);
+        try {
+            const dataUrl = canvas.toDataURL({ format: 'png', quality: 1 });
+            const { data: uploadRes } = await apiClient.post('/announcements/upload-image', { imageBase64: dataUrl });
+            if (!uploadRes?.success) throw new Error(uploadRes?.message || 'Error al subir imagen');
+            const title = canvas._objects?.[0]?.text || 'Anuncio OASIS';
+            const payload = {
+                title,
+                tag: 'OASIS',
+                imageUrl: uploadRes.imageUrl,
+                content: JSON.stringify(canvas.toJSON()),
+                date: new Date().toISOString().split('T')[0],
+            };
+            await apiClient.post('/announcements', payload);
+            showToast('Anuncio publicado correctamente', 'success');
+        } catch (err) {
+            console.error('Error al publicar:', err);
+            showToast(err.message || 'Error al publicar el anuncio', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    }, [canvas, showToast]);
 
     // Cargar plantilla inicial
     useEffect(() => {
@@ -35,8 +67,12 @@ const AnuncioEditor = () => {
                         </button>
                     ))}
                     <div className="flex-grow-1" />
-                    <button className="btn-action primary" onClick={() => console.log('Publicar')}>
-                        <Lucide.CloudUpload size={18} /> <span>PUBLICAR</span>
+                    <button className="btn-action primary" onClick={publishAnnouncement} disabled={isSaving}>
+                        {isSaving ? (
+                            <><span className="spinner" /> <span>PUBLICANDO...</span></>
+                        ) : (
+                            <><Lucide.CloudUpload size={18} /> <span>PUBLICAR</span></>
+                        )}
                     </button>
                 </div>
 
@@ -99,7 +135,34 @@ const AnuncioEditor = () => {
                 </section>
             </main>
 
+            {/* Toast Notification */}
+            <AnimatePresence>
+                {toast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 50 }}
+                        style={{
+                            position: 'fixed', bottom: 30, right: 30, zIndex: 9999,
+                            padding: '14px 24px', borderRadius: 12, fontWeight: 700, fontSize: 14,
+                            background: toast.type === 'success' ? '#10B981' : '#EF4444',
+                            color: '#fff', boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+                        }}
+                    >
+                        {toast.type === 'success' ? '✅ ' : '❌ '}{toast.message}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <style>{`
+                .spinner {
+                    display: inline-block; width: 16px; height: 16px;
+                    border: 2px solid rgba(0,0,0,0.2); border-top-color: #000;
+                    border-radius: 50%; animation: spin 0.6s linear infinite;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+                .btn-action:disabled { opacity: 0.6; cursor: not-allowed; }
+                
                 .editor-master-container {
                     display: flex;
                     flex-direction: column;

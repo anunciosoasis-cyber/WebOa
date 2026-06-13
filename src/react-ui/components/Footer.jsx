@@ -1,19 +1,40 @@
 "use client";
 
-import React, { useState, useEffect } from 'react'; // 1. Agregamos useState y useEffect
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../ThemeContext';
 import logoImg from '../../img/logos/LOGO1.png';
+import apiClient from '../../api/client';
 
 const Footer = () => {
     const { theme } = useTheme();
     
-    // 2. Definimos isMobile manualmente para evitar errores de dependencia
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= 992 : false);
+    const [socials, setSocials] = useState({
+        facebook: 'https://facebook.com',
+        instagram: 'https://instagram.com',
+        youtube: 'https://youtube.com'
+    });
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 992);
         window.addEventListener('resize', handleResize);
+
+        const fetchSettings = async () => {
+            try {
+                const { data } = await apiClient.get('/public/settings');
+                const s = data || {};
+                setSocials({
+                    facebook: s.facebook_url || 'https://facebook.com',
+                    instagram: s.instagram_url || 'https://instagram.com',
+                    youtube: s.youtube_url || 'https://youtube.com'
+                });
+            } catch (error) {
+                console.error("Error loading social settings", error);
+            }
+        };
+        fetchSettings();
+
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
@@ -29,12 +50,13 @@ const Footer = () => {
     const styles = {
         footerWrapper: {
             position: 'relative',
-            width: '100vw',
+            width: '100%',
+            boxSizing: 'border-box',
             minHeight: isMobile ? 'auto' : '650px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: isMobile ? '30px 15px' : '120px 20px', // Usamos isMobile con seguridad
+            padding: isMobile ? '30px 15px' : '120px 20px',
             overflow: 'hidden',
             backgroundImage: 'url("https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=3840&auto=format&fit=crop")',
             backgroundSize: 'cover',
@@ -116,30 +138,30 @@ const Footer = () => {
                             </p>
                         </div>
 
-                        <div className="col-lg-2 col-12 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
+                        <div className="col-lg-2 col-6 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
                             <h5 style={{...styles.columnTitle, textAlign: 'center'}}>Explorar</h5>
                             <Link to="/" className="f-link" style={{...styles.link, textAlign: 'center'}}>Inicio</Link>
                             <Link to="/about" className="f-link" style={{...styles.link, textAlign: 'center'}}>Nosotros</Link>
                             <Link to="/recursos" className="f-link" style={{...styles.link, textAlign: 'center'}}>Recursos</Link>
                         </div>
 
-                        <div className="col-lg-2 col-12 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
+                        <div className="col-lg-2 col-6 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
                             <h5 style={{...styles.columnTitle, textAlign: 'center'}}>Ministerio</h5>
                             <Link to="/peticiones" className="f-link" style={{...styles.link, textAlign: 'center'}}>Oración</Link>
                             <Link to="/inscripciones" className="f-link" style={{...styles.link, textAlign: 'center'}}>Eventos</Link>
                             <Link to="/login" className="f-link" style={{...styles.link, textAlign: 'center'}}>Admin</Link>
                         </div>
 
-                        <div className="col-lg-4 col-12 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
+                        <div className="col-lg-4 col-12 text-center" style={isMobile ? { marginTop: '20px' } : {}}>
                             <h5 style={{...styles.columnTitle, textAlign: 'center'}}>Conexión Social</h5>
-                            <div className="d-flex gap-3 justify-content-center justify-content-lg-start mb-4">
-                                <a href="https://instagram.com" target="_blank" rel="noreferrer" style={styles.socialBtn} className="social-icon">
+                            <div className="d-flex gap-3 justify-content-center mb-4">
+                                <a href={socials.instagram} target="_blank" rel="noreferrer" style={styles.socialBtn} className="social-icon">
                                     <i className="bi bi-instagram"></i>
                                 </a>
-                                <a href="https://facebook.com" target="_blank" rel="noreferrer" style={styles.socialBtn} className="social-icon">
+                                <a href={socials.facebook} target="_blank" rel="noreferrer" style={styles.socialBtn} className="social-icon">
                                     <i className="bi bi-facebook"></i>
                                 </a>
-                                <a href="https://youtube.com" target="_blank" rel="noreferrer" style={styles.socialBtn} className="social-icon">
+                                <a href={socials.youtube} target="_blank" rel="noreferrer" style={styles.socialBtn} className="social-icon">
                                     <i className="bi bi-youtube"></i>
                                 </a>
                             </div>

@@ -13,7 +13,7 @@ import {
     Inbox, Megaphone, Users,
     Settings, Layers, LogOut, LayoutDashboard,
     ChevronLeft, ChevronRight, Moon, Sun, Calendar, Home, FolderOpen,
-    ExternalLink, Heart, Mail
+    ExternalLink, Heart, Mail, MonitorPlay
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -57,7 +57,7 @@ const AdminLayout = () => {
         { to: '/admin/announcements', label: 'Anuncios', Icon: Megaphone },
         { to: '/admin/requests', label: 'Peticiones', Icon: Inbox },
         { to: '/admin/inscripciones', label: 'Eventos', Icon: Calendar },
-        { to: '/admin/culto', label: 'Orden de Culto', Icon: Layers },
+        { to: '/admin/culto', label: 'Studio Oasis', Icon: MonitorPlay },
         { to: '/admin/recursos', label: 'Archivos', Icon: FolderOpen, adminOnly: true },
         { to: '/admin/users', label: 'Equipo', Icon: Users, adminOnly: true },
         { to: '/admin/about', label: 'Identidad', Icon: Heart, adminOnly: true },

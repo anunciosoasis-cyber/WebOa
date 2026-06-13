@@ -13,6 +13,7 @@ import useAppMode from '../../hooks/useAppMode';
 import BottomNav from './BottomNav';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import PersistentPlayer from './PersistentPlayer';
 
 
 /* ─── LayoutMaestro ─── */
@@ -41,6 +42,7 @@ const LayoutMaestro = ({ showFooter = true }) => {
                 paddingTop: isHome ? '0' : '100px', // Espacio compacto para la navbar
                 paddingBottom: isMobile ? '80px' : '0'
             }}>
+                <PersistentPlayer />
                 <Outlet />
             </main>
 

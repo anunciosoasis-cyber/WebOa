@@ -12,7 +12,7 @@
     "dependencies": {
         "@oasis/designer": "file:../../bases para dev/editor grafico/oasis-designer-standalone",
         "@popperjs/core": "^2.11.8",
-        "@supabase/supabase-js": "^2.106.1",
+        "@supabase/supabase-js": "^2.108.1",
         "axios": "^1.13.5",
         "bootstrap": "^5.3.8",
         "browser-image-compression": "^2.0.2",
