@@ -2,8 +2,12 @@ import axios from 'axios';
 
 // En desarrollo usamos el localhost de NestJS.
 // En producción configurar VITE_API_URL en Hostinger con la URL de Render.
-let base = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-if (!base.endsWith('/api')) {
+let base = import.meta.env.VITE_API_URL;
+if (!base) {
+    // Si no hay variable de entorno, autodetectar si es localhost o una IP local (para celulares)
+    const hostname = window.location.hostname;
+    base = `http://${hostname}:3000/api`;
+} else if (!base.endsWith('/api')) {
     base = base.replace(/\/$/, '') + '/api';
 }
 
