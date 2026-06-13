@@ -12,7 +12,7 @@ const oasisDesignerAlias = existsSync(externalDesignerSrc)
   : resolve(__dirname, 'src/stubs/oasis-designer/index.jsx');
 
 export default defineConfig({
-  base: './', // <--- 🌟 ¡ESTA ES LA LÍNEA MÁGICA PARA QUE HOSTINGER NO SE QUEDE EN BLANCO!
+  base: '/', // <--- DEBE SER '/' PARA QUE REACT ROUTER FUNCIONE EN SUBRUTAS COMO /login o /obs-overlay
   plugins: [
     react(),
     VitePWA({

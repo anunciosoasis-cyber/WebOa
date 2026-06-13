@@ -20,7 +20,7 @@ const Home = () => {
     });
 
     useEffect(() => {
-        apiClient.get('/settings').then(({ data }) => {
+        apiClient.get('/public/settings').then(({ data }) => {
             const settingsObj = Array.isArray(data) ?
                 data.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {}) :
                 data;

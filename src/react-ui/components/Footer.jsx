@@ -91,20 +91,24 @@ const Footer = () => {
             letterSpacing: '3px',
         },
         columnTitle: {
-            fontSize: '0.75rem',
+            fontSize: isMobile ? '0.65rem' : '0.75rem',
             fontWeight: '900',
             textTransform: 'uppercase',
-            letterSpacing: '0.3em',
+            letterSpacing: isMobile ? '0.15em' : '0.3em',
             color: colors.accent,
-            marginBottom: '25px'
+            marginBottom: '25px',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word'
         },
         link: {
             textDecoration: 'none',
             color: colors.textMuted,
-            fontSize: '0.9rem',
+            fontSize: isMobile ? '0.8rem' : '0.9rem',
             fontWeight: '600',
             display: 'block',
             marginBottom: '15px',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word'
         },
         socialBtn: {
             width: '50px',
@@ -138,18 +142,22 @@ const Footer = () => {
                             </p>
                         </div>
 
-                        <div className="col-lg-2 col-6 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
-                            <h5 style={{...styles.columnTitle, textAlign: 'center'}}>Explorar</h5>
-                            <Link to="/" className="f-link" style={{...styles.link, textAlign: 'center'}}>Inicio</Link>
-                            <Link to="/about" className="f-link" style={{...styles.link, textAlign: 'center'}}>Nosotros</Link>
-                            <Link to="/recursos" className="f-link" style={{...styles.link, textAlign: 'center'}}>Recursos</Link>
-                        </div>
+                        <div className="col-lg-4 col-12" style={isMobile ? { marginTop: '20px' } : {}}>
+                            <div style={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'space-around', gap: '10px' }}>
+                                <div style={{ flex: 1, textAlign: 'center' }} className="text-lg-start">
+                                    <h5 style={styles.columnTitle}>Explorar</h5>
+                                    <Link to="/" className="f-link" style={styles.link}>Inicio</Link>
+                                    <Link to="/about" className="f-link" style={styles.link}>Nosotros</Link>
+                                    <Link to="/recursos" className="f-link" style={styles.link}>Recursos</Link>
+                                </div>
 
-                        <div className="col-lg-2 col-6 text-center text-lg-start" style={isMobile ? { marginTop: '20px' } : {}}>
-                            <h5 style={{...styles.columnTitle, textAlign: 'center'}}>Ministerio</h5>
-                            <Link to="/peticiones" className="f-link" style={{...styles.link, textAlign: 'center'}}>Oración</Link>
-                            <Link to="/inscripciones" className="f-link" style={{...styles.link, textAlign: 'center'}}>Eventos</Link>
-                            <Link to="/login" className="f-link" style={{...styles.link, textAlign: 'center'}}>Admin</Link>
+                                <div style={{ flex: 1, textAlign: 'center' }} className="text-lg-start">
+                                    <h5 style={styles.columnTitle}>Ministerio</h5>
+                                    <Link to="/peticiones" className="f-link" style={styles.link}>Oración</Link>
+                                    <Link to="/inscripciones" className="f-link" style={styles.link}>Eventos</Link>
+                                    <Link to="/login" className="f-link" style={styles.link}>Admin</Link>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="col-lg-4 col-12 text-center" style={isMobile ? { marginTop: '20px' } : {}}>
