@@ -82,7 +82,6 @@ const DEFAULTS = {
     mail_port: '587',
     mail_encryption: 'tls',
     mail_username: '',
-    mail_password: '',
     mail_from_name: 'Oasis Iglesia',
     mail_from_address: '',
     evolution_url: '',
@@ -280,9 +279,9 @@ const AdminAjustes = () => {
                             </div>
                             <div className="col-md-5">
                                 <label style={labelStyle}>Contraseña de Aplicación</label>
-                                <div className="position-relative">
-                                    <input type={showPass ? 'text' : 'password'} className="form-control oasis-input" value={settings.mail_password} onChange={e => set('mail_password', e.target.value)} placeholder="••••••••" />
-                                    <button onClick={() => setShowPass(!showPass)} className="btn position-absolute end-0 top-0 h-100 px-3 border-0" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}><Eye size={18} /></button>
+                                <div className="p-2 px-3 rounded-4 d-flex align-items-center gap-2" style={{ background: isDark ? 'rgba(16, 185, 129, 0.05)' : 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)', height: '47px' }}>
+                                    <Lock size={16} className="text-success" />
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: OASIS_COLORS.success }}>Protegida por entorno (.env)</span>
                                 </div>
                             </div>
                             <div className="col-md-6">
