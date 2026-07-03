@@ -17,8 +17,6 @@ const YoutubeLivePanel = ({ isDark }) => {
     const [status, setStatus] = useState({ connected: false });
     const [broadcast, setBroadcast] = useState({ active: false, stats: { viewers: 0, likes: 0 } });
     const [chatMessages, setChatMessages] = useState([]);
-    const [showConfig, setShowConfig] = useState(false);
-    const [creds, setCreds] = useState({ clientId: '', clientSecret: '', redirectUri: 'http://localhost:5173/admin/settings/youtube/callback' });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -54,20 +52,6 @@ const YoutubeLivePanel = ({ isDark }) => {
         }
     };
 
-    const saveCredentials = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            await apiClient.post('/youtube/credentials', creds);
-            const res = await apiClient.get('/youtube/auth-url');
-            window.location.href = res.data.url; // Redirige a Google
-        } catch (error) {
-            alert('Error guardando credenciales');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const loginDirectly = async () => {
         setLoading(true);
         try {
@@ -87,33 +71,18 @@ const YoutubeLivePanel = ({ isDark }) => {
                     <h5 className="mb-0 fw-bold" style={{ color: isDark ? '#fff' : '#000' }}>YouTube Live</h5>
                 </div>
                 
-                {status.hasCredentials && !showConfig ? (
+                {status.hasCredentials ? (
                     <div className="text-center py-3">
-                        <p className="x-small opacity-50 mb-3" style={{ color: isDark ? '#fff' : '#000' }}>Tus credenciales de la API están guardadas, pero falta autorizar el inicio de sesión.</p>
-                        <button onClick={loginDirectly} className="btn text-white w-100 fw-bold mb-2" style={{ background: '#FF0000', borderRadius: '12px', fontSize: '0.8rem' }} disabled={loading}>
-                            {loading ? 'CARGANDO...' : <><LogIn size={16} className="me-2"/> AUTORIZAR CON GOOGLE</>}
+                        <p className="x-small opacity-75 mb-3" style={{ color: isDark ? '#fff' : '#000' }}>
+                            {status.connected === false ? 'Tu sesión expiró o aún no estás conectado.' : 'Falta autorizar el inicio de sesión.'}
+                        </p>
+                        <button onClick={loginDirectly} className="btn text-white w-100 fw-bold mb-2 shadow" style={{ background: '#FF0000', borderRadius: '12px', fontSize: '0.8rem' }} disabled={loading}>
+                            {loading ? 'CARGANDO...' : <><LogIn size={16} className="me-2"/> VINCULAR CANAL</>}
                         </button>
-                        <button onClick={() => setShowConfig(true)} className="btn btn-link x-small text-decoration-none" style={{ color: isDark ? '#fff' : '#000', opacity: 0.5 }}>Cambiar credenciales (Client ID)</button>
                     </div>
-                ) : showConfig ? (
-                    <form onSubmit={saveCredentials} className="d-flex flex-column gap-2">
-                        <input className="form-control mb-2" style={{ background: isDark ? 'rgba(0,0,0,0.5)' : '#fff', color: isDark ? '#fff' : '#000', border: `1px solid ${OASIS_COLORS.glassBorder}`, borderRadius: '12px' }} placeholder="Google Client ID" value={creds.clientId} onChange={e => setCreds({...creds, clientId: e.target.value})} required />
-                        <input className="form-control mb-2" style={{ background: isDark ? 'rgba(0,0,0,0.5)' : '#fff', color: isDark ? '#fff' : '#000', border: `1px solid ${OASIS_COLORS.glassBorder}`, borderRadius: '12px' }} placeholder="Google Client Secret" type="password" value={creds.clientSecret} onChange={e => setCreds({...creds, clientSecret: e.target.value})} required />
-                        <div className="d-flex gap-2 mt-2">
-                            <button type="submit" className="btn text-white w-100 fw-bold flex-grow-1" style={{ background: '#FF0000', borderRadius: '12px', fontSize: '0.8rem' }} disabled={loading}>
-                                {loading ? 'CONECTANDO...' : <><LogIn size={16} className="me-2"/> LOGIN CON GOOGLE</>}
-                            </button>
-                            <button type="button" onClick={() => setShowConfig(false)} className="btn w-50" style={{ background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', color: isDark ? '#fff' : '#000', borderRadius: '12px', fontSize: '0.8rem' }}>
-                                Cancelar
-                            </button>
-                        </div>
-                    </form>
                 ) : (
                     <div className="text-center py-3">
-                        <p className="x-small opacity-50 mb-3" style={{ color: isDark ? '#fff' : '#000' }}>No estás conectado a los servidores de Google.</p>
-                        <button onClick={() => setShowConfig(true)} className="btn fw-bold d-flex align-items-center justify-content-center mx-auto" style={{ background: 'rgba(255,0,0,0.1)', color: '#FF0000', border: '1px solid rgba(255,0,0,0.3)', borderRadius: '12px', fontSize: '0.8rem', padding: '10px 20px' }}>
-                            <Settings size={16} className="me-2" /> VINCULAR CANAL
-                        </button>
+                        <p className="x-small opacity-50 mb-3" style={{ color: isDark ? '#fff' : '#000' }}>El administrador no ha configurado las credenciales de YouTube (YOUTUBE_CLIENT_ID) en el servidor.</p>
                     </div>
                 )}
             </GlassCard>

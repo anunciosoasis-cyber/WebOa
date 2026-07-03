@@ -85,7 +85,7 @@ const AdminTransmisionInline = ({ currentActivity, timeMetrics, serviceStartTime
                 
                 // Intercalar el coro después de cada estrofa
                 data = data.map(hymn => {
-                    const chorus = hymn.stanzas.find(s => s.type === 'chorus' || s.number === '' || String(s.number).toLowerCase() === 'coro');
+                    const chorus = hymn.stanzas.find(s => s.type === 'chorus' || s.number === '' || String(s.number).toLowerCase() === 'coro' || s.number === 0);
                     if (chorus) {
                         const expandedStanzas = [];
                         const onlyStanzas = hymn.stanzas.filter(s => s !== chorus);
@@ -714,7 +714,7 @@ const AdminTransmisionInline = ({ currentActivity, timeMetrics, serviceStartTime
                                         disabled={!selectedHymn}
                                     >
                                         {selectedHymn?.stanzas.map((s, idx) => {
-                                            const isCoro = s.type === 'chorus' || s.number === '' || String(s.number).toLowerCase() === 'coro';
+                                            const isCoro = s.type === 'chorus' || s.number === '' || String(s.number).toLowerCase() === 'coro' || s.number === 0;
                                             return (
                                                 <option key={idx} value={idx} style={{ color: isDark ? '#fff' : '#000', background: isDark ? '#1a1a1a' : '#fff' }}>
                                                     {isCoro ? 'Coro' : `Estrofa ${s.number}`}
