@@ -5,7 +5,7 @@ import { ShieldCheck, ArrowLeft, Ghost, CheckCircle, Info, MessageSquare, Send, 
 import apiClient from '../../api/client';
 import { useToast } from '../components/Toast';
 
-const Peticiones = () => {
+const Peticiones = ({ inline = false }) => {
     const [step, setStep] = useState(1); // 1: Privacidad, 2: Tipo de Petición, 3: Formulario final, 4: Éxito
     const [loading, setLoading] = useState(false);
     const [isAnonymous, setIsAnonymous] = useState(false);
@@ -46,7 +46,7 @@ const Peticiones = () => {
     };
 
     return (
-        <div style={containerStyle(colors.softBg)}>
+        <div style={containerStyle(colors.softBg, inline)}>
             <AnimatePresence mode="wait">
                 
                 {/* PASO 1: TRATAMIENTO DE DATOS */}
@@ -59,7 +59,7 @@ const Peticiones = () => {
                         </p>
                         <div style={flexCol}>
                             <button onClick={() => setStep(2)} className="btn-oasis-primary">ACEPTO Y CONTINUAR</button>
-                            <button onClick={() => navigate('/')} style={btnBackText}>Rechazar y volver al inicio</button>
+                            {!inline && <button onClick={() => navigate('/')} style={btnBackText}>Rechazar y volver al inicio</button>}
                         </div>
                     </motion.div>
                 )}
@@ -142,7 +142,7 @@ const Peticiones = () => {
                         <CheckCircle size={70} color={colors.accent} style={{ marginBottom: '20px' }} />
                         <h2 style={titleStyle}>¡Recibido!</h2>
                         <p style={descStyle}>Tu petición ha sido enviada con éxito. Estaremos tratando tu caso con prioridad.</p>
-                        <button onClick={() => navigate('/')} className="btn-oasis-primary">VOLVER AL INICIO</button>
+                        {!inline && <button onClick={() => navigate('/')} className="btn-oasis-primary">VOLVER AL INICIO</button>}
                     </motion.div>
                 )}
 
@@ -175,7 +175,7 @@ const StepHeader = ({ onBack, title, step }) => (
     </div>
 );
 
-const containerStyle = (bg) => ({ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: bg, padding: '20px' });
+const containerStyle = (bg, inline) => ({ minHeight: inline ? 'auto' : '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: inline ? 'transparent' : bg, padding: inline ? '0' : '20px' });
 const cardStyle = { maxWidth: '500px', width: '100%', background: '#fff', borderRadius: '35px', padding: '40px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.1)', textAlign: 'center' };
 const titleStyle = { fontFamily: 'Moonrising, sans-serif', fontSize: '1.7rem', color: '#120C1F', margin: '0 0 10px' };
 const descStyle = { color: '#777', lineHeight: '1.5', fontSize: '0.9rem', marginBottom: '25px' };

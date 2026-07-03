@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../context/PlayerContext';
 import { useTheme } from '../ThemeContext';
+import Peticiones from '../modules/Peticiones';
 
 const PersistentPlayer = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { mode } = useTheme();
     const { youtubeUrl, isLive, loading, errorMsg, showPip, setShowPip } = usePlayer();
-    
+    const [activeInline, setActiveInline] = useState(null); // 'ofrenda' | 'peticion' | null
+
     const isTvRoute = location.pathname === '/tv';
     const isDark = mode === 'dark';
 
@@ -83,72 +85,91 @@ const PersistentPlayer = () => {
                 }}
                 className={isTvRoute ? 'mb-4' : ''}
             >
-            {/* Header only for PiP mode */}
-            {!isTvRoute && (
-                <div style={{
-                    padding: '8px 12px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    backgroundColor: isDark ? '#0A0514' : '#f8f9fa',
-                    borderBottom: isDark ? 'none' : '1px solid #ddd'
-                }}>
-                    <span style={{ color: isDark ? 'white' : 'black', fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '1px' }}>
-                        {isLive ? 'EN VIVO' : 'OASIS TV'}
-                    </span>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={() => navigate('/tv')} title="Expandir" style={{ background: 'transparent', border: 'none', color: isDark ? 'white' : 'black', cursor: 'pointer', fontSize: '1rem', opacity: 0.8 }}>
-                            <i className="bi bi-arrows-angle-expand"></i>
-                        </button>
-                        <button onClick={() => setShowPip(false)} title="Cerrar" style={{ background: 'transparent', border: 'none', color: isDark ? 'white' : 'black', cursor: 'pointer', fontSize: '1rem', opacity: 0.8 }}>
-                            <i className="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', backgroundColor: '#000' }}>
-                {loading ? (
-                    <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center text-white">
-                        <div className="spinner-border text-light" role="status"></div>
-                    </div>
-                ) : youtubeUrl ? (
-                    <iframe 
-                        src={youtubeUrl} 
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        title="Oasis TV"
-                    ></iframe>
-                ) : (
-                    <div className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-white p-4 text-center">
-                        <i className="bi bi-camera-video-off mb-3" style={{ fontSize: isTvRoute ? '3rem' : '2rem', opacity: 0.5 }}></i>
-                        {isTvRoute && <h5>No hay transmisiones disponibles</h5>}
-                        <p className="opacity-50 small mb-0">{isTvRoute ? 'Actualmente no estamos en vivo ni se encontraron videos.' : 'Sin señal'}</p>
-                        {isTvRoute && errorMsg && <p className="text-danger small mt-2">{errorMsg}</p>}
+                {/* Header only for PiP mode */}
+                {!isTvRoute && (
+                    <div style={{
+                        padding: '8px 12px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        backgroundColor: isDark ? '#0A0514' : '#f8f9fa',
+                        borderBottom: isDark ? 'none' : '1px solid #ddd'
+                    }}>
+                        <span style={{ color: isDark ? 'white' : 'black', fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '1px' }}>
+                            {isLive ? 'EN VIVO' : 'OASIS TV'}
+                        </span>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={() => navigate('/tv')} title="Expandir" style={{ background: 'transparent', border: 'none', color: isDark ? 'white' : 'black', cursor: 'pointer', fontSize: '1rem', opacity: 0.8 }}>
+                                <i className="bi bi-arrows-angle-expand"></i>
+                            </button>
+                            <button onClick={() => setShowPip(false)} title="Cerrar" style={{ background: 'transparent', border: 'none', color: isDark ? 'white' : 'black', cursor: 'pointer', fontSize: '1rem', opacity: 0.8 }}>
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
                     </div>
                 )}
-            </div>
-        </motion.div>
 
-        {isTvRoute && (
-            <div className="d-flex gap-3 justify-content-center flex-wrap">
-                <button 
-                    onClick={() => window.open('https://oasismedellin.com/dar', '_blank')}
-                    className="btn fw-bold d-flex align-items-center gap-2"
-                    style={{ padding: '12px 24px', borderRadius: '12px', backgroundColor: OASIS_COLORS.accent, color: '#FFF', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)' }}
-                >
-                    <i className="bi bi-wallet2"></i> Dar Mi Ofrenda
-                </button>
-                <button 
-                    onClick={() => navigate('/peticiones')}
-                    className="btn fw-bold d-flex align-items-center gap-2"
-                    style={{ padding: '12px 24px', borderRadius: '12px', backgroundColor: isDark ? '#FFF' : '#000', color: isDark ? OASIS_COLORS.deepPurple : '#FFF', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)' }}
-                >
-                    <i className="bi bi-chat-heart"></i> Necesito Oración
-                </button>
-            </div>
-        )}
+                <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', backgroundColor: '#000' }}>
+                    {loading ? (
+                        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center text-white">
+                            <div className="spinner-border text-light" role="status"></div>
+                        </div>
+                    ) : youtubeUrl ? (
+                        <iframe
+                            src={youtubeUrl}
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            title="Oasis TV"
+                        ></iframe>
+                    ) : (
+                        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-white p-4 text-center">
+                            <i className="bi bi-camera-video-off mb-3" style={{ fontSize: isTvRoute ? '3rem' : '2rem', opacity: 0.5 }}></i>
+                            {isTvRoute && <h5>No hay transmisiones disponibles</h5>}
+                            <p className="opacity-50 small mb-0">{isTvRoute ? 'Actualmente no estamos en vivo ni se encontraron videos.' : 'Sin señal'}</p>
+                            {isTvRoute && errorMsg && <p className="text-danger small mt-2">{errorMsg}</p>}
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+
+            {isTvRoute && (
+                <div className="d-flex flex-column gap-3">
+                    <div className="d-flex gap-3 justify-content-center flex-wrap">
+                        <button
+                            onClick={() => setActiveInline(prev => prev === 'ofrenda' ? null : 'ofrenda')}
+                            className="btn fw-bold d-flex align-items-center gap-2"
+                            style={{ padding: '12px 24px', borderRadius: '12px', backgroundColor: OASIS_COLORS.accent, color: '#FFF', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)' }}
+                        >
+                            <i className="bi bi-wallet2"></i> Dar Mi Ofrenda
+                        </button>
+                        <button
+                            onClick={() => setActiveInline(prev => prev === 'peticion' ? null : 'peticion')}
+                            className="btn fw-bold d-flex align-items-center gap-2"
+                            style={{ padding: '12px 24px', borderRadius: '12px', backgroundColor: isDark ? '#FFF' : '#000', color: isDark ? OASIS_COLORS.deepPurple : '#FFF', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)' }}
+                        >
+                            <i className="bi bi-chat-heart"></i> Necesito Oración
+                        </button>
+                    </div>
+
+                    <AnimatePresence>
+                        {activeInline === 'ofrenda' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+                                <div className="mt-2 p-3" style={{ backgroundColor: isDark ? '#120C1F' : '#f8f9fa', borderRadius: '24px', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}` }}>
+                                    <iframe src="https://alfoliadventista.org/" style={{ width: '100%', height: '600px', border: 'none', borderRadius: '16px' }} title="Alfolí Virtual" />
+                                </div>
+                            </motion.div>
+                        )}
+                        {activeInline === 'peticion' && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+                                <div className="mt-2" style={{ backgroundColor: isDark ? '#120C1F' : '#f8f9fa', borderRadius: '24px', border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, padding: '20px' }}>
+                                    <Peticiones inline={true} />
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            )}
         </div>
     );
 };
