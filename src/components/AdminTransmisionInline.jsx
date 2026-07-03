@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 import apiClient from '../api/client';
+import himnarioData from '../data/himnario.json';
 import { useToast } from '../react-ui/components/Toast';
 import { MonitorPlay, MonitorOff, BookOpen, Megaphone, ExternalLink, ChevronLeft, ChevronRight, User, LayoutTemplate, PanelBottom, PanelRight, Film, Timer, Music } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -75,13 +76,12 @@ const AdminTransmisionInline = ({ currentActivity, timeMetrics, serviceStartTime
     const [hymnSearchTerm, setHymnSearchTerm] = useState('');
     const [isHymnDropdownOpen, setIsHymnDropdownOpen] = useState(false);
 
-    // Fetch himnos from Local API
+    // Load himnos statically from JSON
     useEffect(() => {
-        const fetchHymns = async () => {
+        const loadHymns = () => {
             setIsLoadingHymns(true);
             try {
-                const response = await apiClient.get('/himnario');
-                let data = response.data;
+                let data = himnarioData;
                 
                 // Intercalar el coro después de cada estrofa
                 data = data.map(hymn => {
@@ -111,7 +111,7 @@ const AdminTransmisionInline = ({ currentActivity, timeMetrics, serviceStartTime
                 setIsLoadingHymns(false);
             }
         };
-        fetchHymns();
+        loadHymns();
     }, []);
 
     const handleHymnSelect = (hymn) => {
