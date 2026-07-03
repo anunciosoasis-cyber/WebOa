@@ -70,7 +70,23 @@ const ObsOverlay = () => {
             }
         });
 
-        return () => supabase.removeChannel(channel);
+        // Event listener para control remoto desde el overlay
+        const handleKeyDown = async (e) => {
+            if (['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                e.preventDefault();
+                await channel.send({
+                    type: 'broadcast',
+                    event: 'remote_keydown',
+                    payload: { key: e.key }
+                });
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            supabase.removeChannel(channel);
+            window.removeEventListener('keydown', handleKeyDown);
+        };
     }, []);
 
     // Variables dinámicas
@@ -100,13 +116,13 @@ const ObsOverlay = () => {
             </style>
             
             <AnimatePresence mode="wait">
-                {(overlayData.mode === 'bible' && overlayData.template === 'cinematic') ? (
+                {((overlayData.mode === 'bible' || overlayData.mode === 'himno') && overlayData.template === 'cinematic') ? (
                     <motion.div
                         key={overlayData.mode + overlayData.template + overlayData.title + overlayData.content}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 1.05, transition: { duration: 0.5 } }}
-                        transition={{ type: 'spring', bounce: 0, duration: 0.8 }}
+                        exit={{ opacity: 0, scale: 1.05, transition: { duration: 0.2 } }}
+                        transition={{ type: 'spring', bounce: 0, duration: 0.25 }}
                         style={{
                             ...overlayStyle,
                             position: 'absolute',
@@ -116,21 +132,21 @@ const ObsOverlay = () => {
                             alignItems: 'center',
                             justifyContent: 'flex-end',
                             background: 'transparent',
-                            padding: '100px 100px 150px 100px',
+                            padding: '40px 80px 80px 80px',
                             textAlign: 'center'
                         }}
                     >
                         <motion.p 
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.3, duration: 0.8 }}
+                            transition={{ delay: 0.1, duration: 0.3 }}
                             style={{ 
                                 color: 'var(--text-color)', 
-                                fontSize: '3.2rem', 
+                                fontSize: '2.5rem', 
                                 fontWeight: 600, 
                                 lineHeight: '1.4', 
                                 fontFamily: 'Georgia, serif',
-                                marginBottom: '25px',
+                                marginBottom: '20px',
                                 textShadow: '2px 4px 12px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6)'
                             }}
                         >
@@ -139,13 +155,13 @@ const ObsOverlay = () => {
                         <motion.h2 
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.6, duration: 0.6 }}
+                            transition={{ delay: 0.2, duration: 0.3 }}
                             style={{ 
                                 color: 'var(--accent-color)', 
-                                fontSize: '1.8rem', 
+                                fontSize: '1.5rem', 
                                 fontWeight: 900, 
                                 textTransform: 'uppercase', 
-                                letterSpacing: '6px',
+                                letterSpacing: '5px',
                                 fontFamily: 'Moonrising, sans-serif',
                                 textShadow: '1px 2px 8px rgba(0,0,0,0.9)'
                             }}
@@ -153,13 +169,13 @@ const ObsOverlay = () => {
                             {overlayData.title}
                         </motion.h2>
                     </motion.div>
-                ) : (overlayData.mode === 'bible' && overlayData.template === 'minimal') ? (
+                ) : ((overlayData.mode === 'bible' || overlayData.mode === 'himno') && overlayData.template === 'minimal') ? (
                     <motion.div
                         key={overlayData.mode + overlayData.template + overlayData.title + overlayData.content}
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: 100, opacity: 0, transition: { duration: 0.4 } }}
-                        transition={{ type: 'spring', stiffness: 80, damping: 20 }}
+                        exit={{ y: 100, opacity: 0, transition: { duration: 0.2 } }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                         style={{
                             ...overlayStyle,
                             position: 'absolute',
@@ -182,21 +198,21 @@ const ObsOverlay = () => {
                             maxWidth: '1600px',
                             width: '100%'
                         }}>
-                            <h2 style={{ color: 'var(--accent-color)', fontSize: '1.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '4px', marginBottom: '15px' }}>
+                            <h2 style={{ color: 'var(--accent-color)', fontSize: '1.5rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '4px', marginBottom: '15px' }}>
                                 {overlayData.title}
                             </h2>
-                            <p style={{ color: 'var(--text-color)', fontSize: '2.6rem', fontWeight: 600, margin: 0, fontFamily: 'Inter, sans-serif' }}>
+                            <p style={{ color: 'var(--text-color)', fontSize: overlayData.mode === 'himno' ? '2.0rem' : '2.6rem', fontWeight: 600, margin: 0, fontFamily: 'Inter, sans-serif' }}>
                                 {overlayData.content}
                             </p>
                         </div>
                     </motion.div>
-                ) : (overlayData.mode === 'bible' && overlayData.template === 'sidebar') ? (
+                ) : ((overlayData.mode === 'bible' || overlayData.mode === 'himno') && overlayData.template === 'sidebar') ? (
                     <motion.div
                         key={overlayData.mode + overlayData.template + overlayData.title + overlayData.content}
                         initial={{ x: '100%', opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: '100%', opacity: 0, transition: { duration: 0.4 } }}
-                        transition={{ type: 'spring', stiffness: 70, damping: 20 }}
+                        exit={{ x: '100%', opacity: 0, transition: { duration: 0.2 } }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                         style={{
                             ...overlayStyle,
                             position: 'absolute',
@@ -215,20 +231,20 @@ const ObsOverlay = () => {
                             boxShadow: '-20px 0 50px rgba(0,0,0,0.5)'
                         }}
                     >
-                        <h2 style={{ color: 'var(--accent-color)', fontSize: '2.2rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '4px', marginBottom: '25px' }}>
+                        <h2 style={{ color: 'var(--accent-color)', fontSize: '1.5rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '4px', marginBottom: '20px' }}>
                             {overlayData.title}
                         </h2>
-                        <p style={{ color: 'var(--text-color)', fontSize: '2.4rem', fontWeight: 500, lineHeight: '1.6', margin: 0, fontFamily: 'Georgia, serif' }}>
+                        <p style={{ color: 'var(--text-color)', fontSize: '1.8rem', fontWeight: 500, lineHeight: '1.6', margin: 0, fontFamily: 'Georgia, serif' }}>
                             {overlayData.content}
                         </p>
                     </motion.div>
-                ) : (overlayData.mode === 'bible' || overlayData.mode === 'announcement') ? (
+                ) : (overlayData.mode === 'bible' || overlayData.mode === 'himno' || overlayData.mode === 'announcement') ? (
                     <motion.div 
                         key={overlayData.mode + overlayData.title + overlayData.content}
                         initial={{ y: 200, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: 200, opacity: 0, transition: { duration: 0.4 } }}
-                        transition={{ type: 'spring', bounce: 0.2, duration: 0.8 }}
+                        exit={{ y: 200, opacity: 0, transition: { duration: 0.2 } }}
+                        transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
                         style={{
                             ...overlayStyle,
                             position: 'absolute',
@@ -247,7 +263,7 @@ const ObsOverlay = () => {
                     >
                         <h2 style={{ 
                             margin: '0 0 15px 0', 
-                            fontSize: '2.2rem', 
+                            fontSize: '1.6rem', 
                             textTransform: 'uppercase', 
                             letterSpacing: '4px',
                             color: 'var(--accent-color)',
@@ -257,10 +273,11 @@ const ObsOverlay = () => {
                         </h2>
                         <p style={{ 
                             margin: 0, 
-                            fontSize: overlayData.mode === 'bible' ? '2.8rem' : '2.4rem', 
+                            fontSize: overlayData.mode === 'bible' ? '2.4rem' : '1.8rem', 
                             fontWeight: '600', 
                             lineHeight: '1.4',
-                            fontFamily: overlayData.mode === 'bible' ? 'Georgia, serif' : 'inherit'
+                            fontFamily: overlayData.mode === 'bible' ? 'Georgia, serif' : 'inherit',
+                            whiteSpace: 'pre-line'
                         }}>
                             {overlayData.content}
                         </p>

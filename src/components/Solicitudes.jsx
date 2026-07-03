@@ -127,7 +127,7 @@ const Solicitudes = () => {
             showToast('Correo enviado correctamente', 'success');
             await fetchRequests();
         } catch (e) {
-            showToast('Error al enviar correo', 'error');
+            showToast(e.response?.data?.message || 'Error al enviar correo', 'error');
         } finally {
             setProcessing(false);
         }

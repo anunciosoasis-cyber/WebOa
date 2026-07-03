@@ -78,111 +78,191 @@ const AdminLayout = () => {
             overflow: 'hidden'
         }}>
             
-            {/* ─── SIDEBAR MINIMALISTA ─── */}
             {isDesktop && (
                 <motion.aside 
                     initial={false}
                     animate={{ width: sidebarWidth }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     style={{
-                        background: sidebarColors.bg,
-                        borderRight: `1px solid ${sidebarColors.border}`,
-                        position: 'fixed', left: 0, top: 0, bottom: 0,
+                        position: 'fixed', left: '20px', top: '20px', bottom: '20px',
                         zIndex: 1000,
-                        display: 'flex', flexDirection: 'column',
-                        overflow: 'hidden',
-                        boxShadow: '4px 0 24px rgba(0,0,0,0.1)'
+                        display: 'flex', flexDirection: 'column'
                     }}
                 >
-                    {/* Header Marca */}
-                    <div style={{ 
-                        padding: '30px 20px', 
-                        display: 'flex', 
-                        flexDirection: isCollapsed ? 'column' : 'row',
-                        alignItems: 'center', 
-                        justifyContent: isCollapsed ? 'center' : 'space-between',
-                        gap: '15px'
+                    <div style={{
+                        background: sidebarColors.bg,
+                        border: `1px solid ${sidebarColors.border}`,
+                        borderRadius: '24px',
+                        overflow: 'hidden',
+                        height: '100%',
+                        display: 'flex', flexDirection: 'column',
+                        boxShadow: '4px 4px 24px rgba(0,0,0,0.15)'
                     }}>
-                        <img src={logo || logoImg} alt="O" style={{ width: '32px', height: '32px', objectFit: 'contain', borderRadius: '4px' }} />
-                        
-                        {!isCollapsed && (
-                            <motion.span 
-                                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                style={{ fontFamily: 'Moonrising', fontSize: '1rem', letterSpacing: '2px', color: oasisColors.accent, flex: 1, marginLeft: '10px' }}
-                            >OASIS</motion.span>
-                        )}
-
-                        <button 
-                            onClick={() => setIsCollapsed(!isCollapsed)}
-                            style={{
-                                width: '24px', height: '24px', borderRadius: '6px',
-                                background: sidebarColors.hoverBg, border: `1px solid ${sidebarColors.border}`,
-                                color: sidebarColors.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.background = sidebarColors.activeBg; e.currentTarget.style.color = '#FFF'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = sidebarColors.hoverBg; e.currentTarget.style.color = sidebarColors.text; }}
-                        >
-                            {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
-                        </button>
-                    </div>
-
-                    {/* Navegación Orgánica */}
-                    <nav style={{ flex: 1, padding: '0 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {links.map(({ to, label, Icon }) => {
-                            const active = to === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(to);
-                            return (
-                                <Link key={to} to={to} style={{
-                                    display: 'flex', alignItems: 'center', gap: '15px',
-                                    padding: '12px', borderRadius: '10px',
-                                    textDecoration: 'none',
-                                    background: active ? sidebarColors.activeBg : 'transparent',
-                                    color: active ? sidebarColors.textActive : sidebarColors.text,
-                                    transition: 'all 0.2s ease',
-                                    justifyContent: isCollapsed ? 'center' : 'flex-start',
-                                    position: 'relative'
-                                }}
-                                onMouseEnter={e => { if (!active) e.currentTarget.style.background = sidebarColors.hoverBg; e.currentTarget.style.color = '#FFF'; }}
-                                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = sidebarColors.text; } else { e.currentTarget.style.color = sidebarColors.textActive; } }}
-                                >
-                                    <Icon size={18} strokeWidth={active ? 2.5 : 2} />
-                                    {!isCollapsed && <span style={{ fontWeight: active ? 700 : 500, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</span>}
-                                    {active && <motion.div layoutId="activeInd" style={{ position: 'absolute', left: 0, width: '3px', height: '18px', background: sidebarColors.accent, borderRadius: '0 3px 3px 0' }} />}
-                                </Link>
-                            );
-                        })}
-                    </nav>
-
-                    {/* Footer / Utilities */}
-                    <div style={{ padding: '20px 10px', borderTop: `1px solid ${sidebarColors.border}`, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'space-around', alignItems: 'center', marginBottom: '10px' }}>
-                            <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: sidebarColors.accent, cursor: 'pointer' }}>
-                                {mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                            </button>
-                            {!isCollapsed && (
-                                <button onClick={() => window.open('/', '_blank')} style={{ background: 'none', border: 'none', color: sidebarColors.text, cursor: 'pointer' }}>
-                                    <ExternalLink size={16} />
-                                </button>
-                            )}
+                        {/* Header Marca */}
+                        <div style={{ 
+                            padding: '40px 20px 30px', 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            gap: '10px',
+                            minHeight: '100px'
+                        }}>
+                            <AnimatePresence mode="wait">
+                                {!isCollapsed ? (
+                                    <motion.span 
+                                        key="full"
+                                        initial={{ opacity: 0, scale: 0.8 }} 
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.8 }}
+                                        transition={{ duration: 0.2 }}
+                                        style={{ fontFamily: 'Moonrising', fontSize: '1.8rem', letterSpacing: '2px', color: '#FFFFFF', textAlign: 'center' }}
+                                    >
+                                        OASIS
+                                    </motion.span>
+                                ) : (
+                                    <motion.span 
+                                        key="short"
+                                        initial={{ opacity: 0, scale: 1.2 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 1.2 }}
+                                        transition={{ duration: 0.2 }}
+                                        style={{ fontFamily: 'Moonrising', fontSize: '0.7rem', letterSpacing: '1px', color: '#FFFFFF', textAlign: 'center' }}
+                                    >
+                                        OASIS
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
                         </div>
-                        <button 
-                            onClick={signOut}
-                            style={{ 
-                                background: 'none', border: 'none', color: '#FF3B30', 
-                                display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start', 
-                                gap: '15px', padding: '12px', cursor: 'pointer', opacity: 0.7
-                            }}
-                        >
-                            <LogOut size={18} />
-                            {!isCollapsed && <span style={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>SALIR</span>}
-                        </button>
+
+                        {/* Navegación Orgánica */}
+                        <nav style={{ flex: 1, padding: '0 10px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
+                            {links.map(({ to, label, Icon }) => {
+                                const active = to === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(to);
+                                return (
+                                    <Link key={to} to={to} style={{
+                                        display: 'flex', alignItems: 'center', gap: '15px',
+                                        padding: '12px', borderRadius: '10px',
+                                        textDecoration: 'none',
+                                        background: active ? sidebarColors.activeBg : 'transparent',
+                                        color: active ? sidebarColors.textActive : sidebarColors.text,
+                                        transition: 'all 0.2s ease',
+                                        justifyContent: isCollapsed ? 'center' : 'flex-start',
+                                        position: 'relative'
+                                    }}
+                                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = sidebarColors.hoverBg; e.currentTarget.style.color = '#FFF'; }}
+                                    onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = sidebarColors.text; } else { e.currentTarget.style.color = sidebarColors.textActive; } }}
+                                    >
+                                        <Icon size={20} strokeWidth={active ? 2.5 : 2} style={{ flexShrink: 0 }} />
+                                        <AnimatePresence>
+                                            {!isCollapsed && (
+                                                <motion.span 
+                                                    initial={{ opacity: 0, width: 0 }}
+                                                    animate={{ opacity: 1, width: 'auto' }}
+                                                    exit={{ opacity: 0, width: 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    style={{ fontWeight: active ? 600 : 400, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden' }}
+                                                >
+                                                    {label}
+                                                </motion.span>
+                                            )}
+                                        </AnimatePresence>
+                                    </Link>
+                                );
+                            })}
+                        </nav>
+
+                        {/* Footer / Utilities con Perfil */}
+                        <div style={{ padding: '20px 10px', borderTop: `1px solid ${sidebarColors.border}`, display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            
+                            {/* Opciones (Theme, Logout, Landing) */}
+                            <div style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'space-around', alignItems: 'center', gap: isCollapsed ? '15px' : '0', flexDirection: isCollapsed ? 'column' : 'row' }}>
+                                <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: sidebarColors.accent, cursor: 'pointer', padding: '5px' }} title="Cambiar Tema">
+                                    {mode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                                </button>
+                                <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#FF3B30', cursor: 'pointer', padding: '5px' }} title="Cerrar Sesión">
+                                    <LogOut size={18} />
+                                </button>
+                                <button onClick={() => window.open('/', '_blank')} style={{ background: 'none', border: 'none', color: sidebarColors.text, cursor: 'pointer', padding: '5px' }} title="Ir a la Landing Page">
+                                    <ExternalLink size={18} />
+                                </button>
+                            </div>
+
+                            {/* Perfil de Usuario */}
+                            <AnimatePresence mode="wait">
+                                {!isCollapsed ? (
+                                    <motion.div 
+                                        key="expanded-profile"
+                                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                                        style={{ 
+                                            display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', 
+                                            background: 'rgba(0,0,0,0.2)', borderRadius: '16px' 
+                                        }}
+                                    >
+                                        <div style={{ 
+                                            width: '36px', height: '36px', borderRadius: '50%', 
+                                            background: '#10B981', color: '#FFF', display: 'flex', 
+                                            alignItems: 'center', justifyContent: 'center', 
+                                            fontWeight: 'bold', fontSize: '1.1rem',
+                                            flexShrink: 0
+                                        }}>
+                                            {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                            <span style={{ fontWeight: '600', fontSize: '0.9rem', color: '#FFF', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                                                {user?.name || 'Administrador'}
+                                            </span>
+                                            <span style={{ fontSize: '0.7rem', color: '#10B981', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                {role || 'ADMIN'}
+                                            </span>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div 
+                                        key="collapsed-profile"
+                                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                                        style={{ 
+                                            width: '32px', height: '32px', borderRadius: '50%', margin: '0 auto',
+                                            background: '#10B981', color: '#FFF', display: 'flex', 
+                                            alignItems: 'center', justifyContent: 'center', 
+                                            fontWeight: 'bold', fontSize: '1rem',
+                                            flexShrink: 0
+                                        }}
+                                    >
+                                        {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
+
+                    {/* Botón de Colapso (Externo) */}
+                    <button 
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        style={{
+                            position: 'absolute',
+                            right: '-12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: '24px', height: '60px',
+                            borderRadius: '12px',
+                            background: '#FFFFFF',
+                            border: `1px solid rgba(0,0,0,0.1)`,
+                            color: '#120C1F', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            zIndex: 10,
+                            padding: 0
+                        }}
+                    >
+                        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                    </button>
                 </motion.aside>
             )}
 
             {/* ─── CONTENIDO PRINCIPAL CON TRANSICIONES ─── */}
             <main style={{
                 flex: 1,
-                marginLeft: isDesktop ? sidebarWidth : 0,
+                marginLeft: isDesktop ? `calc(${sidebarWidth} + 40px)` : 0,
                 transition: 'margin-left 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                 height: '100vh',
                 overflowY: 'auto',

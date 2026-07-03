@@ -498,19 +498,17 @@ const AdminCulto = () => {
                         STUDIO <span style={{ color: OASIS_COLORS.accent }}>OASIS</span>
                     </h1>
                 </div>
-                <div className="d-flex flex-wrap flex-md-nowrap gap-3 align-items-center w-100 w-lg-auto mt-3 mt-lg-0">
-                    <div className="px-4 py-3 rounded-pill d-flex align-items-center justify-content-between gap-3 w-100 w-md-auto" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 10px 25px rgba(0,0,0,0.05)', minWidth: '220px' }}>
-                        <div className="d-flex align-items-center gap-2">
-                            <CalendarIcon size={16} color={OASIS_COLORS.accent} />
-                            <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className={`border-0 bg-transparent fw-bold ${isDark ? 'text-white' : 'text-dark'}`} style={{ outline: 'none', fontSize: '0.9rem' }} />
-                        </div>
+                <div className="d-flex flex-column gap-2 align-items-end mt-3 mt-lg-0" style={{ width: '180px' }}>
+                    <div className="px-3 py-2 rounded-pill d-flex align-items-center justify-content-center gap-2 w-100" style={{ background: isDark ? OASIS_COLORS.glassWhite : '#fff', border: `1px solid ${isDark ? OASIS_COLORS.glassBorder : 'rgba(0,0,0,0.1)'}`, boxShadow: isDark ? 'none' : '0 5px 15px rgba(0,0,0,0.05)' }}>
+                        <CalendarIcon size={16} color={OASIS_COLORS.accent} />
+                        <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className={`border-0 bg-transparent fw-bold text-center ${isDark ? 'text-white' : 'text-dark'}`} style={{ outline: 'none', fontSize: '0.9rem', padding: 0 }} />
                     </div>
                     {serviceStartTime ? (
-                        <button onClick={endService} className="btn rounded-pill px-5 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 w-100 w-md-auto transition-all" style={{ background: '#FF444415', color: '#FF4444', border: '1px solid #FF4444', fontSize: '0.9rem', boxShadow: 'none' }}>
+                        <button onClick={endService} className="btn rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2 transition-all w-100" style={{ background: '#FF444415', color: '#FF4444', border: '1px solid #FF4444', fontSize: '0.9rem', boxShadow: 'none' }}>
                             <CircleStop size={18} /> FINALIZAR CULTO
                         </button>
                     ) : (
-                        <button onClick={startService} className="btn rounded-pill px-5 py-3 fw-bold text-dark d-flex align-items-center justify-content-center gap-2 w-100 w-md-auto transition-all hover-scale" style={{ background: OASIS_COLORS.accent, fontSize: '0.9rem', boxShadow: `0 10px 25px ${OASIS_COLORS.accent}40`, border: 'none' }}>
+                        <button onClick={startService} className="btn rounded-pill py-2 fw-bold text-dark d-flex align-items-center justify-content-center gap-2 transition-all hover-scale w-100" style={{ background: OASIS_COLORS.accent, fontSize: '0.9rem', boxShadow: `0 5px 15px ${OASIS_COLORS.accent}40`, border: 'none' }}>
                             <CirclePlay size={18} /> INICIAR VIVO
                         </button>
                     )}
@@ -582,7 +580,7 @@ const AdminCulto = () => {
                     )}
 
                     {/* Consola Inline OBS Siempre Visible */}
-                    <AdminTransmisionInline currentActivity={currentActivity} timeMetrics={timeMetrics} serviceStartTime={serviceStartTime} />
+                    <AdminTransmisionInline currentActivity={currentActivity} timeMetrics={timeMetrics} serviceStartTime={serviceStartTime} isDark={isDark} />
                 </div>
 
                 {/* ── COLUMNA SECUNDARIA (DERECHA/ABAJO): TIMELINE Y PLANIFICACIÓN ── */}

@@ -1,0 +1,28 @@
+[
+    {
+        "number": 1,
+        "title": "Cantad Alegres al Señor",
+        "stanzas": [
+            { "type": "stanza", "number": 1, "text": "Cantad alegres al Señor,\nmortales todos por doquier;\nservidle siempre con fervor,\nobedecedle con placer." },
+            { "type": "stanza", "number": 2, "text": "Con gratitud canción alzad\nal Hacedor que el ser os dio;\nal Dios excelso venerad,\nque como Padre nos amó." },
+            { "type": "stanza", "number": 3, "text": "Su pueblo somos: salvará\na los que busquen al Señor;\nninguno de ellos dejará;\nél los ampara con su amor." }
+        ]
+    },
+    {
+        "number": 2,
+        "title": "Da Gloria al Señor",
+        "stanzas": [
+            { "type": "stanza", "number": 1, "text": "Da gloria al Señor, de la luz Hacedor,\ndel día la espléndida luz;\nel rastro sigue que en su grande amor,\ndejó en esta tierra Jesús." },
+            { "type": "chorus", "number": "Coro", "text": "Da gloria al Señor, da gloria al Señor,\nda gloria al Padre de amor.\nDa gloria al Señor, da gloria al Señor,\nda gloria al Dios Hacedor." },
+            { "type": "stanza", "number": 2, "text": "Da gloria al Señor que tu vida formó,\ny te hizo a su imagen con luz;\ncon tierno cariño su amor te buscó,\nmuriendo por ti en la cruz." }
+        ]
+    },
+    {
+        "number": 348,
+        "title": "Iglesia de Cristo",
+        "stanzas": [
+            { "type": "stanza", "number": 1, "text": "Iglesia de Cristo, reanima tu amor,\ny espera velando a tu augusto Señor;\nJesús el Esposo, vestido de honor,\nviniendo se anuncia con fuerte clamor." },
+            { "type": "stanza", "number": 2, "text": "Con gozo recibe al gran Salvador;\ny en pos de su huella con fe y con valor,\ntrabaja, mi hermano, con noble tesón;\ntrabaja mostrando a Jesús, y su amor." }
+        ]
+    }
+]

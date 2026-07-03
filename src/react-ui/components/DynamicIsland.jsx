@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import QuickFormModal from './QuickFormModal';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { usePlayer } from '../../context/PlayerContext';
 
 const DynamicIsland = ({ settings }) => {
     const navigate = useNavigate();
+    const { isLive } = usePlayer();
     const scrollContainerRef = useRef(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalType, setModalType] = useState('prayer');
@@ -181,12 +183,14 @@ const DynamicIsland = ({ settings }) => {
                         }
                     `}</style>
 
-                    {items.map((item) => (
+                    {items.map((item) => {
+                        const isEnVivoActive = item.id === 'envivos' && isLive;
+                        return (
                         <motion.div
                             key={item.id}
                             className="dynamic-island-item"
                             variants={itemVariants}
-                            whileHover={{ y: -8, boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}
+                            whileHover={{ y: -8, boxShadow: isEnVivoActive ? '0 20px 40px rgba(255,0,0,0.5)' : '0 20px 40px rgba(0,0,0,0.4)' }}
                             whileTap={{ scale: 0.95 }}
                             onClick={item.action}
                             style={{
@@ -194,36 +198,36 @@ const DynamicIsland = ({ settings }) => {
                                 flex: '0 0 auto',
                                 width: '130px', /* Restaurado el tamaño original */
                                 height: '110px',
-                                backgroundColor: '#FFFFFF',
+                                backgroundColor: isEnVivoActive ? '#FF0000' : '#FFFFFF',
                                 borderRadius: '24px',
-                                border: '1px solid rgba(0,0,0,0.05)',
+                                border: isEnVivoActive ? 'none' : '1px solid rgba(0,0,0,0.05)',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 padding: '15px 10px',
                                 cursor: 'pointer',
-                                boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                                boxShadow: isEnVivoActive ? '0 10px 25px rgba(255,0,0,0.3)' : '0 10px 25px rgba(0,0,0,0.3)',
                                 transition: 'all 0.3s ease'
                             }}
                         >
                             <div
                                 className="dynamic-island-icon"
                                 style={{
-                                    color: '#120C1F',
+                                    color: isEnVivoActive ? '#FFFFFF' : '#120C1F',
                                     fontSize: '1.8rem',
                                     marginBottom: '10px',
                                     transition: 'color 0.3s ease'
                                 }}
-                                onMouseOver={e => e.currentTarget.style.color = '#F59E0B'}
-                                onMouseOut={e => e.currentTarget.style.color = '#120C1F'}
+                                onMouseOver={e => { if(!isEnVivoActive) e.currentTarget.style.color = '#F59E0B' }}
+                                onMouseOut={e => { if(!isEnVivoActive) e.currentTarget.style.color = '#120C1F' }}
                             >
                                 <i className={`bi ${item.icon}`}></i>
                             </div>
                             <div
                                 className="dynamic-island-text"
                                 style={{
-                                    color: '#120C1F',
+                                    color: isEnVivoActive ? '#FFFFFF' : '#120C1F',
                                     fontSize: '0.8rem',
                                     fontWeight: 800,
                                     textAlign: 'center',
@@ -232,7 +236,8 @@ const DynamicIsland = ({ settings }) => {
                                 {item.title}<br />{item.subtitle}
                             </div>
                         </motion.div>
-                    ))}
+                        );
+                    })}
                 </div>
             </motion.div>
 

@@ -7,6 +7,7 @@ import {
     FileText, Save, RotateCcw, Eye, EyeOff,
     RefreshCcw, Copy, Check, Info, Image, Trash2, Mail,
 } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 
 const OASIS_COLORS = {
     deepPurple: '#120C1F',
@@ -242,19 +243,37 @@ const AdminEmailTemplate = () => {
         }
     };
 
-    const handleImageUpload = (setter) => (e) => {
+    const handleImageUpload = (setter) => async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-            showToast('La imagen debe ser menor a 2MB para embeberse como base64', 'error');
+        
+        try {
+            showToast('Comprimiendo y subiendo imagen...', 'info');
+            
+            const compressedFile = await imageCompression(file, {
+                maxSizeMB: 0.9,
+                maxWidthOrHeight: 1280,
+                useWebWorker: true,
+                initialQuality: 0.8
+            });
+
+            const formData = new FormData();
+            formData.append('file', compressedFile, file.name);
+            const res = await apiClient.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            if (res.data && res.data.url) {
+                setter(res.data.url);
+                showToast('Imagen subida correctamente', 'success');
+            } else {
+                throw new Error(res.data?.message || 'No URL returned');
+            }
+        } catch (err) {
+            console.error('Upload Error:', err);
+            showToast(`Error: ${err.message}`, 'error');
+        } finally {
             e.target.value = '';
-            return;
         }
-        const reader = new FileReader();
-        reader.onload = () => setter(reader.result);
-        reader.readAsDataURL(file);
-        // Reset so the same file can be selected again after deletion
-        e.target.value = '';
     };
 
     const insertVar = useCallback((varKey) => {

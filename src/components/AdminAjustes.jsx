@@ -32,7 +32,7 @@ const SectionHeader = ({ icon: Icon, title, subtitle, badge, isDark }) => (
             </div>
             <div>
                 <h4 style={{ fontFamily: 'Moonrising', fontSize: '0.9rem', margin: 0, color: OASIS_COLORS.accent }}>{title}</h4>
-                {subtitle && <p style={{ fontSize: '0.7rem', opacity: 0.5, margin: 0, color: isDark ? '#fff' : '#64748b' }}>{subtitle}</p>}
+                {subtitle && <p style={{ fontSize: '0.7rem', opacity: 0.5, margin: 0, color: isDark ? '#fff' : '#000' }}>{subtitle}</p>}
             </div>
         </div>
         {badge}
@@ -194,7 +194,7 @@ const AdminAjustes = () => {
                         <div className="mb-4">
                             <label style={labelStyle}>Nombre de la Iglesia</label>
                             <input className="form-control oasis-input" value={settings.church_name} onChange={e => set('church_name', e.target.value)} placeholder="Ej: Oasis Iglesia" />
-                            <small className="text-white-50 mt-2 d-block">Aparecerá como remitente en todas las comunicaciones.</small>
+                            <small className="mt-2 d-block" style={{ opacity: 0.5, color: isDark ? '#fff' : '#000' }}>Aparecerá como remitente en todas las comunicaciones.</small>
                         </div>
                     </GlassCard>
                 </div>
@@ -230,10 +230,10 @@ const AdminAjustes = () => {
                             <div className="col-md-6">
                                 <label style={labelStyle}>Número de WhatsApp (Personal)</label>
                                 <div className="input-group">
-                                    <span className="input-group-text border-0 text-white-50" style={{ background: 'rgba(255,255,255,0.02)', borderTopLeftRadius: '15px', borderBottomLeftRadius: '15px' }}>+</span>
+                                    <span className="input-group-text border-0" style={{ background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', borderTopLeftRadius: '15px', borderBottomLeftRadius: '15px', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>+</span>
                                     <input className="form-control oasis-input" value={settings.whatsapp_number} onChange={e => set('whatsapp_number', e.target.value.replace(/\D/g, ''))} placeholder="573001234567" />
                                 </div>
-                                <small className="text-white-50 mt-2 d-block">Recomendado para atención personalizada.</small>
+                                <small className="mt-2 d-block" style={{ opacity: 0.5, color: isDark ? '#fff' : '#000' }}>Recomendado para atención personalizada.</small>
                             </div>
                             <div className="col-md-6">
                                 <label style={labelStyle}>Enlace de Grupo (Alternativo)</label>
@@ -262,7 +262,7 @@ const AdminAjustes = () => {
                                         borderRadius: '20px',
                                         background: settings.mail_provider === key ? p.color + '15' : OASIS_COLORS.glassWhite,
                                         border: `1px solid ${settings.mail_provider === key ? p.color : OASIS_COLORS.glassBorder}`,
-                                        color: settings.mail_provider === key ? p.color : '#fff',
+                                        color: settings.mail_provider === key ? p.color : (isDark ? '#fff' : '#000'),
                                         transition: '0.3s'
                                     }}
                                     className="d-flex flex-column align-items-center gap-2"
@@ -282,7 +282,7 @@ const AdminAjustes = () => {
                                 <label style={labelStyle}>Contraseña de Aplicación</label>
                                 <div className="position-relative">
                                     <input type={showPass ? 'text' : 'password'} className="form-control oasis-input" value={settings.mail_password} onChange={e => set('mail_password', e.target.value)} placeholder="••••••••" />
-                                    <button onClick={() => setShowPass(!showPass)} className="btn position-absolute end-0 top-0 text-white-50 h-100 px-3 border-0"><Eye size={18} /></button>
+                                    <button onClick={() => setShowPass(!showPass)} className="btn position-absolute end-0 top-0 h-100 px-3 border-0" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}><Eye size={18} /></button>
                                 </div>
                             </div>
                             <div className="col-md-6">
@@ -324,7 +324,7 @@ const AdminAjustes = () => {
                                 </div>
                                 <div>
                                     <h4 style={{ fontFamily: 'Moonrising', fontSize: '0.9rem', margin: 0, color: OASIS_COLORS.accent }}>PLANTILLA DE CORREO</h4>
-                                    <p style={{ fontSize: '0.7rem', opacity: 0.5, margin: 0, color: isDark ? '#fff' : '#64748b' }}>Edita el texto y las variables que se envían al recibir una solicitud</p>
+                                    <p style={{ fontSize: '0.7rem', opacity: 0.5, margin: 0, color: isDark ? '#fff' : '#000' }}>Edita el texto y las variables que se envían al recibir una solicitud</p>
                                 </div>
                             </div>
                             <a href="/admin/plantilla-correo" style={{ background: OASIS_COLORS.accent, color: '#000', border: 'none', borderRadius: '50px', padding: '12px 28px', fontWeight: 900, fontSize: '0.75rem', letterSpacing: '1px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -412,9 +412,9 @@ const AdminAjustes = () => {
 const labelStyle = { fontSize: '0.65rem', fontWeight: 900, color: '#F59E0B', textTransform: 'uppercase', marginBottom: '8px', display: 'block' };
 
 const oasisInputStyles = (colors, isDark) => `
-    .oasis-input { background: ${isDark ? colors.glassWhite : '#fff'} !important; border: 1px solid ${colors.glassBorder} !important; color: ${isDark ? '#fff' : '#120C1F'} !important; border-radius: 15px !important; padding: 12px 20px !important; font-size: 0.9rem !important; }
+    .oasis-input { background: ${isDark ? colors.glassWhite : '#fff'} !important; border: 1px solid ${isDark ? colors.glassBorder : 'rgba(0,0,0,0.1)'} !important; color: ${isDark ? '#fff' : '#120C1F'} !important; border-radius: 15px !important; padding: 12px 20px !important; font-size: 0.9rem !important; }
     .oasis-input:focus { border-color: ${colors.accent} !important; box-shadow: 0 0 15px ${colors.accent}20 !important; }
-    .form-select.oasis-input { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba(255,255,255,0.5)' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important; background-repeat: no-repeat !important; background-position: right 1rem center !important; background-size: 16px 12px !important; }
+    .form-select.oasis-input { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important; background-repeat: no-repeat !important; background-position: right 1rem center !important; background-size: 16px 12px !important; }
     .animate-spin { animation: spin 2s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 `;
