@@ -84,7 +84,7 @@ const AdminRecursos = () => {
             body.append('file', file);
 
             const { data } = await apiClient.post('/resources/upload-file', body, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: { 'Content-Type': undefined }
             });
 
             const nextContentType = inferContentType(file);
@@ -106,7 +106,8 @@ const AdminRecursos = () => {
             }
         } catch (error) {
             console.error(error);
-            showToast('Error al subir archivo', 'error');
+            const errMsg = error.response?.data?.message || 'Error al subir archivo';
+            showToast(Array.isArray(errMsg) ? errMsg[0] : errMsg, 'error');
         } finally {
             setUploadingFile(false);
         }
@@ -125,7 +126,7 @@ const AdminRecursos = () => {
             body.append('file', file);
 
             const { data } = await apiClient.post('/resources/upload-file', body, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: { 'Content-Type': undefined }
             });
 
             setFormData((prev) => ({
@@ -136,7 +137,8 @@ const AdminRecursos = () => {
             showToast('Miniatura subida correctamente', 'success');
         } catch (error) {
             console.error(error);
-            showToast('Error al subir miniatura', 'error');
+            const errMsg = error.response?.data?.message || 'Error al subir miniatura';
+            showToast(Array.isArray(errMsg) ? errMsg[0] : errMsg, 'error');
         } finally {
             setUploadingThumbnail(false);
         }
