@@ -39,51 +39,13 @@ const SectionHeader = ({ icon: Icon, title, subtitle, badge, isDark }) => (
     </div>
 );
 
-const SMTP_PRESETS = {
-    gmail: {
-        label: 'Gmail',
-        icon: Mail,
-        color: '#EA4335',
-        host: 'smtp.gmail.com',
-        port: '587',
-        encryption: 'tls',
-        hint: 'Use an "App Password" (not your regular password).',
-        link: 'https://myaccount.google.com/apppasswords',
-    },
-    outlook: {
-        label: 'Outlook',
-        icon: Mail,
-        color: '#0078D4',
-        host: 'smtp-mail.outlook.com',
-        port: '587',
-        encryption: 'tls',
-        hint: 'Use your regular credentials. Ensure SMTP is enabled.',
-        link: 'https://account.microsoft.com/security',
-    },
-    custom: {
-        label: 'Custom',
-        icon: Server,
-        color: '#6B7280',
-        host: '',
-        port: '587',
-        encryption: 'tls',
-        hint: 'Enter your custom SMTP server details.',
-        link: null,
-    },
-};
+
 
 const DEFAULTS = {
     church_name: 'Iglesia Adventista Oasis',
     notify_email: '',
     whatsapp_number: '',
     whatsapp_group_link: '',
-    mail_provider: 'gmail',
-    mail_host: 'smtp.gmail.com',
-    mail_port: '587',
-    mail_encryption: 'tls',
-    mail_username: '',
-    mail_from_name: 'Oasis Iglesia',
-    mail_from_address: '',
     evolution_url: '',
     evolution_key: '',
     evolution_instance: 'oasis-iglesia',
@@ -126,18 +88,6 @@ const AdminAjustes = () => {
     const set = useCallback((key, val) => {
         setSettings(prev => ({ ...prev, [key]: val }));
     }, []);
-
-    const applyPreset = (key) => {
-        const preset = SMTP_PRESETS[key];
-        if (!preset) return;
-        setSettings(prev => ({
-            ...prev,
-            mail_provider: key,
-            mail_host: preset.host || prev.mail_host,
-            mail_port: preset.port,
-            mail_encryption: preset.encryption,
-        }));
-    };
 
     const uploadFile = async (file) => {
         const formData = new FormData();
@@ -203,13 +153,10 @@ const AdminAjustes = () => {
                     <GlassCard style={{ padding: '40px', borderRadius: '35px', border: `1px solid ${OASIS_COLORS.glassBorder}`, height: '100%' }}>
                         <SectionHeader icon={Zap} title="INTEGRACIONES" subtitle="Servicios externos" isDark={isDark} />
                         <div className="row g-3">
-                            <div className="col-md-7">
-                                <label style={labelStyle}>Email de Destino</label>
-                                <input type="email" className="form-control oasis-input" value={settings.notify_email} onChange={e => set('notify_email', e.target.value)} placeholder="pastor@iglesia.com" />
-                            </div>
-                            <div className="col-md-5">
-                                <label style={labelStyle}>Nombre Remitente</label>
-                                <input className="form-control oasis-input" value={settings.mail_from_name} onChange={e => set('mail_from_name', e.target.value)} placeholder="Oasis Iglesia" />
+                            <div className="col-12">
+                                <label style={labelStyle}>Correos de Destino (Para Notificaciones)</label>
+                                <input type="text" className="form-control oasis-input" value={settings.notify_email} onChange={e => set('notify_email', e.target.value)} placeholder="pastor@iglesia.com, lider@iglesia.com" />
+                                <small className="mt-2 d-block" style={{ opacity: 0.5, color: isDark ? '#fff' : '#000' }}>Puedes añadir hasta 5 correos separados por coma.</small>
                             </div>
                         </div>
                     </GlassCard>
@@ -246,67 +193,7 @@ const AdminAjustes = () => {
                     </GlassCard>
                 </div>
 
-                {/* 4. SMTP SERVER */}
-                <div className="col-lg-8">
-                    <GlassCard style={{ padding: '40px', borderRadius: '35px', border: `1px solid ${OASIS_COLORS.glassBorder}` }}>
-                        <SectionHeader icon={Mail} title="MENSAJERÍA" subtitle="Configuración SMTP" isDark={isDark} />
-                        
-                        <div className="d-flex gap-2 mb-5 overflow-auto pb-2">
-                            {Object.entries(SMTP_PRESETS).map(([key, p]) => (
-                                <button key={key} type="button" 
-                                    onClick={() => applyPreset(key)}
-                                    style={{
-                                        minWidth: '120px',
-                                        padding: '15px',
-                                        borderRadius: '20px',
-                                        background: settings.mail_provider === key ? p.color + '15' : OASIS_COLORS.glassWhite,
-                                        border: `1px solid ${settings.mail_provider === key ? p.color : OASIS_COLORS.glassBorder}`,
-                                        color: settings.mail_provider === key ? p.color : (isDark ? '#fff' : '#000'),
-                                        transition: '0.3s'
-                                    }}
-                                    className="d-flex flex-column align-items-center gap-2"
-                                >
-                                    <p.icon size={24} />
-                                    <span style={{ fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>{p.label}</span>
-                                </button>
-                            ))}
-                        </div>
 
-                        <div className="row g-4">
-                            <div className="col-md-7">
-                                <label style={labelStyle}>Usuario / Email SMTP</label>
-                                <input className="form-control oasis-input" value={settings.mail_username} onChange={e => set('mail_username', e.target.value)} placeholder="usuario@gmail.com" />
-                            </div>
-                            <div className="col-md-5">
-                                <label style={labelStyle}>Contraseña de Aplicación</label>
-                                <div className="p-2 px-3 rounded-4 d-flex align-items-center gap-2" style={{ background: isDark ? 'rgba(16, 185, 129, 0.05)' : 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)', height: '47px' }}>
-                                    <Lock size={16} className="text-success" />
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: OASIS_COLORS.success }}>Protegida por entorno (.env)</span>
-                                </div>
-                            </div>
-                            <div className="col-md-6">
-                                <label style={labelStyle}>Servidor (Host)</label>
-                                <input className="form-control oasis-input" value={settings.mail_host} onChange={e => set('mail_host', e.target.value)} placeholder="smtp.gmail.com" />
-                            </div>
-                            <div className="col-md-3">
-                                <label style={labelStyle}>Puerto</label>
-                                <select className="form-select oasis-input" value={settings.mail_port} onChange={e => set('mail_port', e.target.value)}>
-                                    <option value="587">587 (TLS)</option>
-                                    <option value="465">465 (SSL)</option>
-                                    <option value="25">25 (Unsafe)</option>
-                                </select>
-                            </div>
-                            <div className="col-md-3">
-                                <label style={labelStyle}>Cifrado</label>
-                                <select className="form-select oasis-input" value={settings.mail_encryption} onChange={e => set('mail_encryption', e.target.value)}>
-                                    <option value="tls">TLS</option>
-                                    <option value="ssl">SSL</option>
-                                    <option value="">Ninguno</option>
-                                </select>
-                            </div>
-                        </div>
-                    </GlassCard>
-                </div>
 
                 {/* 5. EVOLUTION API */}
                 <div className="col-lg-4">
