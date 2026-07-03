@@ -701,7 +701,7 @@ const AdminEmailTemplate = () => {
                                     srcDoc={previewHtml}
                                     style={{ width: '100%', height: '580px', border: 'none', display: 'block', background: '#fff' }}
                                     title="Vista previa del correo"
-                                    sandbox="allow-same-origin"
+                                    sandbox="allow-same-origin allow-scripts"
                                 />
                             </div>
 
