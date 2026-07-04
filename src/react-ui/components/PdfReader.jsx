@@ -296,7 +296,7 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            padding: '10px',
+                            padding: '0px',
                             width: '100%',
                             flex: 1,
                             background: '#f2f4f7',
@@ -319,14 +319,14 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                                 <HTMLFlipBook
                                     key={`${currentViewerResource.id}-${viewerIsDouble}`}
                                     ref={flipBookRef}
-                                    width={viewerIsDouble ? 460 : 350}
-                                    height={viewerIsDouble ? 640 : 500}
+                                    width={viewerIsDouble ? 500 : 420}
+                                    height={viewerIsDouble ? 700 : 600}
                                     size="stretch"
-                                    minWidth={280}
-                                    maxWidth={viewerIsDouble ? 600 : 800}
-                                    minHeight={350}
-                                    maxHeight={1200}
-                                    maxShadowOpacity={0.3}
+                                    minWidth={300}
+                                    maxWidth={viewerIsDouble ? 1400 : 1000}
+                                    minHeight={400}
+                                    maxHeight={1800}
+                                    maxShadowOpacity={0.15}
                                     showCover={false}
                                     mobileScrollSupport
                                     usePortrait={!viewerIsDouble}
