@@ -70,6 +70,22 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
     const viewerWrapperRef = useRef(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(1);
+    const [isManualZoom, setIsManualZoom] = useState(false);
+
+    useEffect(() => {
+        const updateIntelligentZoom = () => {
+            if (isManualZoom) return;
+            const w = window.innerWidth;
+            if (w >= 1600) setZoomLevel(1.8);
+            else if (w >= 1366) setZoomLevel(1.6);
+            else if (w >= 1024) setZoomLevel(1.4);
+            else if (w >= 768) setZoomLevel(1.2);
+            else setZoomLevel(1);
+        };
+        updateIntelligentZoom();
+        window.addEventListener('resize', updateIntelligentZoom);
+        return () => window.removeEventListener('resize', updateIntelligentZoom);
+    }, [isManualZoom]);
 
     useEffect(() => {
         const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -271,13 +287,18 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
                             <div style={{ display: 'flex', alignItems: 'center', background: '#f2f4f7', borderRadius: '8px', padding: '2px' }}>
-                                <button className="btn-action secondary" onClick={() => setZoomLevel(z => Math.max(0.5, z - 0.2))} style={{ background: 'transparent', width: '28px', height: '28px' }} title="Alejar">
+                                <button className="btn-action secondary" onClick={() => { setIsManualZoom(true); setZoomLevel(z => Math.max(0.5, z - 0.2)); }} style={{ background: 'transparent', width: '28px', height: '28px' }} title="Alejar">
                                     <LucideIcons.Minus size={14} />
                                 </button>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', width: '35px', textAlign: 'center' }}>{Math.round(zoomLevel * 100)}%</span>
-                                <button className="btn-action secondary" onClick={() => setZoomLevel(z => Math.min(3, z + 0.2))} style={{ background: 'transparent', width: '28px', height: '28px' }} title="Acercar">
+                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', width: '35px', textAlign: 'center' }} title="Zoom (Auto)">{Math.round(zoomLevel * 100)}%</span>
+                                <button className="btn-action secondary" onClick={() => { setIsManualZoom(true); setZoomLevel(z => Math.min(3, z + 0.2)); }} style={{ background: 'transparent', width: '28px', height: '28px' }} title="Acercar">
                                     <LucideIcons.Plus size={14} />
                                 </button>
+                                {isManualZoom && (
+                                    <button className="btn-action secondary" onClick={() => setIsManualZoom(false)} style={{ background: 'transparent', width: '28px', height: '28px', color: '#6941C6' }} title="Volver a zoom inteligente">
+                                        <LucideIcons.RefreshCcw size={12} />
+                                    </button>
+                                )}
                             </div>
 
                             <button className="btn-action secondary" onClick={() => {
@@ -361,7 +382,8 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                                         <FlipPdfPage
                                             key={`page-${index + 1}`}
                                             pageNumber={index + 1}
-                                            pdfData={viewerPdfData}
+                                            zoom={1}
+                                            isVisible={isPageVisible(index)}
                                         />
                                     ))}
                                 </HTMLFlipBook>
