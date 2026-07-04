@@ -201,8 +201,8 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                     </div>
 
                     {/* Toolbar Controles */}
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #edf0f6', flexWrap: 'wrap', background: '#fff' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475467' }}>Fecha</label>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px 12px', borderBottom: '1px solid #edf0f6', flexWrap: 'wrap', background: '#fff' }}>
+                        <LucideIcons.Calendar size={16} color="#475467" title="Fecha" />
                         <input
                             type="date"
                             value={viewerDate}
@@ -223,7 +223,7 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                             style={{ border: '1px solid #d0d5dd', borderRadius: '10px', padding: '8px 10px' }}
                         />
 
-                        <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475467' }}>Documento</label>
+                        <LucideIcons.File size={16} color="#475467" title="Documento" />
                         <select
                             value={viewerSelectedId}
                             onChange={(e) => {
@@ -242,31 +242,33 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                             ))}
                         </select>
 
-                        <button className="btn-action secondary" onClick={() => goToPdfPage(viewerPage - pageStep)}>
-                            <LucideIcons.ChevronLeft size={14} />
-                        </button>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Página</span>
-                        <input
-                            type="number"
-                            min={1}
-                            max={viewerTotalPages || undefined}
-                            value={viewerPage}
-                            onChange={(e) => goToPdfPage(Number(e.target.value) || 1)}
-                            style={{ width: '60px', border: '1px solid #d0d5dd', borderRadius: '8px', padding: '6px' }}
-                        />
-                        <span style={{ fontSize: '0.75rem', color: '#667085' }}>/ {viewerTotalPages || '--'}</span>
-                        <button className="btn-action secondary" onClick={() => goToPdfPage(viewerPage + pageStep)}>
-                            <LucideIcons.ChevronRight size={14} />
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <button className="btn-action secondary" onClick={() => goToPdfPage(viewerPage - pageStep)}>
+                                <LucideIcons.ChevronLeft size={14} />
+                            </button>
+                            <input
+                                type="number"
+                                min={1}
+                                max={viewerTotalPages || undefined}
+                                value={viewerPage}
+                                onChange={(e) => goToPdfPage(Number(e.target.value) || 1)}
+                                style={{ width: '45px', border: '1px solid #d0d5dd', borderRadius: '6px', padding: '4px', textAlign: 'center', fontSize: '0.8rem' }}
+                                title="Página actual"
+                            />
+                            <span style={{ fontSize: '0.75rem', color: '#667085' }}>/ {viewerTotalPages || '--'}</span>
+                            <button className="btn-action secondary" onClick={() => goToPdfPage(viewerPage + pageStep)}>
+                                <LucideIcons.ChevronRight size={14} />
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                            <button className="btn-action secondary" onClick={() => setViewerIsDouble((v) => !v)} title={viewerIsDouble ? 'Cambiar a una página' : 'Cambiar a doble página'}>
+                                {viewerIsDouble ? <LucideIcons.FileText size={16} /> : <LucideIcons.BookOpen size={16} />}
+                            </button>
 
-                        <button className="btn-action secondary" onClick={() => setViewerIsDouble((v) => !v)}>
-                            {viewerIsDouble ? 'Doble página' : 'Una página'}
-                        </button>
-
-                        <button className="btn-action primary" onClick={() => downloadViaBackend(currentViewerResource)}>
-                            <LucideIcons.Download size={14} />
-                            Descargar
-                        </button>
+                            <button className="btn-action primary" onClick={() => downloadViaBackend(currentViewerResource)} title="Descargar">
+                                <LucideIcons.Download size={16} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Contenedor del Libro con Estilos Inline Completos */}
@@ -278,7 +280,7 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                             alignItems: 'center',
                             padding: '10px',
                             width: '100%',
-                            height: 'calc(100% - 120px)',
+                            flex: 1,
                             background: '#f2f4f7',
                             overflow: 'hidden',
                             position: 'relative'
