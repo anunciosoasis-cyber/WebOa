@@ -67,6 +67,14 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
     const [viewerPdfLoading, setViewerPdfLoading] = useState(false);
 
     const flipBookRef = useRef(null);
+    const viewerWrapperRef = useRef(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
 
     useEffect(() => {
         if (isOpen && initialResource) {
@@ -188,8 +196,8 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                 }
             `}</style>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="viewer-overlay">
-                <div className="viewer-content">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="viewer-overlay" style={{ zIndex: 9999 }}>
+                <div className="viewer-content" ref={viewerWrapperRef} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff' }}>
 
                     {/* Header */}
                     <div className="viewer-header">
@@ -201,8 +209,8 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                     </div>
 
                     {/* Toolbar Controles */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px 12px', borderBottom: '1px solid #edf0f6', flexWrap: 'wrap', background: '#fff' }}>
-                        <LucideIcons.Calendar size={16} color="#475467" title="Fecha" />
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center', padding: '6px 8px', borderBottom: '1px solid #edf0f6', flexWrap: 'wrap', background: '#fff' }}>
+                        <LucideIcons.Calendar size={14} color="#475467" title="Fecha" />
                         <input
                             type="date"
                             value={viewerDate}
@@ -220,10 +228,10 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                                     setViewerPdfData(null);
                                 }
                             }}
-                            style={{ border: '1px solid #d0d5dd', borderRadius: '10px', padding: '8px 10px' }}
+                            style={{ border: '1px solid #d0d5dd', borderRadius: '6px', padding: '4px 6px', fontSize: '0.8rem', maxWidth: '120px' }}
                         />
 
-                        <LucideIcons.File size={16} color="#475467" title="Documento" />
+                        <LucideIcons.File size={14} color="#475467" title="Documento" />
                         <select
                             value={viewerSelectedId}
                             onChange={(e) => {
@@ -233,7 +241,7 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                                 setViewerLoadError('');
                                 setViewerPdfData(null);
                             }}
-                            style={{ border: '1px solid #d0d5dd', borderRadius: '10px', padding: '8px 10px', minWidth: '150px', maxWidth: '100%', flex: 1 }}
+                            style={{ border: '1px solid #d0d5dd', borderRadius: '6px', padding: '4px 6px', minWidth: '100px', maxWidth: '100%', flex: 1, fontSize: '0.8rem' }}
                         >
                             {filteredOnlinePdfs.map((pdf) => (
                                 <option key={pdf.id} value={String(pdf.id)}>
@@ -261,12 +269,22 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                             </button>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
-                            <button className="btn-action secondary" onClick={() => setViewerIsDouble((v) => !v)} title={viewerIsDouble ? 'Cambiar a una página' : 'Cambiar a doble página'}>
-                                {viewerIsDouble ? <LucideIcons.FileText size={16} /> : <LucideIcons.BookOpen size={16} />}
+                            <button className="btn-action secondary" onClick={() => {
+                                if (!document.fullscreenElement) {
+                                    viewerWrapperRef.current?.requestFullscreen().catch(err => console.log(err));
+                                } else {
+                                    document.exitFullscreen();
+                                }
+                            }} title="Pantalla Completa">
+                                {isFullscreen ? <LucideIcons.Shrink size={14} /> : <LucideIcons.Expand size={14} />}
                             </button>
 
-                            <button className="btn-action primary" onClick={() => downloadViaBackend(currentViewerResource)} title="Descargar">
-                                <LucideIcons.Download size={16} />
+                            <button className="btn-action secondary" onClick={() => setViewerIsDouble((v) => !v)} title={viewerIsDouble ? 'Cambiar a una página' : 'Cambiar a doble página'}>
+                                {viewerIsDouble ? <LucideIcons.FileText size={14} /> : <LucideIcons.BookOpen size={14} />}
+                            </button>
+
+                            <button className="btn-action primary" onClick={() => downloadViaBackend(currentViewerResource)} title="Descargar" style={{ padding: '4px 8px' }}>
+                                <LucideIcons.Download size={14} />
                             </button>
                         </div>
                     </div>
