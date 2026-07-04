@@ -155,49 +155,51 @@ const Recursos = () => {
                             return (
                                 <motion.div key={item.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="col-12 col-md-6 col-lg-4">
                                     <div style={{
-                                        background: '#fff', borderRadius: '30px', padding: '30px', height: '100%', display: 'flex', flexDirection: 'column',
-                                        boxShadow: `0 15px 40px -10px ${colors.shadow}`, border: '1px solid rgba(0,0,0,0.02)', transition: '0.3s'
-                                    }} className="resource-card">
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                                            <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: `${colors.accent}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.accent, overflow: 'hidden' }}>
-                                                {item.thumbnailUrl ? (
-                                                    <img
-                                                        src={item.thumbnailUrl}
-                                                        alt={item.title}
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                    />
-                                                ) : (
-                                                    <Icon size={24} />
-                                                )}
-                                            </div>
-                                            <span style={{ fontSize: '0.65rem', fontWeight: '900', color: colors.accent, textTransform: 'uppercase', background: colors.midnight, padding: '4px 10px', borderRadius: '8px' }}>
-                                                {item.dept}
-                                            </span>
-                                        </div>
-                                        <h4 style={{ color: colors.deepPurple, fontSize: '1.05rem', fontWeight: '800', marginBottom: '10px', flexGrow: 1 }}>{item.title}</h4>
-                                        {item.description ? <p style={{ color: '#64748b', fontSize: '0.78rem', marginBottom: '10px' }}>{item.description}</p> : null}
+                                        borderRadius: '24px', height: '380px', display: 'flex', flexDirection: 'column',
+                                        boxShadow: `0 15px 40px -10px ${colors.shadow}`, transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                        overflow: 'hidden', position: 'relative',
+                                        background: item.thumbnailUrl ? '#000' : '#fff'
+                                    }} className="resource-card group">
+                                        {item.thumbnailUrl && (
+                                            <img 
+                                                src={item.thumbnailUrl} 
+                                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', transition: '0.5s', opacity: 0.85 }} 
+                                                className="book-cover-img" 
+                                                alt={item.title} 
+                                            />
+                                        )}
                                         
-                                        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                                            <button onClick={() => openResource(item)} className="btn-action primary" disabled={item.resourceType === 'info' || !item.url}>
-                                                {item.resourceType === 'info'
-                                                    ? 'SOLO INFORMACIÓN'
-                                                    : item.isDownloadable
-                                                    ? 'DESCARGAR'
-                                                    : 'LEER ONLINE'}
-                                            </button>
-                                            {item.url ? (
-                                                <a
-                                                    href={item.url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="btn-action secondary"
-                                                    aria-label="Abrir enlace"
-                                                >
-                                                    <LucideIcons.ExternalLink size={14} />
-                                                </a>
-                                            ) : (
-                                                <button className="btn-action secondary" disabled><LucideIcons.Minus size={14} /></button>
-                                            )}
+                                        <div style={{ position: 'relative', zIndex: 2, padding: '25px', display: 'flex', flexDirection: 'column', height: '100%', background: item.thumbnailUrl ? 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.9) 100%)' : 'none' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                {!item.thumbnailUrl && (
+                                                    <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: `${colors.accent}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.accent }}>
+                                                        <Icon size={24} />
+                                                    </div>
+                                                )}
+                                                <span style={{ fontSize: '0.65rem', fontWeight: '900', color: item.thumbnailUrl ? '#fff' : colors.accent, textTransform: 'uppercase', background: item.thumbnailUrl ? 'rgba(0,0,0,0.5)' : colors.midnight, padding: '6px 12px', borderRadius: '10px', backdropFilter: 'blur(10px)', marginLeft: 'auto', letterSpacing: '0.5px' }}>
+                                                    {item.dept}
+                                                </span>
+                                            </div>
+                                            
+                                            <div style={{ marginTop: 'auto' }}>
+                                                <h4 style={{ color: item.thumbnailUrl ? '#fff' : colors.deepPurple, fontSize: '1.25rem', fontWeight: '800', marginBottom: '8px', lineHeight: 1.2 }}>{item.title}</h4>
+                                                {item.description ? <p style={{ color: item.thumbnailUrl ? 'rgba(255,255,255,0.7)' : '#64748b', fontSize: '0.8rem', marginBottom: '20px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</p> : null}
+                                                
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <button onClick={() => openResource(item)} className="btn-action primary" disabled={item.resourceType === 'info' || !item.url} style={{ flex: 1, padding: '14px', background: item.thumbnailUrl ? colors.accent : colors.deepPurple, color: item.thumbnailUrl ? colors.midnight : '#fff', fontSize: '0.8rem' }}>
+                                                        {item.resourceType === 'info'
+                                                            ? 'INFO'
+                                                            : item.isDownloadable
+                                                            ? 'DESCARGAR'
+                                                            : 'LEER'}
+                                                    </button>
+                                                    {item.url && !item.isDownloadable && item.resourceType !== 'info' && (
+                                                        <a href={item.url} target="_blank" rel="noreferrer" className="btn-action secondary" aria-label="Abrir enlace" style={{ width: '50px', background: item.thumbnailUrl ? 'rgba(255,255,255,0.15)' : colors.softBg, color: item.thumbnailUrl ? '#fff' : colors.deepPurple, backdropFilter: 'blur(5px)' }}>
+                                                            <LucideIcons.ExternalLink size={16} />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -233,7 +235,8 @@ const Recursos = () => {
             </AnimatePresence>
 
             <style>{`
-                .resource-card:hover { transform: translateY(-8px); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.15) !important; }
+                .resource-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.3) !important; }
+                .resource-card:hover .book-cover-img { transform: scale(1.08); opacity: 1 !important; }
                 .btn-action { border: none; border-radius: 12px; font-weight: 800; font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
                 .btn-action.primary { flex: 1; background: ${colors.deepPurple}; color: #fff; padding: 12px; }
                 .btn-action.primary:hover { background: ${colors.accent}; color: ${colors.midnight}; }
