@@ -319,13 +319,13 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                                 <HTMLFlipBook
                                     key={`${currentViewerResource.id}-${viewerIsDouble}`}
                                     ref={flipBookRef}
-                                    width={viewerIsDouble ? 500 : 420}
-                                    height={viewerIsDouble ? 700 : 600}
+                                    width={viewerIsDouble ? 550 : 450}
+                                    height={viewerIsDouble ? 770 : 630}
                                     size="stretch"
-                                    minWidth={300}
-                                    maxWidth={viewerIsDouble ? 1400 : 1000}
-                                    minHeight={400}
-                                    maxHeight={1800}
+                                    minWidth={250}
+                                    maxWidth={viewerIsDouble ? 2500 : 2000}
+                                    minHeight={300}
+                                    maxHeight={3000}
                                     maxShadowOpacity={0.15}
                                     showCover={false}
                                     mobileScrollSupport

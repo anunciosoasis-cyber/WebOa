@@ -243,8 +243,8 @@ const Recursos = () => {
                 .btn-action.primary:disabled { opacity: 0.55; cursor: not-allowed; }
                 .btn-action.secondary { width: 45px; background: ${colors.softBg}; color: ${colors.deepPurple}; }
                 
-                .viewer-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(8, 5, 13, 0.95); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; padding: 40px; }
-                .viewer-content { width: 100%; maxWidth: 1500px; height: 92vh; background: #fff; border-radius: 24px; overflow: hidden; position: relative; }
+                .viewer-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(8, 5, 13, 0.95); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; padding: 0; }
+                .viewer-content { width: 100vw; maxWidth: none; height: 100vh; background: #fff; border-radius: 0; overflow: hidden; position: relative; }
                 .viewer-header { background: ${colors.midnight}; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
                 .close-btn { background: none; border: none; color: #fff; cursor: pointer; }
                 .book-viewer-shell { height: calc(100% - 116px); display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top, #f6f7fb 0%, #eceff5 100%); overflow: hidden; }
