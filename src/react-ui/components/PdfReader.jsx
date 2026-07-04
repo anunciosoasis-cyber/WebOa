@@ -69,6 +69,7 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
     const flipBookRef = useRef(null);
     const viewerWrapperRef = useRef(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     useEffect(() => {
         const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -269,6 +270,16 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                             </button>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', background: '#f2f4f7', borderRadius: '8px', padding: '2px' }}>
+                                <button className="btn-action secondary" onClick={() => setZoomLevel(z => Math.max(0.5, z - 0.2))} style={{ background: 'transparent', width: '28px', height: '28px' }} title="Alejar">
+                                    <LucideIcons.Minus size={14} />
+                                </button>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', width: '35px', textAlign: 'center' }}>{Math.round(zoomLevel * 100)}%</span>
+                                <button className="btn-action secondary" onClick={() => setZoomLevel(z => Math.min(3, z + 0.2))} style={{ background: 'transparent', width: '28px', height: '28px' }} title="Acercar">
+                                    <LucideIcons.Plus size={14} />
+                                </button>
+                            </div>
+
                             <button className="btn-action secondary" onClick={() => {
                                 if (!document.fullscreenElement) {
                                     viewerWrapperRef.current?.requestFullscreen().catch(err => console.log(err));
@@ -299,14 +310,24 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                             padding: '0px',
                             width: '100%',
                             flex: 1,
-                            background: '#f2f4f7',
-                            overflow: 'hidden',
+                            background: '#e4e7ec',
+                            overflow: 'auto',
                             position: 'relative'
                         }}
                     >
-                        {viewerPdfLoading && <div className="book-loading" style={{ position: 'absolute', zIndex: 5 }}>Descargando archivo pesado...</div>}
+                        {viewerPdfLoading && <div className="book-loading" style={{ position: 'absolute', zIndex: 5, top: '50%', transform: 'translateY(-50%)' }}>Descargando archivo pesado...</div>}
 
-                        <Document
+                        <div style={{
+                            transform: `scale(${zoomLevel})`,
+                            transformOrigin: 'top center',
+                            transition: 'transform 0.2s ease-out',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            minHeight: '100%',
+                            paddingTop: '20px',
+                            paddingBottom: '20px'
+                        }}>
+                            <Document
                             file={currentViewerFile}
                             onLoadSuccess={({ numPages }) => {
                                 setViewerTotalPages(numPages);
@@ -338,17 +359,16 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                                 >
                                     {Array.from({ length: viewerTotalPages }, (_, index) => (
                                         <FlipPdfPage
-                                            key={`pdf-page-${index + 1}`}
+                                            key={`page-${index + 1}`}
                                             pageNumber={index + 1}
-                                            zoom={viewerZoom}
-                                            isVisible={isPageVisible(index)}
+                                            pdfData={viewerPdfData}
                                         />
                                     ))}
                                 </HTMLFlipBook>
                             ) : null}
                         </Document>
                     </div>
-
+                </div>
                 </div>
             </motion.div>
         </AnimatePresence>
