@@ -175,7 +175,7 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                 }
                 .pdf-book-page .react-pdf__Page__canvas {
                     width: 100% !important;
-                    height: auto !important;
+                    height: 100% !important;
                     max-height: 100% !important;
                     object-fit: contain !important;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -233,7 +233,7 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                                 setViewerLoadError('');
                                 setViewerPdfData(null);
                             }}
-                            style={{ border: '1px solid #d0d5dd', borderRadius: '10px', padding: '8px 10px', minWidth: '260px', maxWidth: '420px' }}
+                            style={{ border: '1px solid #d0d5dd', borderRadius: '10px', padding: '8px 10px', minWidth: '150px', maxWidth: '100%', flex: 1 }}
                         >
                             {filteredOnlinePdfs.map((pdf) => (
                                 <option key={pdf.id} value={String(pdf.id)}>
@@ -276,7 +276,8 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            padding: '20px',
+                            padding: '10px',
+                            width: '100%',
                             height: 'calc(100% - 120px)',
                             background: '#f2f4f7',
                             overflow: 'hidden',
@@ -298,9 +299,13 @@ const PdfReader = ({ isOpen, initialResource, onlinePdfResources, onClose, downl
                                 <HTMLFlipBook
                                     key={`${currentViewerResource.id}-${viewerIsDouble}`}
                                     ref={flipBookRef}
-                                    width={viewerIsDouble ? 460 : 520}
-                                    height={viewerIsDouble ? 640 : 700}
-                                    size="fixed" // Fuerza dimensiones exactas e impide colapsos en 0x0
+                                    width={viewerIsDouble ? 460 : 350}
+                                    height={viewerIsDouble ? 640 : 500}
+                                    size="stretch"
+                                    minWidth={280}
+                                    maxWidth={viewerIsDouble ? 600 : 800}
+                                    minHeight={350}
+                                    maxHeight={1200}
                                     maxShadowOpacity={0.3}
                                     showCover={false}
                                     mobileScrollSupport
