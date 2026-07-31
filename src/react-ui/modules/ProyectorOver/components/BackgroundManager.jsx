@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 const LOCAL_BG_IMAGE = '/assets/projector-bg.jpg';
 const LOCAL_BG_VIDEO = '/assets/projector-bg.mp4';
 const COVERR_API_KEY = '80e09202317775e1635c576428be4852';
-const CACHE_KEY = 'coverr_nature_videos';
-const CACHE_EXPIRY = 'coverr_nature_expiry';
+const CACHE_KEY = 'coverr_adventist_safe_videos';
+const CACHE_EXPIRY = 'coverr_adventist_safe_expiry';
 
 const BackgroundManager = ({ mode }) => {
     const isHimno = mode === 'himno';
@@ -50,7 +50,20 @@ const BackgroundManager = ({ mode }) => {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 4000); 
 
-                const res = await fetch('https://api.coverr.co/videos?query=nature%20landscape&urls=true', {
+                // Lista de búsquedas curadas, conservadoras y sin personas (iglesia adventista)
+                const safeQueries = [
+                    'forest aerial', 
+                    'clouds sunlight', 
+                    'waterfall peaceful',
+                    'night sky stars',
+                    'wheat field',
+                    'church window',
+                    'sunrise mountains',
+                    'ocean waves calm'
+                ];
+                const randomQuery = safeQueries[Math.floor(Math.random() * safeQueries.length)];
+
+                const res = await fetch(`https://api.coverr.co/videos?query=${encodeURIComponent(randomQuery)}&urls=true`, {
                     headers: { 'Authorization': `Bearer ${COVERR_API_KEY}` },
                     signal: controller.signal
                 });
