@@ -4,6 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 const BibleHymnOverlay = ({ overlayData, overlayStyle }) => {
     const tmpl = overlayData.template ? overlayData.template.toLowerCase() : 'classic';
 
+    // Función para escalar dinámicamente el texto y evitar desbordamientos
+    const getDynamicFontSize = (text, defaultSizeRem) => {
+        if (!text) return `${defaultSizeRem}rem`;
+        const lines = text.split(/\r\n|\r|\n/).length;
+        const chars = text.length;
+        
+        let size = defaultSizeRem;
+        
+        if (lines >= 8 || chars > 250) size = defaultSizeRem * 0.55;
+        else if (lines >= 6 || chars > 180) size = defaultSizeRem * 0.70;
+        else if (lines >= 5 || chars > 120) size = defaultSizeRem * 0.82;
+        
+        return `${size}rem`;
+    };
+
     // Animaciones por físicas de resorte desacopladas para impacto televisivo
     const containerVariants = {
         cinematic: {
@@ -97,7 +112,7 @@ const BibleHymnOverlay = ({ overlayData, overlayStyle }) => {
                                 variants={childVariants}
                                 style={{
                                     color: '#FFFFFF',
-                                    fontSize: overlayData.mode === 'himno' ? '3.8rem' : '3.3rem',
+                                    fontSize: getDynamicFontSize(overlayData.content, overlayData.mode === 'himno' ? 3.8 : 3.3),
                                     fontWeight: 800,
                                     lineHeight: 1.45,
                                     fontFamily: "'Cinzel', 'Georgia', serif",
@@ -143,7 +158,7 @@ const BibleHymnOverlay = ({ overlayData, overlayStyle }) => {
                                 {overlayData.title}
                             </motion.h2>
                         </div>
-                        <motion.p variants={childVariants} style={{ margin: 0, color: '#FFFFFF', fontSize: overlayData.mode === 'himno' ? '1.9rem' : '2.3rem', fontWeight: 700, lineHeight: 1.35, whiteSpace: 'pre-line', fontFamily: overlayData.mode === 'bible' ? "'Georgia', serif" : "inherit" }}>
+                        <motion.p variants={childVariants} style={{ margin: 0, color: '#FFFFFF', fontSize: getDynamicFontSize(overlayData.content, overlayData.mode === 'himno' ? 1.9 : 2.3), fontWeight: 700, lineHeight: 1.35, whiteSpace: 'pre-line', fontFamily: overlayData.mode === 'bible' ? "'Georgia', serif" : "inherit" }}>
                             {overlayData.content}
                         </motion.p>
                     </div>
@@ -172,7 +187,7 @@ const BibleHymnOverlay = ({ overlayData, overlayStyle }) => {
                             )}
                         </div>
 
-                        <motion.p variants={childVariants} style={{ color: '#F1F5F9', fontSize: overlayData.mode === 'himno' ? '2.3rem' : '2.1rem', fontWeight: 700, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line', fontFamily: overlayData.mode === 'bible' ? "'Georgia', serif" : "inherit", textShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
+                        <motion.p variants={childVariants} style={{ color: '#F1F5F9', fontSize: getDynamicFontSize(overlayData.content, overlayData.mode === 'himno' ? 2.3 : 2.1), fontWeight: 700, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line', fontFamily: overlayData.mode === 'bible' ? "'Georgia', serif" : "inherit", textShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
                             {overlayData.content}
                         </motion.p>
                     </div>
@@ -199,7 +214,7 @@ const BibleHymnOverlay = ({ overlayData, overlayStyle }) => {
                             {/* Delgada línea reflectiva dorada interna */}
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, #F59E0B, transparent 60%)' }} />
 
-                            <motion.p variants={childVariants} style={{ color: '#FFFFFF', fontSize: overlayData.mode === 'himno' ? '2.5rem' : '2.3rem', fontWeight: 700, margin: 0, lineHeight: 1.45, whiteSpace: 'pre-line', fontFamily: overlayData.mode === 'bible' ? "'Georgia', serif" : "inherit", textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
+                            <motion.p variants={childVariants} style={{ color: '#FFFFFF', fontSize: getDynamicFontSize(overlayData.content, overlayData.mode === 'himno' ? 2.5 : 2.3), fontWeight: 700, margin: 0, lineHeight: 1.45, whiteSpace: 'pre-line', fontFamily: overlayData.mode === 'bible' ? "'Georgia', serif" : "inherit", textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
                                 {overlayData.content}
                             </motion.p>
                         </div>
