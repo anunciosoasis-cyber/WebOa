@@ -52,6 +52,7 @@ const DEFAULTS = {
     youtube_playlist_id: '',
     logo: '',
     bg_image: '',
+    bg_video_url: '',
     facebook_url: '',
     instagram_url: '',
     twitter_url: '',
@@ -256,6 +257,18 @@ const AdminAjustes = () => {
                                                 <input type="file" hidden onChange={async e => set('bg_image', await uploadFile(e.target.files[0]))} />
                                             </label>
                                         </div>
+                                    </div>
+                                    <div className="col-12">
+                                        <label style={labelStyle}>Video de Fondo para Proyector</label>
+                                        <input
+                                            className="form-control oasis-input"
+                                            value={settings.bg_video_url}
+                                            onChange={e => set('bg_video_url', e.target.value)}
+                                            placeholder="https://.../nature-loop.mp4"
+                                        />
+                                        <small className="mt-2 d-block" style={{ opacity: 0.5, color: isDark ? '#fff' : '#000' }}>
+                                            Usa un video MP4 o WebM en loop, idealmente sin audio, para el fondo del proyector.
+                                        </small>
                                     </div>
                                 </div>
                             </div>

@@ -17,10 +17,17 @@ export default {
                     dark: '#1f1f2e',
                     slate: '#102027',
                 },
+                'oasis-orange': '#FFA500',
+                'oasis-yellow': '#FFB800',
+                'oasis-red': '#FF0000',
+                'oasis-green': '#4CAF50',
+                'ui-bg': '#F8F9FA',
             },
             fontFamily: {
                 sans: ['AdventSans', 'system-ui', 'sans-serif'],
                 title: ['ModernAge', 'system-ui', 'sans-serif'],
+                // Integración de la fuente Moonrising
+                moonrising: ['"Moonrising"', 'system-ui', 'sans-serif'],
             },
             backdropBlur: {
                 glass: '20px',
@@ -33,6 +40,9 @@ export default {
                 'glass': '0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15)',
                 'glass-sm': '0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.1)',
                 'nav': '0 2px 24px rgba(91,46,166,0.15)',
+                'neumorph': '10px 10px 20px #e0e0e0, -10px -10px 20px #ffffff',
+                'neumorph-inset': 'inset 5px 5px 10px #e0e0e0, inset -5px -5px 10px #ffffff',
+                'neumorph-sm': '4px 4px 8px #e0e0e0, -4px -4px 8px #ffffff',
             },
             animation: {
                 'slide-up': 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',

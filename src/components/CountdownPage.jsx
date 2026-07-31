@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Pause, Play, RotateCcw, Maximize, Minimize } from 'lucide-react';
-import { COUNTDOWN_PRESETS } from './CountdownLiveModal';
+import CountdownLiveModal from './studio-oasis/CountdownLiveModal';
+import { supabase } from '../api/supabaseClient';
 
 // ─── Página standalone de countdown ──────────────────────────────────────────
 const CountdownPage = () => {
@@ -13,33 +14,52 @@ const CountdownPage = () => {
     const containerRef = useRef();
     const intervalRef  = useRef();
 
-    // ── Leer config de sessionStorage al montar ──
+    // ── Cargar config desde localStorage y AUTO-INICIAR ──
+    const loadAndStart = (cfg) => {
+        const mins = cfg?.minutes ?? 5;
+        const secs = cfg?.seconds ?? 0;
+        const total = mins * 60 + secs;
+        setConfig({
+            message:        cfg?.message        ?? '¡Iniciamos Transmisión!',
+            subMessage:     cfg?.subMessage     ?? 'Prepárense para el culto',
+            selectedPreset: cfg?.selectedPreset ?? 'oasis',
+            customBg:       cfg?.customBg       ?? null,
+        });
+        setTotalSeconds(total);
+        setRemaining(total);
+        // Resetear a 'ready' primero para forzar re-mount del intervalo, luego iniciar
+        setPhase('ready');
+        setTimeout(() => setPhase('running'), 50);
+    };
+
     useEffect(() => {
         try {
             const raw = localStorage.getItem('oasis_countdown_config');
-            const cfg = raw ? JSON.parse(raw) : {};
-            const mins = cfg.minutes ?? 5;
-            const secs = cfg.seconds ?? 0;
-            const total = mins * 60 + secs;
-            setConfig({
-                message:        cfg.message        ?? '¡Iniciamos Transmisión!',
-                subMessage:     cfg.subMessage     ?? 'Prepárense para el culto',
-                selectedPreset: cfg.selectedPreset ?? 'oasis',
-                customBg:       cfg.customBg       ?? null,
-            });
-            setTotalSeconds(total);
-            setRemaining(total);
+            loadAndStart(raw ? JSON.parse(raw) : {});
         } catch {
-            const total = 5 * 60;
-            setConfig({ message: '¡Iniciamos Transmisión!', subMessage: 'Prepárense para el culto', selectedPreset: 'oasis', customBg: null });
-            setTotalSeconds(total);
-            setRemaining(total);
+            loadAndStart({});
         }
-        // Título de la pestaña
         document.title = 'Contador — Oasis Community';
+
+        // ── Suscripción Supabase: recibir nuevas configuraciones si ya estaba abierta ──
+        const channel = supabase.channel('obs_public_channel');
+        channel.on('broadcast', { event: 'update_overlay' }, ({ payload }) => {
+            if (payload?.mode === 'countdown') {
+                // Leer la config actualizada de localStorage (el modal ya la guardó)
+                try {
+                    const raw = localStorage.getItem('oasis_countdown_config');
+                    loadAndStart(raw ? JSON.parse(raw) : {});
+                } catch {
+                    loadAndStart({});
+                }
+            }
+        }).subscribe();
+
+        return () => { supabase.removeChannel(channel); };
     }, []);
 
     const handleStart = () => setPhase('running');
+
 
     // ── Temporizador ──
     useEffect(() => {

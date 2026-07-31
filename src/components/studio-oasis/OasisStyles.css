@@ -1,0 +1,60 @@
+/* OasisStyles.css - Neumorphic design for Studio Oasis */
+
+.studio-oasis-theme {
+    background-color: #F8F9FA;
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    color: #1a1a1a;
+}
+
+.neumorph-card {
+    background: #F8F9FA;
+    box-shadow: 10px 10px 20px #e0e0e0, -10px -10px 20px #ffffff;
+    border-radius: 20px;
+}
+
+.neumorph-button {
+    background: #F8F9FA;
+    box-shadow: 4px 4px 8px #e0e0e0, -4px -4px 8px #ffffff;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.neumorph-button:active {
+    box-shadow: inset 2px 2px 5px #e0e0e0, inset -2px -2px 5px #ffffff;
+    transform: scale(0.98);
+}
+
+.neumorph-inset {
+    background: #F8F9FA;
+    box-shadow: inset 4px 4px 8px #e0e0e0, inset -4px -4px 8px #ffffff;
+}
+
+/* Custom Scrollbar for neatness */
+.studio-oasis-theme ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.studio-oasis-theme ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.studio-oasis-theme ::-webkit-scrollbar-thumb {
+    background: #FFB800;
+    border-radius: 10px;
+}
+
+.studio-oasis-theme ::-webkit-scrollbar-thumb:hover {
+    background: #FFA500;
+}
+
+@font-face {
+    font-family: 'Moonrising';
+    src: url('/fonts/Moonrising.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}

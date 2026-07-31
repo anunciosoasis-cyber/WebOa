@@ -32,11 +32,12 @@ const AdminUsers = lazy(() => import('../components/AdminUsers'));
 const AdminAjustes = lazy(() => import('../components/AdminAjustes'));
 const AdminForms = lazy(() => import('../components/AdminForms'));
 const AdminAbout = lazy(() => import('../components/AdminAbout'));
-const AdminCulto = lazy(() => import('../components/AdminCulto'));
+const StudioOasisOrchestrator = lazy(() => import('../components/studio-oasis/StudioOasisOrchestrator'));
 const AdminEmailTemplate = lazy(() => import('../components/AdminEmailTemplate'));
 const YoutubeCallback = lazy(() => import('../components/YoutubeCallback'));
 const CountdownPage = lazy(() => import('../components/CountdownPage'));
 const ObsOverlay = lazy(() => import('./modules/ObsOverlay'));
+const ProyectorOverlay = lazy(() => import('./modules/ProyectorOverlay'));
 
 // ──────────────────────────────────────────────────────
 
@@ -60,6 +61,7 @@ const App = () => {
                                 {/* Página standalone de countdown (sin layout, sin auth) */}
                                 <Route path="/countdown-live" element={<CountdownPage />} />
                                 <Route path="/transmision/overlay" element={<ObsOverlay />} />
+                                <Route path="/transmision/proyector" element={<ProyectorOverlay />} />
 
                                 {/* ... existing routes ... */}
                                 <Route element={<LayoutMaestro />}>
@@ -84,7 +86,7 @@ const App = () => {
                                         <Route path="/admin/inscripciones" element={<AdminForms />} />
                                         <Route path="/admin/ajustes" element={<AdminAjustes />} />
                                         <Route path="/admin/about" element={<AdminAbout />} />
-                                        <Route path="/admin/culto" element={<AdminCulto />} />
+                                        <Route path="/admin/culto" element={<StudioOasisOrchestrator />} />
                                         <Route path="/admin/settings/youtube/callback" element={<YoutubeCallback />} />
                                         <Route path="/admin/plantilla-correo" element={<AdminEmailTemplate />} />
                                         <Route path="/admin/creator" element={<AdminAnnouncements />} />
