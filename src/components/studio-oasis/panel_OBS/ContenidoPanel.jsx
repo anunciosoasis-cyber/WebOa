@@ -142,6 +142,7 @@ const ContenidoPanel = ({
 
                                         if (hymn) {
                                             setSelectedHymn(hymn);
+                                            setSelectedStanza(hymn.stanzas && hymn.stanzas.length > 0 ? hymn.stanzas[0] : null);
                                             setHymnSearch('');
                                         }
                                     }
