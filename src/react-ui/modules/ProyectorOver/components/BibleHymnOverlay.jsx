@@ -10,13 +10,17 @@ const BibleHymnOverlay = ({ overlayData, overlayStyle }) => {
         const lines = text.split(/\r\n|\r|\n/).length;
         const chars = text.length;
         
-        let size = defaultSizeRem;
+        // Cálculo matemático riguroso: 
+        // 70vh disponibles divididos entre (cantidad de líneas * 1.45 de line-height)
+        const maxVh = 70 / (lines * 1.45);
         
+        let size = defaultSizeRem;
         if (lines >= 8 || chars > 250) size = defaultSizeRem * 0.55;
         else if (lines >= 6 || chars > 180) size = defaultSizeRem * 0.70;
         else if (lines >= 5 || chars > 120) size = defaultSizeRem * 0.82;
         
-        return `${size}rem`;
+        // Obliga a que la fuente no exceda los rem calculados, ni tampoco el límite matemático de altura
+        return `min(${size}rem, ${maxVh}vh)`;
     };
 
     // Animaciones por físicas de resorte desacopladas para impacto televisivo
