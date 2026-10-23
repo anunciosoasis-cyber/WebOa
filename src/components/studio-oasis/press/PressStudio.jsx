@@ -64,7 +64,7 @@ export const PressStudio = () => {
     e.target.value = '';
     if (!file) return;
     try {
-      const url = await imageFileToDataUrl(file, 1920, 0.8);
+      const url = await imageFileToDataUrl(file, 1280, 0.75);
       setPressBackground(url);
       try { localStorage.setItem(BG_KEY, url); } catch { showToast('Fondo aplicado solo hasta recargar: la imagen es muy pesada para guardarla', 'warning'); }
     } catch {
@@ -80,14 +80,21 @@ export const PressStudio = () => {
   const pushSlideToScreens = () => {
     const activeSlide = slides[currentSlideIndex];
     const media = activeSlide?.fileUrl || activeSlide?.mediaUrl || null;
+    const effectiveBg = shareableUrl(activeSlide?.background) || shareableUrl(pressBackground) || null;
+    const slideToSend = activeSlide ? {
+      ...activeSlide,
+      background: effectiveBg,
+      fileUrl: shareableUrl(activeSlide.fileUrl) || activeSlide.fileUrl,
+      mediaUrl: shareableUrl(activeSlide.mediaUrl) || activeSlide.mediaUrl,
+    } : null;
     // La diapositiva viaja completa: el proyector la pinta con el mismo componente que la vista previa
     const overlayPayload = {
       mode: isBlank ? 'blank' : 'slide',
       title: presentationTitle ? `${presentationTitle} — Diapositiva ${currentSlideIndex + 1}` : `Diapositiva ${currentSlideIndex + 1}`,
       content: activeSlide?.subtitle || activeSlide?.title || '',
       mediaType: activeSlide?.mediaType || (activeSlide?.type === 'video' ? 'video' : media ? 'image' : null),
-      slide: activeSlide || null,
-      background: pressBackground,
+      slide: slideToSend,
+      background: effectiveBg,
       target: 'proyector',
       timestamp: Date.now(),
     };
@@ -96,10 +103,11 @@ export const PressStudio = () => {
     } catch (e) {
       console.warn('Imagen demasiado grande para el proyector local:', e);
     }
-    // Vídeos o imágenes locales grandes no caben en un mensaje: esas solo llegan al proyector de este PC
-    if (!media || shareableUrl(media)) {
-      pressChannelRef.current?.send({ type: 'broadcast', event: 'ppt_slide', payload: { ...overlayPayload, background: shareableUrl(pressBackground) } });
-    }
+    pressChannelRef.current?.send({
+      type: 'broadcast',
+      event: 'ppt_slide',
+      payload: overlayPayload,
+    });
   };
 
   // Proyectar: envía la diapositiva actual a las pantallas ya abiertas (no abre ventanas;

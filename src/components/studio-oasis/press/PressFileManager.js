@@ -184,7 +184,7 @@ export class PressFileManager {
  * Lee una imagen como data URL reducida (lado mayor ≤ maxSide). Así cabe en localStorage para el proyector
  * de este PC y, si queda pequeña, también viaja por el canal en tiempo real.
  */
-export const imageFileToDataUrl = (file, maxSide = 1600, quality = 0.82) => new Promise((resolve, reject) => {
+export const imageFileToDataUrl = (file, maxSide = 1280, quality = 0.75) => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.onerror = () => reject(reader.error);
   reader.onload = () => {

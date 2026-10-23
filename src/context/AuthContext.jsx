@@ -28,18 +28,27 @@ const decodeJwtPayload = (token) => {
 };
 
 const getUserFromStorage = () => {
-  const storedUser = parseStoredUser();
-  if (storedUser && typeof storedUser === 'object') {
-    return storedUser;
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    localStorage.removeItem(USER_KEY);
+    return null;
   }
 
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) return null;
-
   const payload = decodeJwtPayload(token);
-  if (!payload) return null;
+  // Si el token es corrupto o ya expiró, limpiar sesión completamente
+  if (!payload || (payload.exp && Date.now() >= payload.exp * 1000)) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    return null;
+  }
 
-  // Fallback para mantener sesión entre pestañas aunque falte auth_user.
+  const storedUser = parseStoredUser();
+  if (storedUser && typeof storedUser === 'object') {
+    return { ...storedUser, role: payload.role || storedUser.role };
+  }
+
+  // Fallback generado del payload JWT verificado
   return {
     id: payload.sub,
     username: payload.username || '',
@@ -169,5 +178,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-

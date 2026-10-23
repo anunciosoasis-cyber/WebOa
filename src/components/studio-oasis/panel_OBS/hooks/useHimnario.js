@@ -30,6 +30,7 @@ export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymn
             try {
                 const res = await mediaClient.get('/hymns');
                 if (res.data && res.data.length > 0) {
+                    console.log('[AME] Himnos cargados con exito desde Adventist Media Engine:', res.data.length);
                     const mappedData = res.data.map(h => ({
                         ...h,
                         mp3Url: h.audio_url || h.mp3Url,

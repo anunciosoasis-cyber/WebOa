@@ -27,7 +27,10 @@ export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleT
                 // 1. API de la suite (AdventistMediaEngine, RVR1960)
                 try {
                     const res = await mediaClient.get('/bible/chapter', { params: { book: selectedBook.name, chapter: selectedChapter } });
-                    if (res.data?.length) return apply(res.data);
+                    if (res.data?.length) {
+                        console.log('[AME] Pasaje biblico cargado desde Adventist Media Engine:', selectedBook.name, selectedChapter, res.data.length);
+                        return apply(res.data);
+                    }
                 } catch (apiErr) {
                     console.warn('⚠️ API de Biblia no disponible. Probando bolls.life...', apiErr.message);
                 }

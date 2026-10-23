@@ -82,7 +82,7 @@ export const overlayChannel = (key) => realtime.channel(`oasis_live_${key}`);
 export const pressChannel = (key) => realtime.channel(`oasis_press_${key}`);
 
 // Supabase limita el tamaño de cada mensaje; las imágenes locales grandes (data:) o los vídeos (blob:) no viajan.
-const MAX_INLINE_IMAGE = 150_000;
+const MAX_INLINE_IMAGE = 2_000_000;
 export const shareableUrl = (url) => {
     if (typeof url !== 'string') return null;
     if (/^https?:\/\//.test(url)) return url;
@@ -112,7 +112,13 @@ export const sanitizeOverlay = (payload) => {
         if (field in clean) clean[field] = safeMedia(clean[field]);
     }
     if (clean.slide && typeof clean.slide === 'object') {
-        clean.slide = { ...clean.slide, fileUrl: safeMedia(clean.slide.fileUrl), mediaUrl: safeMedia(clean.slide.mediaUrl) };
+        clean.slide = {
+            ...clean.slide,
+            fileUrl: safeMedia(clean.slide.fileUrl),
+            mediaUrl: safeMedia(clean.slide.mediaUrl),
+            background: safeMedia(clean.slide.background),
+            bgImage: safeMedia(clean.slide.bgImage),
+        };
     }
     return clean;
 };
