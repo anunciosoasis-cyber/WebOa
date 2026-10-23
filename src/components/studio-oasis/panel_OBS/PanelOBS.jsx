@@ -72,11 +72,8 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
     const pushToOBSRef = useRef(null);
     const pushToOBS = (...args) => pushToOBSRef.current && pushToOBSRef.current(...args);
 
-    const biblia = useBiblia(pushToOBS, setActivePreviewSource, isBibleLive, bibleTemplate, obsWS.liveOverlay);
-    const { selectedBook, setSelectedBook, selectedChapter, setSelectedChapter, verses, selectedVerseObj, setSelectedVerseObj, isLoadingVerses, remoteTargetVerseRef, handlePrevVerse, handleNextVerse } = biblia;
-
-    const himnario = useHimnario(pushToOBS, setActivePreviewSource, isBibleLive, hymnalTemplate, obsWS.liveOverlay);
-    const { himnarioList, selectedHymn, setSelectedHymn, selectedStanza, setSelectedStanza, isLoadingHymns, hymnSearchTerm, setHymnSearchTerm, isHymnDropdownOpen, setIsHymnDropdownOpen, handleHymnSelect, handlePrevHymn, handleNextHymn, handlePrevStanza, handleNextStanza, isAutoAdvanceHymn, setIsAutoAdvanceHymn, autoAdvanceSeconds, setAutoAdvanceSeconds, autoAdvanceCountdown, setAutoAdvanceCountdown } = himnario;
+    const himnarioRef = useRef(null);
+    const bibliaRef = useRef(null);
 
     const obsWS = useObsWebSockets(colors, {
         setIsBibleLive,
@@ -84,18 +81,26 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
         setActiveTab,
         setPreacher,
         setAnnouncement,
-        handleNextHymn,
-        handlePrevHymn,
-        himnarioList,
-        handleHymnSelect,
-        setSelectedStanza,
+        handleNextHymn: () => himnarioRef.current?.handleNextHymn(),
+        handlePrevHymn: () => himnarioRef.current?.handlePrevHymn(),
+        get himnarioList() { return himnarioRef.current?.himnarioList || []; },
+        handleHymnSelect: (h) => himnarioRef.current?.handleHymnSelect(h),
+        setSelectedStanza: (s) => himnarioRef.current?.setSelectedStanza(s),
         globalTemplate,
-        remoteTargetVerseRef,
-        setSelectedBook,
-        setSelectedChapter,
-        setSelectedVerseObj
+        get remoteTargetVerseRef() { return bibliaRef.current?.remoteTargetVerseRef; },
+        setSelectedBook: (b) => bibliaRef.current?.setSelectedBook(b),
+        setSelectedChapter: (c) => bibliaRef.current?.setSelectedChapter(c),
+        setSelectedVerseObj: (v) => bibliaRef.current?.setSelectedVerseObj(v)
     });
     const { liveOverlay, setLiveOverlay, obsChannel } = obsWS;
+
+    const biblia = useBiblia(pushToOBS, setActivePreviewSource, isBibleLive, bibleTemplate, liveOverlay);
+    bibliaRef.current = biblia;
+    const { selectedBook, setSelectedBook, selectedChapter, setSelectedChapter, verses, selectedVerseObj, setSelectedVerseObj, isLoadingVerses, remoteTargetVerseRef, handlePrevVerse, handleNextVerse } = biblia;
+
+    const himnario = useHimnario(pushToOBS, setActivePreviewSource, isBibleLive, hymnalTemplate, liveOverlay);
+    himnarioRef.current = himnario;
+    const { himnarioList, selectedHymn, setSelectedHymn, selectedStanza, setSelectedStanza, isLoadingHymns, hymnSearchTerm, setHymnSearchTerm, isHymnDropdownOpen, setIsHymnDropdownOpen, handleHymnSelect, handlePrevHymn, handleNextHymn, handlePrevStanza, handleNextStanza, isAutoAdvanceHymn, setIsAutoAdvanceHymn, autoAdvanceSeconds, setAutoAdvanceSeconds, autoAdvanceCountdown, setAutoAdvanceCountdown } = himnario;
     
     useEffect(() => {
         pushToOBSRef.current = obsWS.pushToOBS;
