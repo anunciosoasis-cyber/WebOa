@@ -132,13 +132,9 @@ const Body = ({ slide, isBlank, background }) => {
     );
   }
 
-  // 2. VÍDEO / 3. IMAGEN O PÁGINA DE PDF: a pantalla completa con relleno desenfocado
-  if (media) {
-    return <MediaFit src={media} alt={slide.title || 'Diapositiva'} video={isVideoMedia(slide, media)} />;
-  }
-
-  // 4. ELEMENTOS ESTRUCTURADOS (.pptx / JSON)
-  if (slide.elements && slide.elements.length > 0) {
+  // 4. ELEMENTOS ESTRUCTURADOS (.pptx / JSON con títulos o texto)
+  const hasTextElements = slide.elements?.some((el) => el.type === 'heading' || el.type === 'text');
+  if (hasTextElements) {
     return (
       <div className="relative w-full h-full">
         <Backdrop background={background} bgColor={slide.style?.bgColor} gradientClass={slide.bg} />
@@ -162,6 +158,11 @@ const Body = ({ slide, isBlank, background }) => {
         </div>
       </div>
     );
+  }
+
+  // 2. VÍDEO / 3. IMAGEN O PÁGINA DE PDF: a pantalla completa con relleno desenfocado
+  if (media) {
+    return <MediaFit src={media} alt={slide.title || 'Diapositiva'} video={isVideoMedia(slide, media)} />;
   }
 
   // 5. CARTEL / TARJETA DE TEXTO

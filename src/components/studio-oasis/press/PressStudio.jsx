@@ -10,7 +10,7 @@ import PressThumbnails from './PressThumbnails';
 import PressUploader from './PressUploader';
 import PressEditModal from './PressEditModal';
 import QRCode from 'qrcode';
-import { supabase } from '../../../api/supabaseClient';
+import { realtime } from '../../../api/realtime';
 import { useLiveKey, liveUrl, pressChannel, shareableUrl } from '../../../api/liveChannel';
 
 const SLIDES_KEY = 'oasis_press_slides';
@@ -145,6 +145,27 @@ export const PressStudio = () => {
       nextSlideTitle: next ? (next.title || `Diapositiva ${currentSlideIndex + 2}`) : 'Fin de Presentación',
       activeSlideUrl: shareableUrl(active?.fileUrl || active?.mediaUrl),
       nextSlideUrl: shareableUrl(next?.fileUrl || next?.mediaUrl),
+      activeSlide: active ? {
+        title: active.title || `Diapositiva ${currentSlideIndex + 1}`,
+        subtitle: active.subtitle || '',
+        type: active.type || 'styled',
+        fileUrl: shareableUrl(active.fileUrl || active.mediaUrl) || null,
+        background: shareableUrl(active.background) || shareableUrl(pressBackground) || null,
+      } : null,
+      nextSlide: next ? {
+        title: next.title || `Diapositiva ${currentSlideIndex + 2}`,
+        subtitle: next.subtitle || '',
+        type: next.type || 'styled',
+        fileUrl: shareableUrl(next.fileUrl || next.mediaUrl) || null,
+        background: shareableUrl(next.background) || shareableUrl(pressBackground) || null,
+      } : null,
+      slidesSummary: slides.map((sl, i) => ({
+        index: i + 1,
+        title: sl.title || `Diapositiva ${i + 1}`,
+        subtitle: sl.subtitle || '',
+        type: sl.type || 'styled',
+        thumbnail: shareableUrl(sl.fileUrl || sl.mediaUrl || sl.background) || shareableUrl(pressBackground) || null,
+      })),
       timestamp: Date.now(),
     };
   })();
@@ -173,6 +194,9 @@ export const PressStudio = () => {
           setIsBlank(false);
         } else if (action === 'TOGGLE_BLANK') {
           setIsBlank((prev) => !prev);
+        } else if (action === 'GOTO' && typeof payload?.index === 'number') {
+          setCurrentSlideIndex(Math.max(0, Math.min(slideCountRef.current - 1, payload.index)));
+          setIsBlank(false);
         }
       })
       .on('broadcast', { event: 'ppt_request_state' }, sendState)
@@ -205,7 +229,7 @@ export const PressStudio = () => {
     pressChannelRef.current = channel;
     return () => {
       pressChannelRef.current = null;
-      supabase.removeChannel(channel);
+      realtime.removeChannel(channel);
     };
   }, [liveKey]);
 

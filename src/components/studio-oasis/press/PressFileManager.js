@@ -61,12 +61,16 @@ export class PressFileManager {
               s.elements?.find((el) => el.type === 'image')?.content ||
               null;
 
+                        // PDF es imagen completa por página; PPTX con texto es diapositiva estructurada
+            const isPureImage = extension === 'pdf' || (!bodyTexts && !s.elements?.some((el) => el.type === 'heading') && !!imgContent);
+
             return {
               id: s.id || `slide-processed-${Date.now()}-${idx}`,
               title: mainHeading,
-              subtitle: bodyTexts || `Página ${idx + 1} de ${ast.slides.length}`,
-              fileUrl: imgContent,
-              type: imgContent ? 'image' : 'styled',
+              subtitle: bodyTexts || (isPureImage ? '' : `Página ${idx + 1} de ${ast.slides.length}`),
+              fileUrl: isPureImage ? imgContent : null,
+              mediaUrl: isPureImage ? imgContent : null,
+              type: isPureImage ? 'image' : 'styled',
               elements: s.elements,
             };
           });
@@ -75,12 +79,14 @@ export class PressFileManager {
         }
       } catch (err) {
         console.warn(`Procesando cliente directo para ${file.name}:`, err);
-        const fallbackSlide = await this.processSingleImageFallback(file);
+        if (!['pptx', 'pdf'].includes(extension)) {
+          const fallbackSlide = await this.processSingleImageFallback(file);
         if (fallbackSlide) {
           slidesList.push(fallbackSlide);
           if (!presentationTitle) presentationTitle = file.name.split('.')[0];
         }
       }
+    }
     }
 
     return {

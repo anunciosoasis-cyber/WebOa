@@ -5,18 +5,12 @@
  */
 
 import { PresentationAST, SlideNode, SlideElement } from '../../types/slide.types';
+import JSZip from 'jszip';
 
 export class PPTXParser {
   
   private async ensureJSZip(): Promise<any> {
-    if ((window as any).JSZip) return (window as any).JSZip;
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      script.onload = () => resolve((window as any).JSZip);
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
+    return JSZip;
   }
 
   private async ensurePdfJs(): Promise<any> {
@@ -148,12 +142,40 @@ export class PPTXParser {
             });
           }
 
-          // 3. Imagen de apoyo integrada si la diapositiva la incluye
-          if (mediaKeys[i]) {
+          // 3. Imagen de apoyo integrada si esta diapositiva específica la incluye
+          let slideImageUri: string | null = null;
+          const slideNumMatch = slidePath.match(/slide(\d+)\.xml/);
+          if (slideNumMatch) {
+            const relsPath = `ppt/slides/_rels/slide${slideNumMatch[1]}.xml.rels`;
+            if (zip.files[relsPath]) {
+              try {
+                const relsText = await zip.files[relsPath].async('text');
+                const relsDoc = parser.parseFromString(relsText, 'text/xml');
+                const relNodes = Array.from(relsDoc.getElementsByTagName('Relationship'));
+                for (const r of relNodes) {
+                  const target = r.getAttribute('Target') || '';
+                  const type = r.getAttribute('Type') || '';
+                  if (type.includes('image') || /\.(png|jpe?g|webp|gif|svg)$/i.test(target)) {
+                    const normPath = target.startsWith('/')
+                      ? target.slice(1)
+                      : ('ppt/slides/' + target).replace(/\/+/g, '/').replace(/ppt\/slides\/\.\.\//, 'ppt/');
+                    if (mediaMap[normPath]) {
+                      slideImageUri = mediaMap[normPath];
+                      break;
+                    }
+                  }
+                }
+              } catch (e) {
+                console.warn('Error leyendo rels de diapositiva:', e);
+              }
+            }
+          }
+
+          if (slideImageUri) {
             elements.push({
               id: `el-img-${i}`,
               type: 'image',
-              content: mediaMap[mediaKeys[i]],
+              content: slideImageUri,
               style: { maxHeight: '180px', width: 'auto', margin: '1rem auto', borderRadius: '1rem' }
             });
           }
@@ -199,14 +221,14 @@ export class PPTXParser {
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 2.0 }); // Escala 2.0 para nitidez HD
+        const viewport = page.getViewport({ scale: 1.5 }); // Escala 1.5 para equilibrio ideal HD y rendimiento
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
         await page.render({ canvasContext: context, viewport }).promise;
-        const dataUrl = canvas.toDataURL('image/png');
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
         slides.push({
           id: `slide-pdf-${i}`,
