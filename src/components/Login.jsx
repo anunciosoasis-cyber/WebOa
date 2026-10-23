@@ -92,6 +92,20 @@ export default function Login() {
         );
     };
 
+    const handleGoogleSuccess = (result) => {
+        if (result?.user) {
+            const account = {
+                name: result.user.name || result.user.full_name || 'Operador',
+                role: result.user.role || 'Admin',
+                email: result.user.email,
+                avatar: result.user.avatar || null,
+            };
+            const others = knownUsers.filter((u) => u.email !== account.email);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify([account, ...others].slice(0, 4)));
+        }
+        enterAdmin();
+    };
+
     const handleSwitchMode = (targetView) => {
         setView(targetView);
         setError('');
@@ -338,7 +352,7 @@ export default function Login() {
                                 <div className="lg-ref-google-container">
                                     <GoogleSignInButton
                                         theme={isDark ? 'filled_black' : 'outline'}
-                                        onSuccess={enterAdmin}
+                                        onSuccess={handleGoogleSuccess}
                                         onError={triggerError}
                                     />
                                 </div>
@@ -540,7 +554,7 @@ export default function Login() {
                                 <div className="lg-ref-google-container">
                                     <GoogleSignInButton
                                         theme={isDark ? 'filled_black' : 'outline'}
-                                        onSuccess={enterAdmin}
+                                        onSuccess={handleGoogleSuccess}
                                         onError={triggerError}
                                     />
                                 </div>

@@ -26,6 +26,7 @@ const DEFAULT_SLIDES = [
 ];
 // Presentaciones de la app ya insertadas aquí (no se repiten al recuperar las pendientes)
 const IMPORTED_KEY = 'oasis_press_imported_decks';
+const APPLIED_OPS_KEY = 'oasis_press_applied_ops';
 const readImported = () => {
   try {
     const raw = localStorage.getItem(IMPORTED_KEY);
@@ -58,7 +59,26 @@ const getSafeRemoteImage = (slide) => {
   return slide.thumbnailUrl || null;
 };
 
-const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank) => {
+// Diapositivas de texto que la app puede editar (las de imagen/vídeo solo se mueven o borran)
+const EDITABLE_TYPES = new Set(['styled', 'hybrid_announcement']);
+
+// Lo que llega de la app: solo textos y estilo (nada de URLs de medios), recortados
+const appText = (v) => (typeof v === 'string' ? v.slice(0, 500) : '');
+const appSlideFields = (sl) => {
+  const ev = sl?.eventData || {};
+  const st = sl?.style || {};
+  return {
+    title: appText(sl?.title),
+    subtitle: appText(sl?.subtitle),
+    eventData: { tag: appText(ev.tag), speaker: appText(ev.speaker), eventDate: appText(ev.eventDate), location: appText(ev.location) },
+    style: {
+      ...Object.fromEntries(['bgColor', 'textColor', 'accentColor', 'fontFamily'].filter((k) => typeof st[k] === 'string').map((k) => [k, st[k].slice(0, 40)])),
+      ...Object.fromEntries(['bold', 'italic', 'underline'].filter((k) => typeof st[k] === 'boolean').map((k) => [k, st[k]])),
+    },
+  };
+};
+
+const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank, appliedOps = []) => {
   const active = allSlides[activeIndex];
   const next = allSlides[activeIndex + 1];
 
@@ -92,11 +112,16 @@ const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank)
     } : null,
     slidesSummary: allSlides.map((sl, i) => ({
       index: i + 1,
+      id: String(sl.id ?? i),
       title: sl.title || `Diapositiva ${i + 1}`,
       subtitle: sl.subtitle || '',
       type: sl.type || 'styled',
       thumbnail: sl.thumbnailUrl || (typeof sl.fileUrl === 'string' && (sl.fileUrl.startsWith('http') || sl.fileUrl.length < 200_000) ? sl.fileUrl : null),
+      // Datos para editarla desde la app (solo diapositivas de texto)
+      ...(EDITABLE_TYPES.has(sl.type || 'styled') ? { editable: true, eventData: sl.eventData || {}, style: { ...DEFAULT_SLIDE_STYLE, ...(sl.style || {}) } } : {}),
     })),
+    // Cambios de la app ya aplicados aquí: la app deja de reenviarlos (ver ppt_add/update/delete_slide)
+    appliedOps,
     timestamp: Date.now(),
   };
 };
@@ -208,12 +233,29 @@ export const PressStudio = () => {
     pushSlideToScreens();
   }, [currentSlideIndex, isBlank]);
 
+  // Operaciones de la app ya aplicadas (opId): la app las reenvía hasta verlas en ppt_state, así nunca se duplican.
+  // Se guardan para que una recarga del Estudio no vuelva a aplicar algo que la app aún no vio confirmado.
+  const appliedOpsRef = useRef(null);
+  if (appliedOpsRef.current === null) {
+    try { appliedOpsRef.current = JSON.parse(localStorage.getItem(APPLIED_OPS_KEY)) || []; } catch { appliedOpsRef.current = []; }
+  }
+  const slidesRef = useRef(slides);
+  slidesRef.current = slides;
+
   // Control remoto (celular) por el canal en tiempo real
   const remoteStateRef = useRef(null);
-  remoteStateRef.current = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank);
+  remoteStateRef.current = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank, appliedOpsRef.current);
   const announcedDecksRef = useRef(new Set());
   const slideCountRef = useRef(slides.length);
   slideCountRef.current = slides.length;
+
+  const applyOnce = (opId, apply) => {
+    if (typeof opId !== 'string' || appliedOpsRef.current.includes(opId)) return false;
+    appliedOpsRef.current = [...appliedOpsRef.current, opId].slice(-100);
+    try { localStorage.setItem(APPLIED_OPS_KEY, JSON.stringify(appliedOpsRef.current)); } catch { /* solo en memoria */ }
+    apply();
+    return true;
+  };
 
   // Lo que llega de la app se inserta después de la actual y pasa al aire: quien lo envió espera verlo.
   const insertFromApp = (incoming, message) => {
@@ -266,7 +308,8 @@ export const PressStudio = () => {
   useEffect(() => {
     if (!liveKey) return;
     const channel = pressChannel(liveKey);
-    const sendState = () => channel.send({ type: 'broadcast', event: 'ppt_state', payload: remoteStateRef.current });
+    // Con la lista de cambios aplicados al día (la app la usa para confirmar lo que envió)
+    const sendState = () => channel.send({ type: 'broadcast', event: 'ppt_state', payload: { ...remoteStateRef.current, appliedOps: appliedOpsRef.current } });
     channel
       .on('broadcast', { event: 'ppt_command' }, ({ payload }) => {
         const action = payload?.action;
@@ -291,22 +334,41 @@ export const PressStudio = () => {
       })
       .on('broadcast', { event: 'ppt_request_state' }, sendState)
       // Diapositiva de texto creada en la app: solo campos de texto y estilo (nada de URLs de medios)
+      // Diapositivas de texto desde la app: crear, editar y borrar (idempotentes por opId)
       .on('broadcast', { event: 'ppt_add_slide' }, ({ payload }) => {
-        const sl = payload?.slide;
-        if (!sl || typeof sl.title !== 'string') return;
-        const text = (v) => (typeof v === 'string' ? v.slice(0, 500) : '');
-        const ev = sl.eventData || {};
-        const st = sl.style || {};
-        const slide = {
-          id: newSlideId(),
-          type: 'styled',
-          title: text(sl.title),
-          subtitle: text(sl.subtitle),
-          eventData: { tag: text(ev.tag), speaker: text(ev.speaker), eventDate: text(ev.eventDate), location: text(ev.location) },
-          style: { ...DEFAULT_SLIDE_STYLE, ...Object.fromEntries(['bgColor', 'textColor', 'accentColor', 'fontFamily'].filter((k) => typeof st[k] === 'string').map((k) => [k, st[k].slice(0, 40)])) },
-          hidden: {},
-        };
-        insertFromApp([slide], `Diapositiva "${slide.title}" recibida desde la app y al aire`);
+        if (typeof payload?.slide?.title !== 'string') return;
+        const slide = { id: newSlideId(), type: 'styled', hidden: {}, ...appSlideFields(payload.slide) };
+        slide.style = { ...DEFAULT_SLIDE_STYLE, ...slide.style };
+        applyOnce(payload.opId ?? newSlideId(), () => insertFromApp([slide], `Diapositiva "${slide.title}" recibida desde la app y al aire`));
+        sendState();
+      })
+      .on('broadcast', { event: 'ppt_update_slide' }, ({ payload }) => {
+        if (!payload?.id || !payload?.slide) return;
+        applyOnce(payload.opId ?? newSlideId(), () => {
+          const fields = appSlideFields(payload.slide);
+          setSlides((prev) => prev.map((sl) => (String(sl.id) !== String(payload.id) || !EDITABLE_TYPES.has(sl.type || 'styled') ? sl : {
+            ...sl,
+            title: fields.title,
+            subtitle: fields.subtitle,
+            eventData: { ...(sl.eventData || {}), ...fields.eventData },
+            style: { ...DEFAULT_SLIDE_STYLE, ...(sl.style || {}), ...fields.style },
+          })));
+          showToast(`Diapositiva "${fields.title}" editada desde la app`, 'success', 3000);
+        });
+        sendState();
+      })
+      .on('broadcast', { event: 'ppt_delete_slide' }, ({ payload }) => {
+        if (!payload?.id) return;
+        applyOnce(payload.opId ?? newSlideId(), () => {
+          const current = slidesRef.current;
+          const idx = current.findIndex((sl) => String(sl.id) === String(payload.id));
+          if (idx < 0 || current.length <= 1) return;
+          setSlides(current.filter((_, i) => i !== idx));
+          // La que está al aire no cambia: si se borra una anterior, el índice se corre
+          setCurrentSlideIndex((cur) => Math.max(0, Math.min(current.length - 2, idx < cur ? cur - 1 : cur)));
+          showToast('Diapositiva eliminada desde la app', 'info', 3000);
+        });
+        sendState();
       })
       .on('broadcast', { event: 'ppt_request_slide' }, () => {
         pushSlideToScreens();
@@ -333,7 +395,7 @@ export const PressStudio = () => {
 
   // Cada cambio de diapositiva se refleja en el celular con payload optimizado
   useEffect(() => {
-    const payload = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank);
+    const payload = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank, appliedOpsRef.current);
     remoteStateRef.current = payload;
     pressChannelRef.current?.send({ type: 'broadcast', event: 'ppt_state', payload });
   }, [currentSlideIndex, slides, isBlank, presentationTitle]);
@@ -368,7 +430,7 @@ export const PressStudio = () => {
           setPresentationTitle(result.title);
         }
         // Emitir inmediatamente al celular para sincronizar el archivo externo al instante
-        const immediatePayload = createRemotePayload(result.slides, 0, newTitle, false);
+        const immediatePayload = createRemotePayload(result.slides, 0, newTitle, false, appliedOpsRef.current);
         remoteStateRef.current = immediatePayload;
         pressChannelRef.current?.send({
           type: 'broadcast',

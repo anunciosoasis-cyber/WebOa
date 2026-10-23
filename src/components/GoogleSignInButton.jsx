@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/client';
 
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GSI_SRC = 'https://accounts.google.com/gsi/client';
 
 const loadGsi = () => new Promise((resolve, reject) => {
@@ -13,20 +13,34 @@ const loadGsi = () => new Promise((resolve, reject) => {
     if (!existing) document.head.appendChild(script);
 });
 
-/** Botón oficial "Iniciar sesión con Google" con fallback visual de alta fidelidad. */
+/** Botón oficial "Iniciar sesión con Google" con carga dinámica de client_id y fallback visual. */
 export default function GoogleSignInButton({ onSuccess, onError, theme = 'outline' }) {
     const { signInWithGoogle } = useAuth();
     const ref = useRef(null);
+    const [clientId, setClientId] = useState(import.meta.env.VITE_GOOGLE_CLIENT_ID || '');
     const [gsiReady, setGsiReady] = useState(false);
 
+    // Si Vite no incrustó el client_id al compilar, se solicita dinámicamente a la API en tiempo de ejecución
     useEffect(() => {
-        if (!CLIENT_ID) return;
+        if (!clientId) {
+            apiClient.get('/auth/config')
+                .then(({ data }) => {
+                    if (data?.googleClientId) {
+                        setClientId(data.googleClientId);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [clientId]);
+
+    useEffect(() => {
+        if (!clientId) return;
         let cancelled = false;
         loadGsi()
             .then(() => {
                 if (cancelled || !ref.current) return;
                 window.google.accounts.id.initialize({
-                    client_id: CLIENT_ID,
+                    client_id: clientId,
                     callback: async ({ credential }) => {
                         try {
                             onSuccess?.(await signInWithGoogle(credential));
@@ -47,11 +61,23 @@ export default function GoogleSignInButton({ onSuccess, onError, theme = 'outlin
             })
             .catch((err) => onError?.(err.message));
         return () => { cancelled = true; };
-    }, [theme]);
+    }, [clientId, theme]);
 
-    const handleCustomClick = () => {
-        if (!CLIENT_ID) {
-            onError?.('El acceso con Google requiere configurar VITE_GOOGLE_CLIENT_ID en el servidor.');
+    const handleCustomClick = async () => {
+        let activeId = clientId;
+        if (!activeId) {
+            try {
+                const { data } = await apiClient.get('/auth/config');
+                if (data?.googleClientId) {
+                    activeId = data.googleClientId;
+                    setClientId(data.googleClientId);
+                }
+            } catch {
+                // ignorar
+            }
+        }
+        if (!activeId) {
+            onError?.('El acceso con Google requiere configurar GOOGLE_CLIENT_IDS o GOOGLE_WEB_CLIENT_ID en el archivo .env del servidor.');
             return;
         }
         if (window.google?.accounts?.id) {
@@ -61,7 +87,7 @@ export default function GoogleSignInButton({ onSuccess, onError, theme = 'outlin
 
     return (
         <div className="lg-google-wrap" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-            {CLIENT_ID && (
+            {clientId && (
                 <div
                     ref={ref}
                     style={{
@@ -71,7 +97,7 @@ export default function GoogleSignInButton({ onSuccess, onError, theme = 'outlin
                     }}
                 />
             )}
-            {(!CLIENT_ID || !gsiReady) && (
+            {(!clientId || !gsiReady) && (
                 <button type="button" className="lg-ref-google-btn" onClick={handleCustomClick}>
                     <svg className="lg-ref-google-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
