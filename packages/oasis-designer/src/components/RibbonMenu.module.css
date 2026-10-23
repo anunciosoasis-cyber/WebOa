@@ -1,0 +1,161 @@
+/* RibbonMenu.module.css */
+
+/* Wrapper and themes */
+.wrapper {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1050;
+  flex-shrink: 0;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.light {
+  --bg-color: #ffffff;
+  --bg-secondary: #f9fafb;
+  --text-primary: #64748b;
+  --text-active: #5b2ea6;
+  background: var(--bg-color);
+}
+
+.dark {
+  /* Paleta del admin OASIS en modo oscuro */
+  --bg-color: rgba(36, 18, 74, 0.85);
+  --bg-secondary: rgba(27, 13, 54, 0.6);
+  --text-primary: #A79FC4;
+  --text-active: #F59E0B;
+  background: var(--bg-color);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Tab list */
+.tabList {
+  display: flex;
+  padding: 0 24px;
+  gap: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* Tab button base */
+.tabButton {
+  position: relative;
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  outline: none;
+  transition: color 0.2s ease;
+}
+
+.tabButton:hover {
+  color: var(--text-active);
+}
+
+.activeTab {
+  color: var(--text-active);
+  font-weight: 700;
+}
+
+.activeUnderline {
+  position: absolute;
+  bottom: -1px;
+  left: 12px;
+  right: 12px;
+  height: 3px;
+  background: var(--text-active);
+  border-radius: 4px 4px 0 0;
+  z-index: 2;
+}
+
+/* Content area */
+.contentArea {
+  height: 120px; /* generous height */
+  position: relative;
+  overflow: visible;
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.tabContent {
+  display: flex;
+  align-items: center;
+  padding: 0 30px;
+  height: 100%;
+  width: 100%;
+  gap: 24px; /* space between button islands */
+  overflow: visible;
+}
+
+/* Bottom shadow */
+.bottomShadow {
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.02), transparent);
+  pointer-events: none;
+}
+
+/* Fallback UI */
+.fallback {
+  padding: 16px;
+  background: #ffe5e5;
+  color: #b91c1c;
+  text-align: center;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .tabList {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+  .tabList::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+  .tabContent {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 16px;
+  }
+  .tabContent::-webkit-scrollbar {
+    display: none;
+  }
+  .contentArea {
+    height: auto;
+    min-height: 100px;
+    padding-bottom: 8px;
+  }
+}
+
+/* ── Modo panel deslizable (móvil): los grupos se reparten en filas en vez de una tira horizontal ── */
+.sheet {
+  background: transparent;
+  border-bottom: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.sheetContent > * {
+  flex-wrap: wrap !important;
+  height: auto !important;
+  width: 100% !important;
+  align-items: flex-start !important;
+  justify-content: center;
+  row-gap: 18px;
+  padding: 4px 0 8px;
+}
+.sheetContent > * > div {
+  height: auto !important;
+  border-right: none !important;
+}

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import apiClient from '../../api/client';
-import { supabase } from '../../api/supabaseClient'; // Make sure the path is correct
+import { supabase } from '../../api/supabaseClient';
+import { liveKeyFromUrl, overlayChannel, sanitizeOverlay, privateFallbackKey } from '../../api/liveChannel';
 import BibleHymnOverlay from './ProyectorOver/components/BibleHymnOverlay';
 import LowerThirdOverlay from './ProyectorOver/components/LowerThirdOverlay';
 import CountdownOverlay from './ProyectorOver/components/CountdownOverlay';
@@ -52,16 +53,32 @@ const ObsOverlay = () => {
             try { setOverlayData(JSON.parse(initial)); } catch(e){}
         }
 
-        // Suscripción a Supabase Realtime (Broadcast directo, sin tablas)
-        const channel = supabase.channel('obs_public_channel');
+        // Escuchar cambios locales de diapositiva desatendidos
+        const handleStorageChange = (e) => {
+            if (e.key === 'obs_overlay_data' && e.newValue) {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    if (!data.target || data.target === 'all' || data.target === 'obs') {
+                        setOverlayData(data);
+                    }
+                } catch (err) {
+                    console.error('Error al recibir cambio en OBS:', err);
+                }
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+
+        // Suscripción a Supabase Realtime con la clave de la URL (sin clave: canal aislado, solo funciona localStorage)
+        const channel = overlayChannel(liveKeyFromUrl() || privateFallbackKey());
 
         // Limpiar estilos forzados de React/ThemeContext para garantizar transparencia en OBS
         document.body.style.backgroundColor = 'transparent';
         document.documentElement.style.backgroundColor = 'transparent';
 
         channel.on('broadcast', { event: 'update_overlay' }, (payload) => {
-            const data = payload.payload;
-            if (data && data.target && data.target !== 'all' && data.target !== 'obs') {
+            const data = sanitizeOverlay(payload.payload);
+            if (!data) return;
+            if (data.target && data.target !== 'all' && data.target !== 'obs') {
                 return;
             }
             setOverlayData(data);
@@ -78,6 +95,7 @@ const ObsOverlay = () => {
 
         return () => {
             supabase.removeChannel(channel);
+            window.removeEventListener('storage', handleStorageChange);
             document.body.style.backgroundColor = '#0000FF';
             document.documentElement.style.backgroundColor = '#0000FF';
         };
@@ -108,7 +126,12 @@ const ObsOverlay = () => {
                     }
                 `}
             </style>
-            
+            {!liveKeyFromUrl() && (
+                <div role="alert" style={{ position: 'absolute', top: 12, left: 12, zIndex: 9999, maxWidth: 420, padding: '8px 12px', borderRadius: 10, background: 'rgba(0,0,0,0.75)', color: '#FBBF24', font: '600 13px Inter, sans-serif' }}>
+                    Falta la clave del canal en la URL: copia el enlace desde Studio Oasis (botón "Full" o "Proyectar").
+                </div>
+            )}
+
             <AnimatePresence mode="wait">
                 {(overlayData.mode === 'bible' || overlayData.mode === 'himno') ? (
                     <BibleHymnOverlay key="bibleHymn" overlayData={overlayData} overlayStyle={overlayStyle} />

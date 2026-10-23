@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import fastapiClient from '../../../../api/fastapiClient';
+import mediaClient from '../../../../api/mediaClient';
 
 export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleTemplate) => {
     const [selectedBook, setSelectedBook] = useState({ id: 1, name: "Génesis", chapters: 50 });
@@ -13,41 +13,27 @@ export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleT
         const fetchChapter = async () => {
             if (!selectedBook || !selectedChapter) return;
             setIsLoadingVerses(true);
+            const apply = (data) => {
+                setVerses(data);
+                const targetV = remoteTargetVerseRef.current ? data.find(v => v.verse === remoteTargetVerseRef.current) : null;
+                if (targetV) {
+                    setSelectedVerseObj(targetV);
+                    remoteTargetVerseRef.current = null;
+                } else {
+                    setSelectedVerseObj(prev => (prev && data.some(v => v.verse === prev.verse)) ? prev : (data[0] || null));
+                }
+            };
             try {
-                // Try bolls.life first as it's faster and more reliable
+                // 1. API de la suite (AdventistMediaEngine, RVR1960)
                 try {
-                    const response = await fetch(`https://bolls.life/get-chapter/RV1960/${selectedBook.id}/${selectedChapter}/`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        setVerses(data);
-                        const targetV = remoteTargetVerseRef.current ? data.find(v => v.verse === remoteTargetVerseRef.current) : null;
-                        if (targetV) {
-                            setSelectedVerseObj(targetV);
-                            remoteTargetVerseRef.current = null;
-                        } else {
-                            setSelectedVerseObj(prev => (prev && data.some(v => v.verse === prev.verse)) ? prev : (data[0] || null));
-                        }
-                        setIsLoadingVerses(false);
-                        return;
-                    }
-                } catch (bollsErr) {
-                    console.warn("⚠️ bolls.life no disponible. Consultando FastAPI...", bollsErr);
+                    const res = await mediaClient.get('/bible/chapter', { params: { book: selectedBook.name, chapter: selectedChapter } });
+                    if (res.data?.length) return apply(res.data);
+                } catch (apiErr) {
+                    console.warn('⚠️ API de Biblia no disponible. Probando bolls.life...', apiErr.message);
                 }
-
-                // Fallback to FastAPI
-                const res = await fastapiClient.get('/bible/chapter', {
-                    params: { book: selectedBook.name, chapter: selectedChapter }
-                });
-                if (res.data && res.data.length > 0) {
-                    setVerses(res.data);
-                    const targetV = remoteTargetVerseRef.current ? res.data.find(v => v.verse === remoteTargetVerseRef.current) : null;
-                    if (targetV) {
-                        setSelectedVerseObj(targetV);
-                        remoteTargetVerseRef.current = null;
-                    } else {
-                        setSelectedVerseObj(prev => (prev && res.data.some(v => v.verse === prev.verse)) ? prev : (res.data[0] || null));
-                    }
-                }
+                // 2. Respaldo externo
+                const response = await fetch(`https://bolls.life/get-chapter/RV1960/${selectedBook.id}/${selectedChapter}/`);
+                if (response.ok) apply(await response.json());
             } catch (err) {
                 console.error("Error cargando versículos.", err);
             } finally {

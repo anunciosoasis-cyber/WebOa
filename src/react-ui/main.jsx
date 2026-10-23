@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import { registerSW } from 'virtual:pwa-register';
+import '../styles/tokens.css';
 import '../styles/custom.css';
 import './styles/responsive.css';
 import { AuthProvider } from '../context/AuthContext';

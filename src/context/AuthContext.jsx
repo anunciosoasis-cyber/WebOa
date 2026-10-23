@@ -5,6 +5,7 @@ const AuthContext = createContext({});
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY  = 'auth_user';
+const REFRESH_KEY = 'auth_refresh';
 
 const parseStoredUser = () => {
   try {
@@ -50,13 +51,9 @@ const getUserFromStorage = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => getUserFromStorage());
-  const [loading, setLoading] = useState(true);
-
-  // Hidratación inicial para asegurar persistencia al abrir nueva pestaña.
-  useEffect(() => {
-    setUser(getUserFromStorage());
-    setLoading(false);
-  }, []);
+  // La sesión se lee de localStorage de forma síncrona en el useState de arriba,
+  // así que no hay fase de carga inicial (evita el spinner a pantalla completa en "/").
+  const [loading, setLoading] = useState(false);
 
   // Sincronizar sesión entre pestañas para login/logout.
   useEffect(() => {
@@ -78,6 +75,7 @@ export const AuthProvider = ({ children }) => {
         password,
       });
       localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(REFRESH_KEY, data.refreshToken);
       localStorage.setItem(USER_KEY, JSON.stringify(data.user));
       setUser(data.user);
       return data;
@@ -86,19 +84,66 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /** Login con Google: el idToken lo entrega el botón de Google Identity Services */
+  const signInWithGoogle = async (idToken) => {
+    setLoading(true);
+    try {
+      const { data } = await apiClient.post('/auth/google', { idToken });
+      localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(REFRESH_KEY, data.refreshToken);
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      setUser(data.user);
+      return data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** Registro público en la iglesia activa */
+  const signUp = async ({ name, email, password }) => {
+    setLoading(true);
+    try {
+      const { data } = await apiClient.post('/register', {
+        username: name || email.split('@')[0],
+        email,
+        password,
+      });
+      return data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /** Cerrar sesión — limpia localStorage y estado local */
   const signOut = async () => {
-    await apiClient.post('/logout').catch(() => {});
+    await apiClient.post('/logout', { refreshToken: localStorage.getItem(REFRESH_KEY) }).catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
     setUser(null);
   };
 
-  const adminRoles     = ['admin', 'editor'];
+  /** Solicitar recuperación de contraseña por email */
+  const requestPasswordReset = async (email) => {
+    try {
+      const { data } = await apiClient.post('/auth/forgot-password', { email });
+      return data;
+    } catch {
+      return {
+        success: true,
+        message: 'Si el correo electrónico está registrado, recibirás un enlace para restablecer tu contraseña.',
+      };
+    }
+  };
+
+  const adminRoles     = ['admin', 'pastor', 'editor', 'operator'];
   const canAccessAdmin = user && adminRoles.includes(user.role);
 
   const value = {
     signIn,
+    signUp,
+    signInWithGoogle,
+    requestPasswordReset,
     signOut,
     user,
     loading,

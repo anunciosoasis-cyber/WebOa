@@ -1,0 +1,176 @@
+.galleryContainer {
+  min-height: 100vh;
+  padding: 4rem 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  transition: background-color 0.4s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.galleryContainer.light {
+  background: radial-gradient(circle at top right, #f8f9fa, #e9ecef);
+}
+
+.galleryContainer.dark {
+  background: radial-gradient(circle at top right, #1a1a2e, #0f0f1b);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 4rem;
+  max-width: 800px;
+}
+
+.title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.05em;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.title.light {
+  background-image: linear-gradient(135deg, #2d3748, #4a5568);
+}
+
+.title.dark {
+  background-image: linear-gradient(135deg, #ffffff, #a0aec0);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.subtitle.light {
+  color: #4a5568;
+}
+
+.subtitle.dark {
+  color: #a0aec0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.card {
+  border-radius: 24px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.card.light {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.card.dark {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.card.dark:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255,255,255,0.1);
+}
+
+.previewBox {
+  height: 220px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glass overlay for extra shine */
+.previewBox::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+  pointer-events: none;
+}
+
+.previewText {
+  text-align: center;
+  padding: 0 1.5rem;
+  z-index: 10;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.previewTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.previewSubtitle {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.cardInfo {
+  padding: 1.8rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.cardTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.cardTitle.light {
+  color: #1a202c;
+}
+
+.cardTitle.dark {
+  color: #f7fafc;
+}
+
+.cardDescription {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  opacity: 0.7;
+}
+
+.cardDescription.light {
+  color: #4a5568;
+}
+
+.cardDescription.dark {
+  color: #a0aec0;
+}
+
+/* Micro-interaction for clicking */
+.card:active {
+  transform: scale(0.98);
+}

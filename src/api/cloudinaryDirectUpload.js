@@ -32,7 +32,14 @@ export async function uploadToCloudinary(file) {
   }
 
   // 1. Obtener firma del backend (requiere JWT)
-  const { data: sigData } = await apiClient.get('/cloudinary/signature');
+  let sigData;
+  try {
+    const res = await apiClient.post('/media/cloudinary-signature');
+    sigData = res.data;
+  } catch {
+    const res = await apiClient.get('/cloudinary/signature');
+    sigData = res.data;
+  }
   const { timestamp, signature, folder, api_key, cloud_name } = sigData;
 
   // 2. Construir FormData para Cloudinary

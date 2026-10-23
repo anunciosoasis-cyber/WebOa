@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import React, { useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import useAppMode from '../hooks/useAppMode';
 import AdminBottomNav from '../react-ui/components/AdminBottomNav';
+import PageTransition from '../react-ui/components/PageTransition';
+import '../styles/admin-dark.css';
 import logoImg from '../img/logos/LOGO1.png';
 import apiClient from '../api/client';
 import { useTheme } from '../react-ui/ThemeContext';
@@ -13,16 +15,21 @@ import {
     Inbox, Megaphone, Users,
     Settings, Layers, LogOut, LayoutDashboard,
     ChevronLeft, ChevronRight, Moon, Sun, Calendar, Home, FolderOpen,
-    ExternalLink, Heart, Mail, MonitorPlay
+    ExternalLink, Heart, Mail, MonitorPlay, ClipboardList, Building2
 } from 'lucide-react';
+
+// Rutas a pantalla completa: sin padding ni barra inferior móvil (el editor trae su propia navegación).
+const EDITOR_ROUTES = ['/admin/announcements', '/admin/creator'];
 
 const AdminLayout = () => {
     const location = useLocation();
+    const isEditor = EDITOR_ROUTES.includes(location.pathname);
     const { signOut, user, role } = useAuth();
     const { isMobile, isDesktop } = useAppMode();
     const { mode, toggleMode } = useTheme();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [logo, setLogo] = useState(null);
+    const mainRef = useRef(null);
 
     React.useEffect(() => {
         apiClient.get('/settings').then(({ data }) => {
@@ -34,11 +41,11 @@ const AdminLayout = () => {
     }, []);
 
     const oasisColors = {
-        deepPurple: '#120C1F',
-        midnight: '#08050D',
+        deepPurple: '#2a144a',
+        midnight: '#1b0d36',
         accent: '#F59E0B',
         glassBorder: mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
-        textMain: mode === 'dark' ? '#FFFFFF' : '#120C1F'
+        textMain: mode === 'dark' ? '#FFFFFF' : '#2a144a'
     };
 
     // Tema Morado Oscuro para el Menú Lateral
@@ -58,21 +65,23 @@ const AdminLayout = () => {
         { to: '/admin/requests', label: 'Peticiones', Icon: Inbox },
         { to: '/admin/inscripciones', label: 'Eventos', Icon: Calendar },
         { to: '/admin/culto', label: 'Studio Oasis', Icon: MonitorPlay },
+        { to: '/admin/junta', label: 'Junta Oasis', Icon: ClipboardList, adminOnly: true },
         { to: '/admin/recursos', label: 'Archivos', Icon: FolderOpen, adminOnly: true },
         { to: '/admin/users', label: 'Equipo', Icon: Users, adminOnly: true },
         { to: '/admin/about', label: 'Identidad', Icon: Heart, adminOnly: true },
         { to: '/admin/plantilla-correo', label: 'Plantilla Email', Icon: Mail, adminOnly: true },
         { to: '/admin/ajustes', label: 'Ajustes', Icon: Settings, adminOnly: true },
+        { to: '/admin/plataforma', label: 'Plataforma', Icon: Building2, superAdminOnly: true },
     ];
 
     const isUserAdmin = role === 'admin' || user?.role === 'admin';
-    const links = allLinks.filter(l => !l.adminOnly || isUserAdmin);
+    const links = allLinks.filter(l => (!l.adminOnly || isUserAdmin) && (!l.superAdminOnly || user?.isSuperAdmin));
     const sidebarWidth = isCollapsed ? '75px' : '260px';
 
     return (
-        <div style={{ 
-            minHeight: '100vh', 
-            background: mode === 'dark' ? oasisColors.midnight : '#F9FAFB', 
+        <div data-admin-theme={mode} style={{
+            minHeight: '100vh',
+            background: mode === 'dark' ? oasisColors.midnight : '#F9FAFB',  
             color: oasisColors.textMain,
             display: 'flex',
             overflow: 'hidden'
@@ -260,31 +269,23 @@ const AdminLayout = () => {
             )}
 
             {/* ─── CONTENIDO PRINCIPAL CON TRANSICIONES ─── */}
-            <main style={{
+            <main ref={mainRef} style={{
                 flex: 1,
                 marginLeft: isDesktop ? `calc(${sidebarWidth} + 40px)` : 0,
                 transition: 'margin-left 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                 height: '100vh',
-                overflowY: 'auto',
+                overflowY: isEditor ? 'hidden' : 'auto',
                 position: 'relative'
             }}>
-                <AnimatePresence mode="popLayout">
-                    <motion.div
-                        key={location.pathname}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.15, ease: "easeOut" }}
-                        style={{ padding: isMobile ? '20px' : '40px' }}
-                    >
-                        <div style={{ maxWidth: '1300px', margin: '0 auto' }}>
-                            <Outlet />
-                        </div>
-                    </motion.div>
-                </AnimatePresence>
+                <PageTransition
+                    scrollRef={mainRef}
+                    style={isEditor
+                        ? { padding: isMobile ? 0 : '12px 16px 12px 0', height: '100%', boxSizing: 'border-box' }
+                        : { padding: isMobile ? '20px' : '40px', maxWidth: '1300px', margin: '0 auto', boxSizing: 'content-box' }}
+                />
             </main>
 
-            {isMobile && <AdminBottomNav />}
+            {isMobile && !isEditor && <AdminBottomNav />}
 
             <style>{`
                 @font-face { font-family: 'Moonrising'; src: url('/fonts/Moonrising.ttf'); }

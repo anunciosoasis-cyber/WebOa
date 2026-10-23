@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Pause, Play, RotateCcw, Maximize, Minimize } from 'lucide-react';
-import CountdownLiveModal from './studio-oasis/CountdownLiveModal';
+import { COUNTDOWN_PRESETS } from './studio-oasis/CountdownLiveModal';
 import { supabase } from '../api/supabaseClient';
+import { liveKeyFromUrl, overlayChannel, privateFallbackKey } from '../api/liveChannel';
 
 // ─── Página standalone de countdown ──────────────────────────────────────────
 const CountdownPage = () => {
@@ -42,7 +43,7 @@ const CountdownPage = () => {
         document.title = 'Contador — Oasis Community';
 
         // ── Suscripción Supabase: recibir nuevas configuraciones si ya estaba abierta ──
-        const channel = supabase.channel('obs_public_channel');
+        const channel = overlayChannel(liveKeyFromUrl() || privateFallbackKey());
         channel.on('broadcast', { event: 'update_overlay' }, ({ payload }) => {
             if (payload?.mode === 'countdown') {
                 // Leer la config actualizada de localStorage (el modal ya la guardó)

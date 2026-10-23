@@ -1,0 +1,1 @@
+Coloca aquí utilidades y helpers JS/TS como CanvasUtilities.js, apiClient.ts, uploadImage.ts.

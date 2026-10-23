@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+import { Eye, Heart, Shield } from 'lucide-react';
+const LucideIcons = { Eye, Heart, Shield };
 import { COLORS } from './AboutStyles';
 
 const AboutValues = ({ settings }) => {

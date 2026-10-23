@@ -1,0 +1,25 @@
+/* designTokens.css - shared color palette */
+:root {
+  --primary-h: 250;
+  --primary-s: 40%;
+  --primary-l: 45%;
+  --bg-light: #ffffff;
+  --bg-dark: #1a1a1a;
+  --text-primary-light: #64748b;
+  --text-primary-dark: #cbd5e1;
+  --text-active-light: #5b2ea6;
+  --text-active-dark: #a78bfa;
+}
+
+/* Optional dark mode overrides */
+.dark {
+  --bg-color: var(--bg-dark);
+  --text-primary: var(--text-primary-dark);
+  --text-active: var(--text-active-dark);
+}
+
+.light {
+  --bg-color: var(--bg-light);
+  --text-primary: var(--text-primary-light);
+  --text-active: var(--text-active-light);
+}

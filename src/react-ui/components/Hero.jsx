@@ -1,42 +1,47 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import * as LucideIcons from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+const LucideIcons = { ChevronLeft, ChevronRight };
 import { motion, AnimatePresence } from 'framer-motion';
 
 const OASIS_SLIDES = [
     {
-        url: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?q=90&w=3840&auto=format&fit=crop',
+        url: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=1920&auto=format&fit=crop',
         title: "Unidos en Familia",
         description: "En Oasis, cada hogar encuentra un refugio de paz. Fortaleciendo los lazos del amor cristiano en cada generación.",
         accent: "Generaciones"
     },
     {
-        url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=90&w=3840&auto=format&fit=crop',
+        url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1920&auto=format&fit=crop',
         title: "Juventud con Propósito",
         description: "Liderando con fe y energía. Una comunidad donde los jóvenes transforman el mundo a través del servicio a Dios.",
         accent: "Dinamismo"
     },
     {
-        url: 'https://images.unsplash.com/photo-1490730141103-6cac27aaab94?q=90&w=3840&auto=format&fit=crop',
+        url: 'https://images.unsplash.com/photo-1490730141103-6cac27aaab94?q=80&w=1920&auto=format&fit=crop',
         title: "Esperanza Bendita",
         description: "Caminando juntos hacia el encuentro con nuestro Creador. La unidad de la iglesia es nuestra mayor fortaleza.",
         accent: "Advenimiento"
     },
     {
-        url: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=90&w=3840&auto=format&fit=crop',
+        url: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1920&auto=format&fit=crop',
         title: "Comunidad Viva",
         description: "Más que una iglesia, somos un cuerpo unido en la misión de compartir el evangelio eterno a toda nación.",
         accent: "Misión"
     }
 ];
 
-const Hero = () => {
+const Hero = ({ settings }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [bgImage, setBgImage] = useState(null);
+    const [bgImage, setBgImage] = useState(settings?.bg_image || null);
     const timerRef = useRef(null);
 
     useEffect(() => {
+        if (settings?.bg_image) {
+            setBgImage(settings.bg_image);
+            return;
+        }
         // En producción el endpoint está bajo /api
         const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
         const endpoint = apiBase.endsWith('/api') ? `${apiBase}/public/settings` : `${apiBase}/api/public/settings`;
@@ -46,7 +51,7 @@ const Hero = () => {
             .then(data => {
                 if (data.bg_image) setBgImage(data.bg_image);
             }).catch(e => console.error('Hero bg load error:', e));
-    }, []);
+    }, [settings?.bg_image]);
 
     // Paleta de Colores Senior UX: Deep Purple & Amber
     const colors = {
@@ -77,25 +82,25 @@ const Hero = () => {
     return (
         <section className="relative h-screen min-h-[700px] w-full overflow-hidden bg-[#08050D] flex items-center px-6 lg:px-24">
             
-            {/* 1. MOTOR DE IMÁGENES 4K CON DIFUSIÓN CINEMATOGRÁFICA */}
+            {/* 1. MOTOR DE IMÁGENES OPTIMIZADO */}
             <AnimatePresence mode="popLayout">
                 <motion.div 
                     key={currentIndex}
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.05 }}
-                    transition={{ duration: 2.5, ease: "easeInOut" }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1.2, ease: "easeInOut" }}
                     className="absolute inset-0 z-0"
                     style={{
                         backgroundImage: `url(${bgImage || current.url})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
+                        willChange: 'opacity'
                     }}
                 >
                     {/* Capas de Sobriedad y Color Oasis */}
                     <div className="absolute inset-0 bg-[#08050D]/60 mix-blend-multiply z-10" />
                     <div className="absolute inset-0 bg-gradient-to-r from-[#120C1F]/90 via-[#120C1F]/40 to-transparent z-20" />
-                    <div className="absolute inset-0 backdrop-blur-[1px] z-30" />
                 </motion.div>
             </AnimatePresence>
 

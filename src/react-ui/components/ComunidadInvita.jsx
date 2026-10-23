@@ -1,21 +1,33 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import * as LucideIcons from 'lucide-react';
+// Solo los iconos que se buscan por nombre: `import *` arrastraba toda la librería al bundle.
+import { ArrowUpRight, Facebook, Instagram, Youtube } from 'lucide-react';
+const LucideIcons = { ArrowUpRight, Facebook, Instagram, Youtube };
 import { motion, AnimatePresence } from 'framer-motion';
 import MapSection from './MapSection';
 import CalendarSection from './CalendarSection';
 
-const SocialRibbon = () => {
+const SocialRibbon = ({ settings }) => {
     const [messageIndex, setMessageIndex] = useState(0);
     const [socials, setSocials] = useState({
-        facebook: 'https://facebook.com',
-        instagram: 'https://instagram.com',
-        youtube: 'https://youtube.com',
-        twitter: 'https://twitter.com'
+        facebook: settings?.facebook_url || 'https://facebook.com',
+        instagram: settings?.instagram_url || 'https://instagram.com',
+        youtube: settings?.youtube_url || 'https://youtube.com',
+        twitter: settings?.twitter_url || 'https://twitter.com'
     });
 
     useEffect(() => {
+        if (settings) {
+            setSocials({
+                facebook: settings.facebook_url || 'https://facebook.com',
+                instagram: settings.instagram_url || 'https://instagram.com',
+                youtube: settings.youtube_url || 'https://youtube.com',
+                twitter: settings.twitter_url || 'https://twitter.com'
+            });
+            return;
+        }
+
         const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
         const endpoint = apiBase.endsWith('/api') ? `${apiBase}/public/settings` : `${apiBase}/api/public/settings`;
 
@@ -29,7 +41,7 @@ const SocialRibbon = () => {
                     twitter: data.twitter_url || 'https://twitter.com'
                 });
             }).catch(e => console.error('Social links load error:', e));
-    }, []);
+    }, [settings]);
 
     const colors = {
         deepPurple: '#120C1F',

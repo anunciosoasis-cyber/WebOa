@@ -59,7 +59,7 @@ const Dashboard = () => {
         try {
             const canvas = await html2canvas(element, {
                 scale: 2,
-                backgroundColor: isDark ? OASIS_COLORS.midnight : '#ffffff',
+                backgroundColor: isDark ? 'transparent' : '#ffffff',
                 useCORS: true
             });
             const imgData = canvas.toDataURL('image/png');

@@ -1,0 +1,40 @@
+/*
+ * Identidad visual OASIS: una sola paleta para todo el sistema (web pública, login y admin).
+ * Los módulos con CSS propio usan estas variables; los componentes con estilos en JS usan react-ui/styles/theme.js.
+ * shortcut: los mismos valores viven en theme.js; si cambia uno, cambiar el otro (o leer estas variables desde JS).
+ *
+ * Uso:
+ *   Dorado  → acción principal (botones, activo, enlaces). Texto encima: --oasis-midnight.
+ *   Morados → fondos y superficies de modo oscuro, menú lateral y degradados de marca.
+ *   Tipos   → Moonrising para la marca y títulos; Inter / AdventSans para el texto.
+ */
+:root {
+    /* Dorado OASIS */
+    --oasis-gold: #f59e0b;
+    --oasis-gold-light: #fbbf24;
+    --oasis-gold-dark: #d97706;
+    --oasis-gold-soft: rgba(245, 158, 11, 0.14);
+
+    /* Morados OASIS (del más claro al más profundo) */
+    --oasis-purple-400: #5b2ea6;
+    --oasis-purple-500: #2a144a; /* morado profundo: menú lateral, texto de marca en claro */
+    --oasis-purple-600: #24124a; /* superficie oscura */
+    --oasis-purple-700: #1b0d36; /* fondo oscuro del admin */
+    --oasis-purple-800: #160a26; /* menú lateral oscuro */
+    --oasis-midnight: #120c1f; /* texto en modo claro y sobre dorado */
+
+    /* Neutros y estados */
+    --oasis-white: #ffffff;
+    --oasis-light-bg: #f9fafb;
+    --oasis-slate: #64748b;
+    --oasis-success: #10b981;
+    --oasis-error: #ef4444;
+
+    /* Tipografías */
+    --oasis-font-brand: 'Moonrising', 'Inter', sans-serif;
+    --oasis-font-body: 'Inter', 'AdventSans', system-ui, sans-serif;
+
+    /* Formas */
+    --oasis-radius-lg: 24px;
+    --oasis-radius-md: 14px;
+}

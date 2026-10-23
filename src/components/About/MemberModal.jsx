@@ -1,7 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+const LucideIcons = { ShieldCheck };
 import { COLORS, FONT_FAMILY } from './AboutStyles';
 
 const MemberModal = ({ member, onClose, getImageUrl }) => (

@@ -1,0 +1,1 @@
+Coloca aquí los archivos de imagen de logotipos: LOGO1.png, IASD1.png, RRSS1.png

@@ -296,7 +296,7 @@ const AdminEmailTemplate = () => {
 
     if (loading) return (
         <div className="d-flex justify-content-center align-items-center vh-100"
-            style={{ background: isDark ? OASIS_COLORS.midnight : '#F9FAFB' }}>
+            style={{ background: isDark ? 'transparent' : '#F9FAFB' }}>
             <div className="spinner-border" style={{ color: OASIS_COLORS.accent }} role="status" />
         </div>
     );
@@ -390,7 +390,7 @@ const AdminEmailTemplate = () => {
 
     return (
         <div className="container-fluid pb-5"
-            style={{ background: isDark ? OASIS_COLORS.midnight : '#F9FAFB', minHeight: '100vh', padding: '40px' }}>
+            style={{ background: isDark ? 'transparent' : '#F9FAFB', minHeight: '100vh', padding: '40px' }}>
 
             <header className="mb-5 d-flex justify-content-between align-items-end flex-wrap gap-3">
                 <div>

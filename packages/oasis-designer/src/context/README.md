@@ -1,0 +1,1 @@
+Coloca aquí los contextos globales de React, como ThemeContext.

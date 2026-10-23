@@ -19,8 +19,8 @@ const ProtectedRoute = ({ redirectPath = '/login', adminOnly = true }) => {
         return <Navigate to={redirectPath} replace />;
     }
 
-    // Verificar si el usuario puede acceder al admin (admin o editor)
-    const adminRoles = ['admin', 'editor'];
+    // Roles del equipo que entran al panel (matriz en backend/docs/ROLES_Y_SESIONES.md)
+    const adminRoles = ['admin', 'pastor', 'editor', 'operator'];
     if (adminOnly && !adminRoles.includes(effectiveUser.role)) {
         return <Navigate to="/" replace />;
     }

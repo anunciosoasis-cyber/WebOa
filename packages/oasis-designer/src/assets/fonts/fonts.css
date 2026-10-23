@@ -1,0 +1,96 @@
+/*
+ * ═══════════════════════════════════════════════════════════════
+ *  FUENTES — @oasis/designer
+ *  Importar en el consumidor: import '@oasis/designer/fonts.css'
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+/* ── GOOGLE FONTS (web fonts siempre disponibles) ────────── */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Bebas+Neue&family=Advent+Pro:wght@400;500;600;700&family=Dancing+Script:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* ── BLACKSWORD ───────────────────────────────────────────── */
+@font-face {
+  font-family: 'Blacksword';
+  src: url('./Blacksword.otf') format('opentype'),
+       url('/fonts/Blacksword.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── MODERN AGE ───────────────────────────────────────────── */
+@font-face {
+  font-family: 'Modern Age';
+  src: url('./Modern Age.ttf') format('truetype'),
+       url('/fonts/Modern Age.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── MOONRISING ───────────────────────────────────────────── */
+@font-face {
+  font-family: 'Moonrising';
+  src: url('./Moonrising.ttf') format('truetype'),
+       url('/fonts/Moonrising.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── ADVENT SANS ──────────────────────────────────────────── */
+@font-face {
+  font-family: 'Advent Sans';
+  src: url('./AdventSans-Logo.ttf') format('truetype'),
+       url('/fonts/AdventSans-Logo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── ABOVE THE BEYOND SCRIPT ──────────────────────────────── */
+@font-face {
+  font-family: 'Above The Beyond';
+  src: url('./above-the-beyond-script.ttf') format('truetype'),
+       url('/fonts/above-the-beyond-script.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── ALIAS DE COMPATIBILIDAD (valores legacy en localStorage) */
+@font-face {
+  font-family: 'ModernAge';
+  src: url('./Modern Age.ttf') format('truetype'),
+       url('/fonts/Modern Age.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MoonRising';
+  src: url('./Moonrising.ttf') format('truetype'),
+       url('/fonts/Moonrising.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'AdventSans';
+  src: url('./AdventSans-Logo.ttf') format('truetype'),
+       url('/fonts/AdventSans-Logo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'above-the-beyond-script';
+  src: url('./above-the-beyond-script.ttf') format('truetype'),
+       url('/fonts/above-the-beyond-script.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

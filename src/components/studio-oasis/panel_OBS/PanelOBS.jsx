@@ -1,7 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { supabase } from '../../../api/supabaseClient';
 import apiClient from '../../../api/client';
-import fastapiClient from '../../../api/fastapiClient';
 import himnarioData from '../../../data/himnario.json';
 import { useToast } from '../../../react-ui/components/Toast';
 import { MonitorPlay, MonitorOff, BookOpen, Megaphone, ExternalLink, ChevronLeft, ChevronRight, User, LayoutTemplate, PanelBottom, PanelRight, Film, Timer, Music, Radio, Volume2, Sparkles, Send, EyeOff, Search, X, Play, Monitor, Zap, Sliders, Tv, Eye } from 'lucide-react';
@@ -10,6 +9,7 @@ import { useBiblia } from './hooks/useBiblia';
 import { useHimnario } from './hooks/useHimnario';
 import { useBanners } from './hooks/useBanners';
 import { useObsWebSockets } from './hooks/useObsWebSockets';
+import { liveUrl } from '../../../api/liveChannel';
 import ContadorPanel from './ContadorPanel';
 import PreviewMonitors from './PreviewMonitors';
 import ContenidoPanel from './ContenidoPanel';
@@ -88,6 +88,7 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
         handlePrevHymn,
         himnarioList,
         handleHymnSelect,
+        setSelectedStanza,
         globalTemplate,
         remoteTargetVerseRef,
         setSelectedBook,
@@ -139,7 +140,11 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
         setGlobalTemplate(tmpl); // Update global for BannersPanel UI sync
     };
 
+    // Solo cuando el operador cambia la plantilla; comparar con el valor anterior es idempotente en StrictMode
+    const prevGlobalTemplate = useRef(globalTemplate);
     useEffect(() => {
+        if (prevGlobalTemplate.current === globalTemplate) return;
+        prevGlobalTemplate.current = globalTemplate;
         if (liveOverlay && liveOverlay.mode && liveOverlay.mode !== 'hidden' && liveOverlay.template !== globalTemplate) {
             const extra = { template: globalTemplate };
             if (liveOverlay.subText) extra.subText = liveOverlay.subText;
@@ -179,8 +184,8 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
     }, [activeTab]);
 
 
-    const openOBSWindow = () => window.open('/transmision/overlay', 'OBS_WINDOW', 'width=1920,height=1080');
-    const openProyectorWindow = () => window.open('/transmision/proyector', 'PROYECTOR_WINDOW', 'width=1920,height=1080');
+    const openOBSWindow = () => window.open(liveUrl('/transmision/overlay', obsWS.liveKey), 'OBS_WINDOW', 'width=1920,height=1080');
+    const openProyectorWindow = () => window.open(liveUrl('/transmision/proyector', obsWS.liveKey), 'PROYECTOR_WINDOW', 'width=1920,height=1080');
 
     useImperativeHandle(ref, () => ({
         pushToOBS,

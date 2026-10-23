@@ -1,330 +1,565 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Moon, Sun, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../react-ui/ThemeContext';
+import GoogleSignInButton from './GoogleSignInButton';
+import logoImg from '../img/logos/LOGO1.png';
+import oasisCommunityImg from '../img/comunidad-oasis.png';
+import '../styles/login.css';
 
-const Login = () => {
-    // ==========================================
-    // 🎨 CONFIGURACIÓN DE IMAGEN (Cámbiala aquí)
-    // ==========================================
-    const LEFT_PANEL_IMAGE = "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=2073&auto=format&fit=crop";
+const STORAGE_KEY = 'oasis_known_accounts';
+const LEAVE_MS = 520;
 
-    const { signIn } = useAuth();
-    const { theme } = useTheme();
+const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Login Oasis estilo tarjeta de referencia:
+ * - Fondo atmosférico difuminado con la foto de la comunidad Oasis
+ * - Tarjeta centrada con cabecera fotográfica nítida y corte diagonal
+ * - Insignia circular central superpuesta con el emblema de Oasis
+ * - Formulario minimalista con etiquetas en mayúsculas y trazo limpio
+ * - Opción de recuperación de contraseña por email integrada
+ * - Inicio de sesión con Google
+ * - Paleta y botones oficiales Oasis (Oasis Gold y Royal Midnight Purple)
+ */
+export default function Login() {
+    const { signIn, signUp, requestPasswordReset } = useAuth();
+    const { mode, toggleMode } = useTheme();
+    const isDark = mode === 'dark';
     const navigate = useNavigate();
 
-    // Estado para recordar al último usuario
-    const [lastUser, setLastUser] = useState(null);
-    const [formData, setFormData] = useState({ email: '', password: '' });
+    // 'login' | 'register' | 'forgot'
+    const [view, setView] = useState('login');
+    const [knownUsers, setKnownUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [isManualLogin, setIsManualLogin] = useState(false);
+
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+    });
+    const [recoveryEmail, setRecoveryEmail] = useState('');
+    const [recoverySent, setRecoverySent] = useState(false);
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
+    const [shake, setShake] = useState(false);
+    const [leaving, setLeaving] = useState(false);
+    const leaveTimer = useRef(null);
+
+    useEffect(() => () => clearTimeout(leaveTimer.current), []);
 
     useEffect(() => {
         try {
-            const stored = localStorage.getItem('oasis_last_user');
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                setLastUser(parsed);
-                setFormData(prev => ({ ...prev, email: parsed.email }));
+            const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (Array.isArray(list) && list.length > 0) {
+                setKnownUsers(list);
+                setSelectedUser(list[0]);
+                setFormData((prev) => ({ ...prev, email: list[0].email }));
+                setRecoveryEmail(list[0].email);
+                setIsManualLogin(false);
+                return;
             }
         } catch (e) {
-            console.error('Error reading last user', e);
+            console.error('Error al leer perfiles:', e);
         }
+        setIsManualLogin(true);
     }, []);
 
-    const handleClearLastUser = () => {
-        setLastUser(null);
-        setFormData({ email: '', password: '' });
+    const set = (key) => (e) => {
+        const val = e.target.value;
+        setFormData((prev) => ({ ...prev, [key]: val }));
+        if (key === 'email') setRecoveryEmail(val);
     };
 
+    const triggerError = (msg) => {
+        setError(msg);
+        setShake(true);
+        setTimeout(() => setShake(false), 400);
+    };
+
+    const enterAdmin = () => {
+        setLeaving(true);
+        leaveTimer.current = setTimeout(
+            () => navigate('/admin/requests'),
+            reducedMotion() ? 0 : LEAVE_MS
+        );
+    };
+
+    const handleSwitchMode = (targetView) => {
+        setView(targetView);
+        setError('');
+        setSuccessMsg('');
+        setRecoverySent(false);
+        if (targetView === 'register') {
+            setIsManualLogin(true);
+            setSelectedUser(null);
+        } else if (targetView === 'login' && knownUsers.length > 0) {
+            setSelectedUser(knownUsers[0]);
+            setIsManualLogin(false);
+            setFormData((prev) => ({ ...prev, email: knownUsers[0].email, password: '' }));
+        }
+    };
+
+    const handleSwitchToManual = () => {
+        setSelectedUser(null);
+        setIsManualLogin(true);
+        setFormData((prev) => ({ ...prev, email: '', password: '' }));
+        setError('');
+    };
+
+    // Envío del formulario de Login / Registro
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
+        setSuccessMsg('');
+
+        if (view === 'register') {
+            if (formData.password !== formData.confirmPassword) {
+                return triggerError('Las contraseñas no coinciden.');
+            }
+            if (formData.password.length < 6) {
+                return triggerError('La contraseña debe tener al menos 6 caracteres.');
+            }
+        }
+
+        setLoading(true);
         try {
+            if (view === 'register') {
+                if (signUp) {
+                    await signUp({
+                        name: formData.name.trim(),
+                        email: formData.email.trim(),
+                        password: formData.password,
+                    });
+                }
+            }
             const result = await signIn({
-                email: formData.email,
-                password: formData.password
+                email: formData.email.trim(),
+                password: formData.password,
             });
 
-            // Guardar en memoria
-            if (result && result.user) {
-                localStorage.setItem('oasis_last_user', JSON.stringify({
-                    name: result.user.name || result.user.username || 'Admin',
+            if (result?.user) {
+                const account = {
+                    name: result.user.name || result.user.full_name || formData.name || 'Operador',
                     role: result.user.role || 'Admin',
-                    email: formData.email
-                }));
+                    email: formData.email.trim(),
+                    avatar: result.user.avatar || null,
+                };
+                const others = knownUsers.filter((u) => u.email !== account.email);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify([account, ...others].slice(0, 4)));
             }
-            navigate('/admin/requests');
+            enterAdmin();
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Error de acceso');
+            triggerError(err.response?.data?.message || err.message || 'Credenciales incorrectas');
+            setLoading(false);
+        }
+    };
+
+    // Envío de recuperación de contraseña por email
+    const handleForgotPasswordSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setSuccessMsg('');
+
+        const targetEmail = (recoveryEmail || formData.email || '').trim();
+        if (!targetEmail) {
+            return triggerError('Por favor ingresa tu correo electrónico.');
+        }
+
+        setLoading(true);
+        try {
+            const res = await requestPasswordReset(targetEmail);
+            setRecoverySent(true);
+            setSuccessMsg(res?.message || 'Hemos enviado las instrucciones a tu correo electrónico.');
+        } catch (err) {
+            triggerError(err.response?.data?.message || err.message || 'No se pudo enviar el correo de recuperación.');
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            backgroundColor: '#F8F9FC',
-            paddingTop: '20px', // Reducido drásticamente para pegarlo a la Navbar
-            paddingBottom: '40px',
-            paddingLeft: '20px',
-            paddingRight: '20px',
-            minHeight: '100vh',
-            overflow: 'hidden'
-        }}>
-            {/* CONTENEDOR PRINCIPAL: Tarjeta con sombra paralela */}
-            <div style={{
-                display: 'flex',
-                width: '100%',
-                maxWidth: '1000px',
-                minHeight: '600px',
-                backgroundColor: '#FFFFFF',
-                borderRadius: '32px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2), 0 0 40px rgba(0,0,0,0.05)',
-                overflow: 'hidden',
-                animation: 'loginAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}>
-                {/* LADO IZQUIERDO: IMAGEN Y TARJETA (Solo visible en PC/Tablet) */}
-                <div className="d-none d-lg-block" style={{ width: '50%', position: 'relative' }}>
-                    <img
-                        src={LEFT_PANEL_IMAGE}
-                        alt="Background"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(18, 12, 31, 0.3)' }} />
+    const remembered = view === 'login' && !isManualLogin && selectedUser;
 
-                    {/* Tarjeta inferior */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '50px',
-                        left: '50px',
-                        right: '50px',
-                        background: 'rgba(255, 255, 255, 0.15)',
-                        backdropFilter: 'blur(12px)',
-                        WebkitBackdropFilter: 'blur(12px)',
-                        borderRadius: '24px',
-                        padding: '40px',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-                    }}>
-                        <div style={{
-                            fontSize: '0.8rem',
-                            color: '#F59E0B',
-                            fontWeight: 900,
-                            letterSpacing: '2px',
-                            marginBottom: '15px',
-                            textTransform: 'uppercase'
-                        }}>
-                            OASIS ECOSYSTEM
-                        </div>
-                        <h2 style={{
-                            color: '#FFFFFF',
-                            margin: 0,
-                            fontWeight: 800,
-                            fontSize: '2.2rem',
-                            lineHeight: 1.2,
-                            textShadow: '0 2px 10px rgba(0,0,0,0.2)'
-                        }}>
-                            Gestión inteligente de sus procesos ministeriales.
-                        </h2>
+    return (
+        <div className="lg" data-mode={mode} data-leaving={leaving}>
+            {/* Fondo atmosférico difuminado con la foto de la comunidad */}
+            <div
+                className="lg-ref-backdrop"
+                style={{ backgroundImage: `url(${oasisCommunityImg})` }}
+                aria-hidden="true"
+            />
+            <div className="lg-ref-backdrop-overlay" aria-hidden="true" />
+
+            {/* Cortina de transición */}
+            <div className="lg-curtain" aria-hidden="true">
+                <img src={logoImg} alt="" />
+            </div>
+
+            {/* Barra superior de navegación rápida */}
+            <header className="lg-top lg-in" style={{ '--i': 0 }}>
+                <Link to="/" className="lg-chip">
+                    <ArrowLeft size={15} /> Volver al sitio
+                </Link>
+                <button
+                    type="button"
+                    className="lg-chip"
+                    onClick={toggleMode}
+                    aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                >
+                    {isDark ? <Sun size={15} /> : <Moon size={15} />}
+                </button>
+            </header>
+
+            {/* Tarjeta de estilo de referencia con cabecera en corte diagonal e insignia */}
+            <main className="lg-ref-card lg-in" style={{ '--i': 1 }}>
+                {/* Cabecera con foto y corte diagonal */}
+                <div className="lg-ref-header">
+                    <img
+                        src={oasisCommunityImg}
+                        alt="Comunidad Iglesia Adventista Oasis"
+                        className="lg-ref-header-img"
+                    />
+                    <div className="lg-ref-header-overlay" />
+                    
+                    {/* Insignia circular centrada flotando sobre el corte diagonal */}
+                    <div className="lg-ref-badge" title="Iglesia Oasis">
+                        <img src={logoImg} alt="Oasis" className="lg-ref-badge-logo" />
+                        <span className="lg-ref-badge-label">OASIS</span>
                     </div>
                 </div>
 
-                {/* LADO DERECHO: FORMULARIO */}
-                <div style={{
-                    width: '100%',
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '40px'
-                }}>
-                    <div style={{ width: '100%', maxWidth: '380px' }}>
-
-                        {/* Header: Título (Sin logo) */}
-                        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                            <h2 style={{ fontFamily: 'Moonrising, sans-serif', color: '#120C1F', margin: 0, fontSize: '2.2rem' }}>
-                                OASIS <span style={{ color: '#F59E0B' }}>CONTROL</span>
-                            </h2>
-                            <div style={{ fontSize: '0.7rem', color: '#666', fontWeight: 800, letterSpacing: '1.5px', marginTop: '10px' }}>
-                                INGRESE A SU PANEL OPERATIVO
-                            </div>
-                        </div>
-
+                {/* Cuerpo del formulario */}
+                <div className="lg-ref-body">
+                    <div className={shake ? 'lg-shake' : undefined}>
+                        {/* Mensaje de error */}
                         {error && (
-                            <div style={{
-                                background: '#FEE2E2',
-                                color: '#B91C1C',
-                                padding: '14px',
-                                borderRadius: '16px',
-                                fontSize: '0.85rem',
-                                marginBottom: '25px',
-                                fontWeight: '600',
-                                textAlign: 'center'
-                            }}>
+                            <div className="lg-ref-alert lg-ref-alert-error" role="alert">
                                 {error}
                             </div>
                         )}
 
-                        {/* Tarjeta de Último Usuario (Si existe) */}
-                        {lastUser ? (
-                            <div style={{
-                                background: '#F8F9FC',
-                                borderRadius: '24px',
-                                padding: '30px 20px',
-                                textAlign: 'center',
-                                marginBottom: '30px',
-                                border: '1px solid rgba(0,0,0,0.05)'
-                            }}>
-                                <div style={{
-                                    width: '70px',
-                                    height: '70px',
-                                    borderRadius: '50%',
-                                    background: '#120C1F',
-                                    color: '#F59E0B',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '2rem',
-                                    margin: '0 auto 15px auto',
-                                    fontWeight: 'bold'
-                                }}>
-                                    {lastUser.name.charAt(0).toUpperCase()}
-                                </div>
-                                <h5 style={{ color: '#120C1F', margin: '0 0 5px 0', fontWeight: 800, fontSize: '1.1rem' }}>
-                                    {lastUser.name}
-                                </h5>
-                                <div style={{ color: '#F59E0B', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '20px' }}>
-                                    {lastUser.role}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleClearLastUser}
-                                    style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#9ca3af',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 800,
-                                        cursor: 'pointer',
-                                        transition: 'color 0.2s'
-                                    }}
-                                    onMouseOver={e => e.target.style.color = '#120C1F'}
-                                    onMouseOut={e => e.target.style.color = '#9ca3af'}
-                                >
-                                    INGRESAR CON OTRA CUENTA
-                                </button>
+                        {/* Mensaje de éxito */}
+                        {successMsg && (
+                            <div className="lg-ref-alert lg-ref-alert-success" role="status">
+                                <CheckCircle2 size={16} />
+                                <span>{successMsg}</span>
                             </div>
-                        ) : null}
+                        )}
 
-                        {/* Formulario */}
-                        <form onSubmit={handleSubmit}>
-                            {!lastUser && (
-                                <div className="mb-4">
-                                    <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#120C1F', opacity: 0.5, marginBottom: '8px', display: 'block', paddingLeft: '5px' }}>
+                        {/* ── MODO 1: LOGIN ── */}
+                        {view === 'login' && (
+                            <form className="lg-ref-form" onSubmit={handleSubmit}>
+                                {remembered && (
+                                    <div className="lg-ref-remembered-banner">
+                                        <span>Sesión guardada para <strong>{selectedUser.name}</strong></span>
+                                        <button type="button" className="lg-ref-link" onClick={handleSwitchToManual}>
+                                            Cambiar cuenta
+                                        </button>
+                                    </div>
+                                )}
+
+                                {!remembered && (
+                                    <div className="lg-ref-group">
+                                        <label htmlFor="lg-email" className="lg-ref-label">
+                                            CORREO ELECTRÓNICO
+                                        </label>
+                                        <input
+                                            id="lg-email"
+                                            className="lg-ref-input"
+                                            type="email"
+                                            required
+                                            autoComplete="email"
+                                            placeholder="ejemplo@oasis.org"
+                                            value={formData.email}
+                                            onChange={set('email')}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="lg-ref-group">
+                                    <div className="lg-ref-label-row">
+                                        <label htmlFor="lg-pass" className="lg-ref-label">
+                                            CONTRASEÑA
+                                        </label>
+                                        <button
+                                            type="button"
+                                            className="lg-ref-forgot-link"
+                                            onClick={() => handleSwitchMode('forgot')}
+                                        >
+                                            ¿Olvidaste tu contraseña?
+                                        </button>
+                                    </div>
+                                    <div className="lg-ref-input-wrap">
+                                        <input
+                                            id="lg-pass"
+                                            className="lg-ref-input lg-ref-input-pass"
+                                            type={showPassword ? 'text' : 'password'}
+                                            required
+                                            autoComplete="current-password"
+                                            placeholder="••••••••"
+                                            value={formData.password}
+                                            onChange={set('password')}
+                                            autoFocus={Boolean(remembered)}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="lg-ref-eye"
+                                            onClick={() => setShowPassword((v) => !v)}
+                                            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                        >
+                                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="lg-ref-submit-btn"
+                                    disabled={loading || leaving}
+                                >
+                                    {loading ? (
+                                        <span className="lg-spin" aria-label="Ingresando..." />
+                                    ) : (
+                                        'INGRESAR'
+                                    )}
+                                </button>
+
+                                <div className="lg-ref-divider">
+                                    <span>o continuar con</span>
+                                </div>
+
+                                <div className="lg-ref-google-container">
+                                    <GoogleSignInButton
+                                        theme={isDark ? 'filled_black' : 'outline'}
+                                        onSuccess={enterAdmin}
+                                        onError={triggerError}
+                                    />
+                                </div>
+
+                                <div className="lg-ref-footer">
+                                    <span>¿NO TIENES UNA CUENTA?</span>
+                                    <button
+                                        type="button"
+                                        className="lg-ref-switch-btn"
+                                        onClick={() => handleSwitchMode('register')}
+                                    >
+                                        REGÍSTRATE
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {/* ── MODO 2: RECUPERACIÓN DE CONTRASEÑA ── */}
+                        {view === 'forgot' && (
+                            <form className="lg-ref-form" onSubmit={handleForgotPasswordSubmit}>
+                                <div className="lg-ref-view-intro">
+                                    <h2 className="lg-ref-view-title">Recuperar Contraseña</h2>
+                                    <p className="lg-ref-view-desc">
+                                        Ingresa el correo electrónico asociado a tu cuenta de Iglesia Oasis y te enviaremos las instrucciones de recuperación.
+                                    </p>
+                                </div>
+
+                                {!recoverySent ? (
+                                    <>
+                                        <div className="lg-ref-group">
+                                            <label htmlFor="lg-rec-email" className="lg-ref-label">
+                                                CORREO ELECTRÓNICO
+                                            </label>
+                                            <div className="lg-ref-input-wrap">
+                                                <input
+                                                    id="lg-rec-email"
+                                                    className="lg-ref-input"
+                                                    type="email"
+                                                    required
+                                                    autoComplete="email"
+                                                    placeholder="ejemplo@oasis.org"
+                                                    value={recoveryEmail}
+                                                    onChange={(e) => setRecoveryEmail(e.target.value)}
+                                                    autoFocus
+                                                />
+                                                <Mail size={16} className="lg-ref-input-icon" />
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            className="lg-ref-submit-btn"
+                                            disabled={loading || leaving}
+                                        >
+                                            {loading ? (
+                                                <span className="lg-spin" aria-label="Enviando..." />
+                                            ) : (
+                                                'ENVIAR ENLACE DE RECUPERACIÓN'
+                                            )}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="lg-ref-recovery-done">
+                                        <p>
+                                            Hemos enviado las instrucciones a <strong>{recoveryEmail}</strong>. Si no lo ves en unos minutos, revisa tu carpeta de spam.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            className="lg-ref-submit-btn"
+                                            onClick={() => setRecoverySent(false)}
+                                        >
+                                            REINTENTAR CON OTRO CORREO
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="lg-ref-footer">
+                                    <button
+                                        type="button"
+                                        className="lg-ref-back-link"
+                                        onClick={() => handleSwitchMode('login')}
+                                    >
+                                        ← VOLVER AL INICIO DE SESIÓN
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {/* ── MODO 3: REGISTRO ── */}
+                        {view === 'register' && (
+                            <form className="lg-ref-form" onSubmit={handleSubmit}>
+                                <div className="lg-ref-view-intro">
+                                    <h2 className="lg-ref-view-title">Crear Cuenta</h2>
+                                    <p className="lg-ref-view-desc">
+                                        Únete a la plataforma de gestión de Iglesia Oasis.
+                                    </p>
+                                </div>
+
+                                <div className="lg-ref-group">
+                                    <label htmlFor="lg-reg-name" className="lg-ref-label">
+                                        NOMBRE COMPLETO
+                                    </label>
+                                    <input
+                                        id="lg-reg-name"
+                                        className="lg-ref-input"
+                                        type="text"
+                                        required
+                                        autoComplete="name"
+                                        placeholder="Nombre y apellido"
+                                        value={formData.name}
+                                        onChange={set('name')}
+                                    />
+                                </div>
+
+                                <div className="lg-ref-group">
+                                    <label htmlFor="lg-reg-email" className="lg-ref-label">
                                         CORREO ELECTRÓNICO
                                     </label>
                                     <input
+                                        id="lg-reg-email"
+                                        className="lg-ref-input"
                                         type="email"
-                                        value={formData.email}
-                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
                                         required
-                                        className="form-control"
-                                        style={{
-                                            background: '#fff',
-                                            border: '1px solid rgba(0,0,0,0.1)',
-                                            borderRadius: '16px',
-                                            padding: '16px 20px',
-                                            fontSize: '0.95rem',
-                                            boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-                                        }}
+                                        autoComplete="email"
+                                        placeholder="ejemplo@oasis.org"
+                                        value={formData.email}
+                                        onChange={set('email')}
                                     />
                                 </div>
-                            )}
 
-                            <div className="mb-5">
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingLeft: '5px', paddingRight: '5px' }}>
-                                    <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#120C1F', opacity: 0.5, margin: 0 }}>
+                                <div className="lg-ref-group">
+                                    <label htmlFor="lg-reg-pass" className="lg-ref-label">
                                         CONTRASEÑA
                                     </label>
-                                    <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: '0.7rem', fontWeight: 800, color: '#F59E0B', textDecoration: 'none' }}>
-                                        ¿OLVIDÓ LA CLAVE?
-                                    </a>
+                                    <div className="lg-ref-input-wrap">
+                                        <input
+                                            id="lg-reg-pass"
+                                            className="lg-ref-input lg-ref-input-pass"
+                                            type={showPassword ? 'text' : 'password'}
+                                            required
+                                            autoComplete="new-password"
+                                            placeholder="Mínimo 6 caracteres"
+                                            value={formData.password}
+                                            onChange={set('password')}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="lg-ref-eye"
+                                            onClick={() => setShowPassword((v) => !v)}
+                                            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                        >
+                                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style={{ position: 'relative' }}>
-                                    <i className="bi bi-lock" style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', fontSize: '1.1rem' }}></i>
-                                    <input
-                                        type="password"
-                                        value={formData.password}
-                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                        required
-                                        className="form-control"
-                                        placeholder="••••••••"
-                                        style={{
-                                            background: '#fff',
-                                            border: '1px solid rgba(0,0,0,0.1)',
-                                            borderRadius: '16px',
-                                            padding: '16px 20px 16px 45px',
-                                            fontSize: '1.2rem',
-                                            letterSpacing: '3px',
-                                            boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-                                        }}
+
+                                <div className="lg-ref-group">
+                                    <label htmlFor="lg-reg-pass2" className="lg-ref-label">
+                                        CONFIRMAR CONTRASEÑA
+                                    </label>
+                                    <div className="lg-ref-input-wrap">
+                                        <input
+                                            id="lg-reg-pass2"
+                                            className="lg-ref-input lg-ref-input-pass"
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            required
+                                            autoComplete="new-password"
+                                            placeholder="Repite la contraseña"
+                                            value={formData.confirmPassword}
+                                            onChange={set('confirmPassword')}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="lg-ref-eye"
+                                            onClick={() => setShowConfirmPassword((v) => !v)}
+                                            aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="lg-ref-submit-btn"
+                                    disabled={loading || leaving}
+                                >
+                                    {loading ? (
+                                        <span className="lg-spin" aria-label="Creando cuenta..." />
+                                    ) : (
+                                        'CREAR CUENTA'
+                                    )}
+                                </button>
+
+                                <div className="lg-ref-divider">
+                                    <span>o registrarse con</span>
+                                </div>
+
+                                <div className="lg-ref-google-container">
+                                    <GoogleSignInButton
+                                        theme={isDark ? 'filled_black' : 'outline'}
+                                        onSuccess={enterAdmin}
+                                        onError={triggerError}
                                     />
                                 </div>
-                            </div>
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                style={{
-                                    background: '#120C1F',
-                                    color: '#fff',
-                                    border: 'none',
-                                    padding: '18px',
-                                    borderRadius: '16px',
-                                    width: '100%',
-                                    fontWeight: 800,
-                                    fontSize: '0.85rem',
-                                    letterSpacing: '1px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '10px',
-                                    cursor: loading ? 'wait' : 'pointer',
-                                    transition: 'all 0.2s',
-                                    boxShadow: '0 10px 20px -5px rgba(18, 12, 31, 0.4)'
-                                }}
-                                onMouseOver={e => !loading && (e.target.style.background = '#F59E0B')}
-                                onMouseOut={e => !loading && (e.target.style.background = '#120C1F')}
-                            >
-                                {loading ? 'VERIFICANDO...' : <>ACCEDER AL SISTEMA <i className="bi bi-arrow-right" style={{ fontSize: '1.1rem' }}></i></>}
-                            </button>
-
-                            <div style={{ textAlign: 'center', marginTop: '50px', fontSize: '0.65rem', color: '#9CA3AF', fontWeight: 800, letterSpacing: '2px' }}>
-                                © 2026 OASIS ECOSYSTEM
-                            </div>
-                        </form>
+                                <div className="lg-ref-footer">
+                                    <span>¿YA TIENES UNA CUENTA?</span>
+                                    <button
+                                        type="button"
+                                        className="lg-ref-switch-btn"
+                                        onClick={() => handleSwitchMode('login')}
+                                    >
+                                        INICIA SESIÓN
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </div>
                 </div>
-            </div>
-
-            <style>{`
-                @keyframes loginAppear {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .form-control:focus {
-                    border-color: #F59E0B !important;
-                    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1) !important;
-                    outline: none;
-                }
-            `}</style>
+            </main>
         </div>
     );
-};
-
-export default Login;
+}

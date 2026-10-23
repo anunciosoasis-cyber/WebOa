@@ -1,0 +1,86 @@
+/*
+ * Modo oscuro del admin para los módulos construidos con utilidades claras de Tailwind
+ * (Studio Oasis y Junta Oasis). Reasigna sus fondos, textos, bordes y sombras a la paleta
+ * morada del admin, para que todo el panel tenga el mismo fondo (#1b0d36).
+ * shortcut: capa de sobrescritura por clase; al rediseñar esos módulos, pasar a tokens propios y borrar este archivo.
+ */
+[data-admin-theme="dark"] {
+    --adm-bg: var(--oasis-purple-700);
+    --adm-surface: var(--oasis-purple-600);
+    --adm-surface-2: #2c1858;
+    --adm-border: rgba(255, 255, 255, 0.08);
+    --adm-text: #F5F3FF;
+    --adm-text-2: #C9C2E0;
+    --adm-muted: #A79FC4;
+}
+
+/* Raíces de los módulos: sin fondo propio, se ve el morado del layout */
+[data-admin-theme="dark"] .studio-oasis-theme,
+[data-admin-theme="dark"] .church-board {
+    background-color: transparent !important;
+    color: var(--adm-text);
+}
+
+/* Superficies claras → morado (el QR conserva su fondo blanco para poder escanearse) */
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.bg-ui-bg, .neumorph-card, .neumorph-button, .neumorph-inset, .bg-slate-100, .bg-gray-100):not(:has(> img[alt*="QR"])) {
+    background-color: var(--adm-surface) !important;
+}
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.bg-white, [class*="bg-white/"], .bg-slate-50, [class*="bg-slate-50/"], .bg-gray-50, [class*="bg-gray-50/"], [class*="bg-slate-100/"], [class*="bg-[#EEF1F6]"], [class*="bg-[#F4F5F8]"], [class*="bg-[#EBECEF]"], [class*="bg-[#F8FAFC]"], [class*="bg-[#F8F9FA]"]):not(:has(> img[alt*="QR"])) {
+    background-color: var(--adm-surface-2) !important;
+}
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.bg-slate-200, .bg-gray-200, [class*="bg-slate-200/"]) {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+[data-admin-theme="dark"] .church-board :is(.bg-gradient-to-b, .bg-gradient-to-br):is([class*="from-white"], [class*="from-slate-50"]) {
+    background-image: none !important;
+    background-color: var(--adm-surface-2) !important;
+}
+
+/* Textos oscuros → claros, salvo sobre botones dorados/ámbar (ahí el texto oscuro se lee mejor) */
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.text-black, .text-gray-950, .text-gray-900, .text-gray-800, .text-slate-950, .text-slate-900, .text-slate-800):not(:is(.bg-oasis-yellow, .bg-oasis-orange, .bg-amber-400, .bg-amber-500, .bg-amber-600, [class*="bg-[#FFB800]"], [class*="bg-[#F59E0B]"]), :is(.bg-oasis-yellow, .bg-oasis-orange, .bg-amber-400, .bg-amber-500, .bg-amber-600, [class*="bg-[#FFB800]"], [class*="bg-[#F59E0B]"]) *) {
+    color: var(--adm-text) !important;
+}
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.text-gray-700, .text-gray-600, .text-slate-700, .text-slate-600):not(:is(.bg-oasis-yellow, .bg-amber-500, [class*="bg-[#FFB800]"]) *) {
+    color: var(--adm-text-2) !important;
+}
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.text-gray-500, .text-gray-400, .text-slate-500, .text-slate-400) {
+    color: var(--adm-muted) !important;
+}
+/* Bordes y sombras claras (neumorfismo) → bordes sutiles y sombras oscuras */
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.border-white, [class*="border-white/"], .border-gray-100, .border-gray-200, .border-slate-100, .border-slate-200, [class*="border-slate-200/"], [class*="border-slate-100/"]) {
+    border-color: var(--adm-border) !important;
+}
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.shadow-neumorph, .shadow-neumorph-sm, .neumorph-card, .neumorph-button, [class*="shadow-[10px_10px"], [class*="shadow-[4px_6px"], [class*="shadow-[2px_3px"], [class*="shadow-[0_20px_60px"]) {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(.shadow-neumorph-inset, .neumorph-inset, [class*="shadow-[inset"]) {
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Campos de formulario */
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    background-color: var(--adm-bg) !important;
+    color: var(--adm-text) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) :is(input, textarea)::placeholder {
+    color: var(--adm-muted) !important;
+}
+
+/* Tablas de Bootstrap (Recursos, Solicitudes, Equipo): sin el gris #212529, sobre el morado del panel */
+[data-admin-theme="dark"] .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--adm-text);
+    --bs-table-border-color: var(--adm-border);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.04);
+    --bs-table-hover-color: var(--adm-text);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+}
+[data-admin-theme="dark"] .table > :not(caption) > * > * {
+    background-color: transparent;
+}
+
+/* Morado de marca usado como texto: sobre fondo morado oscuro necesita una versión clara para leerse */
+[data-admin-theme="dark"] :is(.studio-oasis-theme, .church-board, .oasis-dark-scope) [class*="text-[#5b2ea6]"]:not([class*="bg-[#5b2ea6]"]) {
+    color: #C4B5FD !important;
+}

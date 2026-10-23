@@ -179,13 +179,13 @@ const Solicitudes = () => {
     };
 
     if (loading && requests.length === 0) return (
-        <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: isDark ? OASIS_COLORS.midnight : '#F9FAFB' }}>
+        <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: isDark ? 'transparent' : '#F9FAFB' }}>
             <div className="spinner-border" style={{ color: OASIS_COLORS.accent }} role="status"></div>
         </div>
     );
 
     return (
-        <div className="container-fluid pb-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+        <div className="container-fluid pb-5" style={{ background: isDark ? 'transparent' : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
             <header className="mb-5">
                 <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Community Outreach</span>
                 <h1 style={{ fontFamily: 'Moonrising', fontSize: '2.5rem', margin: '5px 0 0', color: isDark ? '#fff' : OASIS_COLORS.deepPurple }}>

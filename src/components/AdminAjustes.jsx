@@ -5,6 +5,7 @@ import { useToast } from '../react-ui/components/Toast';
 import ConfirmationModal from '../react-ui/components/ConfirmationModal';
 import GlassCard from '../react-ui/components/GlassCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import WhatsappPanel from './whatsapp/WhatsappPanel';
 import { 
     Settings, Church, MessageSquare, Mail, 
     ShieldCheck, Zap, Globe, Save, RefreshCcw,
@@ -48,7 +49,7 @@ const DEFAULTS = {
     whatsapp_group_link: '',
     evolution_url: '',
     evolution_key: '',
-    evolution_instance: 'oasis-iglesia',
+    evolution_instance: '', // vacío = oasis-<iglesia> (una instancia por iglesia)
     youtube_playlist_id: '',
     logo: '',
     bg_image: '',
@@ -111,13 +112,13 @@ const AdminAjustes = () => {
     };
 
     if (loading) return (
-        <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: isDark ? OASIS_COLORS.midnight : '#F9FAFB' }}>
+        <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: isDark ? 'transparent' : '#F9FAFB' }}>
             <div className="spinner-border" style={{ color: OASIS_COLORS.accent }} role="status"></div>
         </div>
     );
 
     return (
-        <div className="container-fluid pb-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+        <div className="container-fluid pb-5" style={{ background: isDark ? 'transparent' : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
             <header className="mb-5 d-flex justify-content-between align-items-end">
                 <div>
                     <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>System Infrastructure</span>
@@ -197,8 +198,11 @@ const AdminAjustes = () => {
 
 
                 {/* 5. EVOLUTION API */}
-                <div className="col-lg-4">
-                    {/* ... (keep existing evolution content) */}
+                <div className="col-12">
+                    <GlassCard style={{ padding: '40px', borderRadius: '35px', border: `1px solid ${OASIS_COLORS.glassBorder}` }}>
+                        <SectionHeader icon={Smartphone} title="WHATSAPP AUTOMÁTICO" subtitle="Número de la iglesia vinculado con Evolution API: envíos de anuncios y programados" isDark={isDark} />
+                        <WhatsappPanel settings={settings} set={set} isDark={isDark} />
+                    </GlassCard>
                 </div>
 
                 {/* 5b. PLANTILLA DE CORREO — enlace a página dedicada */}

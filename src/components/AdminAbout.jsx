@@ -174,13 +174,13 @@ const AdminAbout = () => {
     };
 
     if (loading) return (
-        <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: isDark ? OASIS_COLORS.midnight : '#F9FAFB' }}>
+        <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: isDark ? 'transparent' : '#F9FAFB' }}>
             <div className="spinner-border" style={{ color: OASIS_COLORS.accent }} role="status"></div>
         </div>
     );
 
     return (
-        <div className="container-fluid pb-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+        <div className="container-fluid pb-5" style={{ background: isDark ? 'transparent' : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
             <header className="mb-5 d-flex justify-content-between align-items-end">
                 <div>
                     <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Branding & Vision</span>

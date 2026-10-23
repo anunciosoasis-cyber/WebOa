@@ -2,7 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import apiClient from '../../api/client';
 import { supabase } from '../../api/supabaseClient';
-import fastapiClient from '../../api/fastapiClient';
+import { liveKeyFromUrl, overlayChannel, pressChannel, sanitizeOverlay, privateFallbackKey } from '../../api/liveChannel';
+import SlideCanvasView from '../../components/studio-oasis/press/SlideCanvasView';
+import mediaClient from '../../api/mediaClient';
 import himnarioDataRaw from '../../data/himnario.json';
 
 const himnarioData = himnarioDataRaw.map(hymn => {
@@ -98,7 +100,7 @@ const ProyectorOverlay = () => {
         const fetchChapter = async () => {
             setLoadingBible(true);
             try {
-                const res = await fastapiClient.get('/bible/chapter', {
+                const res = await mediaClient.get('/bible/chapter', {
                     params: { book: selectedBibleBook.name, chapter: selectedBibleChapter }
                 });
                 if (res.data && res.data.length > 0) {
@@ -243,12 +245,34 @@ const ProyectorOverlay = () => {
             try { setOverlayData(JSON.parse(initial)); } catch(e){}
         }
 
+        // Escuchar cambios de diapositivas en tiempo real desde otras pestañas/ventanas
+        const handleStorageChange = (e) => {
+            if (e.key === 'obs_overlay_data' && e.newValue) {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    if (!data.target || data.target === 'all' || data.target === 'proyector') {
+                        setOverlayData(data);
+                    }
+                } catch (err) {
+                    console.error('Error al recibir cambio en proyector:', err);
+                }
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
 
-        const channel = supabase.channel('obs_public_channel');
+        const liveKey = liveKeyFromUrl() || privateFallbackKey();
+        const channel = overlayChannel(liveKey);
         channelRef.current = channel;
-        
+
+        // Diapositivas de Oasis Press desde otro equipo
+        const slidesChannel = pressChannel(liveKey);
+        slidesChannel.on('broadcast', { event: 'ppt_slide' }, ({ payload }) => {
+            const data = sanitizeOverlay(payload);
+            if (data && (!data.target || data.target === 'all' || data.target === 'proyector')) setOverlayData(data);
+        }).subscribe();
+
         channel.on('broadcast', { event: 'update_overlay' }, (payload) => {
-            const data = payload.payload;
+            const data = sanitizeOverlay(payload.payload);
             if (data) {
                 if (data.target && data.target !== 'all' && data.target !== 'proyector') {
                     return;
@@ -325,7 +349,9 @@ const ProyectorOverlay = () => {
 
         return () => {
             supabase.removeChannel(channel);
+            supabase.removeChannel(slidesChannel);
             window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('storage', handleStorageChange);
         };
     }, []);
 
@@ -370,6 +396,11 @@ const ProyectorOverlay = () => {
             backgroundColor: 'transparent',
             fontFamily: 'Inter, sans-serif'
         }}>
+            {!liveKeyFromUrl() && (
+                <div role="alert" style={{ position: 'absolute', top: 12, left: 12, zIndex: 9999, maxWidth: 420, padding: '8px 12px', borderRadius: 10, background: 'rgba(0,0,0,0.75)', color: '#FBBF24', font: '600 13px Inter, sans-serif' }}>
+                    Falta la clave del canal en la URL: copia el enlace desde Studio Oasis (botón "Full" o "Proyectar").
+                </div>
+            )}
             <BackgroundManager mode={overlayData.mode} />
             <style>
                 {`
@@ -381,7 +412,93 @@ const ProyectorOverlay = () => {
             </style>
 
             <AnimatePresence mode="wait">
-                {(overlayData.mode === 'bible' || overlayData.mode === 'himno') ? (
+                {overlayData.mode === 'blank' ? (
+                    <motion.div
+                        key="blank"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{ position: 'absolute', inset: 0, backgroundColor: '#000000', zIndex: 9999 }}
+                    />
+                ) : (overlayData.mode === 'slide' && overlayData.slide) ? (
+                    // Oasis Press: el mismo componente que la vista previa, en 16:9 centrado
+                    <motion.div
+                        key={`press-${overlayData.timestamp}`}
+                        initial={{ opacity: 0, scale: 0.99 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                        style={{ position: 'absolute', inset: 0, zIndex: 20, backgroundColor: '#000000', display: 'grid', placeItems: 'center' }}
+                    >
+                        <div style={{ width: 'min(100vw, calc(100vh * 16 / 9))', aspectRatio: '16 / 9' }}>
+                            <SlideCanvasView slide={overlayData.slide} background={overlayData.background} rounded={false} />
+                        </div>
+                    </motion.div>
+                ) : (overlayData.imageUrl || overlayData.mode === 'slide' || overlayData.mode === 'presentation') ? (
+                    <motion.div
+                        key={`slide-${overlayData.imageUrl || overlayData.title}-${overlayData.timestamp}`}
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 20,
+                            backgroundColor: '#000000',
+                            padding: '0'
+                        }}
+                    >
+                        {overlayData.mediaType === 'video' || (!overlayData.mediaType && overlayData.imageUrl && (overlayData.imageUrl.endsWith('.mp4') || overlayData.imageUrl.startsWith('blob:'))) ? (
+                            <video
+                                src={overlayData.imageUrl || overlayData.mediaUrl}
+                                autoPlay
+                                loop
+                                playsInline
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'contain'
+                                }}
+                            />
+                        ) : overlayData.imageUrl ? (
+                            <img
+                                src={overlayData.imageUrl}
+                                alt={overlayData.title || 'Diapositiva en vivo'}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'contain'
+                                }}
+                            />
+                        ) : (
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justify: 'center',
+                                background: 'linear-gradient(135deg, #120C1F 0%, #1b0d36 100%)',
+                                color: '#ffffff',
+                                padding: '40px',
+                                textAlign: 'center'
+                            }}>
+                                <h1 style={{ fontSize: '4rem', fontWeight: 900, color: '#F59E0B', fontFamily: 'Moonrising, sans-serif', marginBottom: '20px' }}>
+                                    {overlayData.title}
+                                </h1>
+                                {overlayData.content && (
+                                    <p style={{ fontSize: '2rem', color: '#E2E8F0', fontWeight: 700, maxWidth: '80%', lineHeight: 1.4 }}>
+                                        {overlayData.content}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </motion.div>
+                ) : (overlayData.mode === 'bible' || overlayData.mode === 'himno') ? (
                     <BibleHymnOverlay key="bibleHymn" overlayData={overlayData} overlayStyle={overlayStyle} />
                 ) : (overlayData.mode === 'preacher' || overlayData.mode === 'anuncio' || overlayData.mode === 'announcement') ? (
                     <LowerThirdOverlay key="preacher" overlayData={overlayData} overlayStyle={overlayStyle} />

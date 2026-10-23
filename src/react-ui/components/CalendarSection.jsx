@@ -3,14 +3,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../ThemeContext';
 import apiClient from '../../api/client';
-import * as LucideIcons from 'lucide-react';
+// Imports nombrados: `import * as` metía las ~1.500 iconos (830 KB) en el chunk de la Home.
+import { Calendar, ChevronLeft, ChevronRight, Clock, MapPin, CalendarDays } from 'lucide-react';
+const LucideIcons = { Calendar, ChevronLeft, ChevronRight, Clock, MapPin, CalendarDays };
 import { motion, AnimatePresence } from 'framer-motion';
 
 const EVENTS_REFRESH_MS = 30000;
 const ANNOUNCEMENTS_UPDATED_EVENT = 'oasis:announcements-updated';
 const ANNOUNCEMENTS_UPDATED_KEY = 'oasis_announcements_updated_at';
 
-const CalendarSection = () => {
+const CalendarSection = ({ announcements }) => {
     const { theme } = useTheme();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [events, setEvents] = useState([]);
@@ -90,6 +92,12 @@ const CalendarSection = () => {
     }, []);
 
     useEffect(() => {
+        if (Array.isArray(announcements)) {
+            const normalizedEvents = announcements.map(normalizeAnnouncement);
+            setEvents(normalizedEvents.filter(ev => ev.date));
+            return;
+        }
+
         loadEvents();
 
         const intervalId = window.setInterval(loadEvents, EVENTS_REFRESH_MS);

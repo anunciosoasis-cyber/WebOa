@@ -21,11 +21,13 @@ import {
 } from 'lucide-react';
 import CountdownLiveModal from './CountdownLiveModal';
 import PanelOBS from './panel_OBS/PanelOBS';
+import PairAppButton from './PairAppButton';
 import YoutubeLivePanel from './YoutubeLivePanel';
 import DateDisplay from './DateDisplay';
 import CtrlCulto from './CtrlCulto';
 import BtnOrdenCulto from './BtnOrdenCulto';
 import PlantillaOrden from './PlantillaOrden';
+import PressStudio from './press/PressStudio';
 import './OasisStyles.css';
 
 const OASIS_COLORS = {
@@ -42,11 +44,11 @@ const OASIS_COLORS = {
 const PLANTILLAS_DEFAULT = [
     {
         id: 'adventista',
-        nombre: '⛪ Culto Adventista Completo',
+        nombre: 'Culto Adventista Completo',
         secciones: [
             {
                 id: 'sabatica',
-                titulo: '🧠 Escuela Sabática & Repaso de la Lección',
+                titulo: 'Escuela Sabática & Repaso de la Lección',
                 horario: '09:15',
                 items: [
                     { actividad: 'Servicio de Alabanza Inicial', responsable: '', duracion: 10, hora: '09:15' },
@@ -58,7 +60,7 @@ const PLANTILLAS_DEFAULT = [
             },
             {
                 id: 'culto',
-                titulo: '⚡ Servicio de Culto Divino (Oración y Adoración)',
+                titulo: 'Servicio de Culto Divino (Oración y Adoración)',
                 horario: '11:00',
                 items: [
                     { actividad: 'Ejercicio de Canto', responsable: '', duracion: 5, hora: '11:00' },
@@ -126,7 +128,8 @@ const AdminCulto = () => {
     const [orden, setOrden] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    // en-CA da YYYY-MM-DD en la zona horaria local (toISOString es UTC: a partir de las 7 p. m. en Colombia ya es "mañana")
+    const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA'));
 
     const [showCountdown, setShowCountdown] = useState(false);
     const [showProjection, setShowProjection] = useState(false);
@@ -160,7 +163,7 @@ const AdminCulto = () => {
     const [blockElapsedSeconds, setBlockElapsedSeconds] = useState(() => {
         const base = Number(localStorage.getItem('culto_blockElapsedSeconds')) || 0;
         const startTime = localStorage.getItem('culto_serviceStartTime');
-        const paused = localStorage.getItem('culto_isPaused') === 'true';
+        const paused = localStorage.getItem('culto_isPaused') === 'true' || localStorage.getItem('culto_isBlockPaused') === 'true';
 
         if (startTime && !paused) {
             const lastTick = Number(localStorage.getItem('culto_lastTickTime'));
@@ -209,25 +212,29 @@ const AdminCulto = () => {
         localStorage.setItem('culto_isBlockPaused', isBlockPaused.toString());
     }, [serviceStartTime, currentActivityIndex, elapsedSeconds, blockElapsedSeconds, isPaused, isBlockPaused]);
 
+    const isBlockPausedRef = useRef(isBlockPaused);
+    useEffect(() => { isBlockPausedRef.current = isBlockPaused; }, [isBlockPaused]);
+
+    // Suma los segundos reales transcurridos desde el último tick. Con la pestaña en segundo plano el navegador
+    // retrasa setInterval (hasta 1 vez por minuto); así el reloj se pone al día en vez de quedarse atrás.
     useEffect(() => {
-        let timer;
-        if (serviceStartTime && !isPaused) {
-            localStorage.setItem('culto_lastTickTime', Date.now().toString());
-            timer = setInterval(() => {
-                setElapsedSeconds(prev => prev + 1);
-                
-                // Usamos el estado funcional para leer el valor actualizado de isBlockPaused
-                setIsBlockPaused(currentPaused => {
-                    if (!currentPaused) {
-                        setBlockElapsedSeconds(prev => prev + 1);
-                    }
-                    return currentPaused;
-                });
-                
-                localStorage.setItem('culto_lastTickTime', Date.now().toString());
-            }, 1000);
-        }
-        return () => clearInterval(timer);
+        if (!serviceStartTime || isPaused) return;
+        let lastTick = Date.now();
+        localStorage.setItem('culto_lastTickTime', lastTick.toString());
+        const tick = () => {
+            const delta = Math.floor((Date.now() - lastTick) / 1000);
+            if (delta <= 0) return;
+            lastTick += delta * 1000; // conserva la fracción de segundo para el siguiente tick
+            setElapsedSeconds(prev => prev + delta);
+            if (!isBlockPausedRef.current) setBlockElapsedSeconds(prev => prev + delta);
+            localStorage.setItem('culto_lastTickTime', lastTick.toString());
+        };
+        const timer = setInterval(tick, 1000);
+        document.addEventListener('visibilitychange', tick);
+        return () => {
+            clearInterval(timer);
+            document.removeEventListener('visibilitychange', tick);
+        };
     }, [serviceStartTime, isPaused]);
 
     const fetchOrden = async () => {
@@ -242,13 +249,17 @@ const AdminCulto = () => {
 
     const handleCreate = async (e) => {
         if (e) e.preventDefault();
+        if (!formData.actividad.trim() || !formData.hora) {
+            showToast('Escribe la actividad y la hora', 'warning');
+            return;
+        }
         try {
             await apiClient.post('/orden-culto', { ...formData, fecha: selectedDate });
             setFormData({ actividad: '', responsable: '', hora: '', duracionEstimada: 5, fecha: selectedDate });
             setShowForm(false);
             fetchOrden();
             showToast('Bloque añadido', 'success');
-        } catch (e) { showToast('Error', 'error'); }
+        } catch (e) { showToast('No se pudo añadir el bloque', 'error'); }
     };
 
     const startService = () => {
@@ -260,7 +271,7 @@ const AdminCulto = () => {
         if (serviceStartTime) return;
 
         setConfirmConfig({
-            show: true, title: '¿INICIAR SERVICIO?', message: 'Se activará el panel en vivo con el control de tiempos.', type: 'warning',
+            show: true, title: '¿INICIAR SERVICIO?', message: 'Se activará el panel en vivo con el control de tiempos y, si YouTube está conectado, se iniciará la transmisión en vivo.', type: 'warning',
             onConfirm: async () => {
                 const now = new Date();
                 setServiceStartTime(now.toISOString());
@@ -272,6 +283,7 @@ const AdminCulto = () => {
                 setConfirmConfig(p => ({ ...p, show: false }));
                 try {
                     await apiClient.post('/youtube/broadcast/start');
+                    showToast('Transmisión de YouTube iniciada', 'success');
                 } catch (e) {
                     console.log('No YouTube broadcast started.');
                 }
@@ -281,7 +293,7 @@ const AdminCulto = () => {
 
     const endService = () => {
         setConfirmConfig({
-            show: true, title: '¿FINALIZAR CULTO?', message: 'Esto detendrá definitivamente el cronómetro y limpiará el progreso actual.', type: 'error',
+            show: true, title: '¿FINALIZAR CULTO?', message: 'Esto detendrá definitivamente el cronómetro, limpiará el progreso actual y, si hay una transmisión de YouTube activa, la finalizará.', type: 'error',
             onConfirm: async () => {
                 setServiceStartTime(null);
                 setElapsedSeconds(0);
@@ -293,6 +305,7 @@ const AdminCulto = () => {
                 setConfirmConfig(p => ({ ...p, show: false }));
                 try {
                     await apiClient.post('/youtube/broadcast/stop');
+                    showToast('Transmisión de YouTube finalizada', 'success');
                 } catch (e) {
                     console.log('No YouTube broadcast stopped.');
                 }
@@ -347,6 +360,9 @@ const AdminCulto = () => {
                         <YoutubeLivePanel isDark={false} />
                     </div>
 
+                    {/* Emparejar OASIS Studio app (control remoto) con la sala */}
+                    <PairAppButton />
+
                     {/* MÓDULO FECHA Y CONTROLES CRONÓMETRO */}
                     <div className="flex flex-col gap-2 w-[165px] h-auto lg:h-full shrink-0">
                         {/* Caja del Indicador Hoy / Fecha (Componente Modular) */}
@@ -391,6 +407,9 @@ const AdminCulto = () => {
                 </div>
             </div>
 
+            {/* MÓDULO DE PRESENTACIONES POWERPOINT Y CONTROL REMOTO QR */}
+            <PressStudio />
+
             {/* MODAL DE SELECCIÓN DE PLANTILLAS */}
             <PlantillaOrden 
                 showPlantilla={showPlantilla}
@@ -402,7 +421,48 @@ const AdminCulto = () => {
                 fetchOrden={fetchOrden}
                 showToast={showToast}
             />
-            <ConfirmationModal 
+            {showForm && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="nuevo-bloque-titulo">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowForm(false)} />
+                    <form onSubmit={handleCreate} className="relative w-full max-w-md bg-ui-bg rounded-[2rem] shadow-neumorph border border-white/50 p-6 space-y-4 text-gray-900">
+                        <div className="flex items-center justify-between">
+                            <h2 id="nuevo-bloque-titulo" className="font-moonrising text-lg uppercase tracking-wide m-0">
+                                Nuevo <span className="text-oasis-orange">bloque</span>
+                            </h2>
+                            <button type="button" onClick={() => setShowForm(false)} aria-label="Cerrar" className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-900">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-wider text-gray-600">Actividad</span>
+                            <input autoFocus required value={formData.actividad} onChange={e => setFormData(f => ({ ...f, actividad: e.target.value }))}
+                                placeholder="Ej: Himno de alabanza" className="mt-1 w-full h-11 px-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                        </label>
+                        <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-wider text-gray-600">Responsable</span>
+                            <input value={formData.responsable} onChange={e => setFormData(f => ({ ...f, responsable: e.target.value }))}
+                                placeholder="Opcional" className="mt-1 w-full h-11 px-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <label className="block">
+                                <span className="text-xs font-bold uppercase tracking-wider text-gray-600">Hora</span>
+                                <input type="time" required value={formData.hora} onChange={e => setFormData(f => ({ ...f, hora: e.target.value }))}
+                                    className="mt-1 w-full h-11 px-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                            </label>
+                            <label className="block">
+                                <span className="text-xs font-bold uppercase tracking-wider text-gray-600">Duración (min)</span>
+                                <input type="number" min="1" max="240" required value={formData.duracionEstimada} onChange={e => setFormData(f => ({ ...f, duracionEstimada: Number(e.target.value) }))}
+                                    className="mt-1 w-full h-11 px-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                            </label>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button type="button" onClick={() => setShowForm(false)} className="flex-1 h-11 rounded-full border border-gray-300 font-bold text-sm text-gray-700">Cancelar</button>
+                            <button type="submit" className="flex-1 h-11 rounded-full bg-oasis-yellow font-bold text-sm text-gray-900 shadow-neumorph">Añadir bloque</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+            <ConfirmationModal
                 show={confirmConfig.show}
                 title={confirmConfig.title}
                 message={confirmConfig.message}

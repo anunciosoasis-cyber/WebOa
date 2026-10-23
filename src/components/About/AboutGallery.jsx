@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+import { Heart, MessageCircle, Share2, X } from 'lucide-react';
+const LucideIcons = { Heart, MessageCircle, Share2, X };
 import { COLORS } from './AboutStyles';
 
 // DATA PICTORIAL COMPLETA - Muestra de Trayectoria Oasis

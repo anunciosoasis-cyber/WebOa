@@ -1,5 +1,6 @@
 /**
  * OASIS React Design System - PREMIUM GOLD EDITION
+ * Misma paleta que styles/tokens.css (CSS de módulos y login): si cambia un color, cambiarlo en ambos.
  */
 
 export const createTheme = (mode = 'dark') => {
@@ -15,8 +16,9 @@ export const createTheme = (mode = 'dark') => {
             primary: '#F59E0B', // Oasis Premium Gold
             secondary: '#120C1F', // Deep Midnight Purple
             accent: '#F59E0B', // Oasis Gold
-            background: isDark ? '#0A0712' : '#FFFFFF', 
-            surface: isDark ? '#120C1F' : '#ffffff', 
+            // Morados del panel admin (AdminLayout): antes casi negros (#0A0712 / #120C1F)
+            background: isDark ? '#1b0d36' : '#FFFFFF', 
+            surface: isDark ? '#24124a' : '#ffffff', 
             surfaceAlt: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
             text: {
                 primary: isDark ? '#FFFFFF' : '#120C1F',
@@ -30,7 +32,7 @@ export const createTheme = (mode = 'dark') => {
         },
 
         glass: {
-            background: isDark ? 'rgba(18, 12, 31, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            background: isDark ? 'rgba(36, 18, 74, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             backdropFilter: 'blur(15px) saturate(160%)',
             border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.05)',
             borderRadius: '24px',

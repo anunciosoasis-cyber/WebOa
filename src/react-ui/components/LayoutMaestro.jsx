@@ -7,13 +7,14 @@
  * Estética: Liquid Glass (backdropFilter, bordes sutiles, Flat Design 2.0)
  */
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useTheme } from '../ThemeContext';
 import useAppMode from '../../hooks/useAppMode';
 import BottomNav from './BottomNav';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import PersistentPlayer from './PersistentPlayer';
+import PageTransition from './PageTransition';
 
 
 /* ─── LayoutMaestro ─── */
@@ -43,7 +44,7 @@ const LayoutMaestro = ({ showFooter = true }) => {
                 paddingBottom: isMobile ? '80px' : '0'
             }}>
                 <PersistentPlayer />
-                <Outlet />
+                <PageTransition />
             </main>
 
             {/* Universal Footer */}

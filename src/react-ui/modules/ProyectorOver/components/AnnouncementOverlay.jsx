@@ -19,7 +19,15 @@ const AnnouncementOverlay = ({ overlayData, overlayStyle }) => {
                 zIndex: 10
             }}
         >
-            {overlayData.template === 'ticker' ? (
+            {overlayData.imageUrl ? (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyCenter: 'center', background: '#000', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 30px 90px rgba(0,0,0,0.9)' }}>
+                    <img 
+                        src={overlayData.imageUrl} 
+                        alt="Diapositiva Proyectada en Vivo" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                    />
+                </div>
+            ) : overlayData.template === 'ticker' ? (
                 <div style={{ width: 'min(1800px, 96%)', background: 'linear-gradient(90deg, rgba(17,24,39,0.98), rgba(31,41,55,0.96))', borderRadius: '24px', border: '1px solid rgba(214,184,126,0.22)', boxShadow: '0 25px 60px rgba(0,0,0,0.8)', overflow: 'hidden' }}>
                     <div style={{ display: 'flex', alignItems: 'stretch' }}>
                         <div style={{ background: 'linear-gradient(180deg, #D6B87E, #C7A66A)', padding: '18px 24px', display: 'flex', alignItems: 'center', minWidth: '280px' }}>

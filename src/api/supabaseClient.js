@@ -1,6 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tu-proyecto.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'TU_SUPABASE_ANON_KEY_AQUI';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Compatibilidad: los componentes importan `supabase` de aquí desde la época de Supabase Realtime.
+// Ahora es el adaptador de salas sobre el gateway Socket.IO del backend (ver realtime.js).
+export { realtime as supabase } from './realtime';

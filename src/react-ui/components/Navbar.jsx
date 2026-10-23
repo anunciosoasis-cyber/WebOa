@@ -14,7 +14,7 @@ const Navbar = () => {
     const location = useLocation();
 
     // Rutas que SIEMPRE deben tener la Navbar oscura/cristal (fondos claros)
-    const darkNavRoutes = ['/login', '/peticiones', '/about', '/recursos', '/inscripciones'];
+    const darkNavRoutes = ['/peticiones', '/about', '/recursos', '/inscripciones'];
     const isForceDark = darkNavRoutes.includes(location.pathname);
 
     const colors = {

@@ -16,9 +16,9 @@ export const PlayerProvider = ({ children }) => {
         const loadData = async () => {
             try {
                 const [setRes, ytRes, liveRes] = await Promise.all([
-                    apiClient.get('/public/settings'),
-                    apiClient.get('/youtube/public/uploads'),
-                    apiClient.get('/youtube/public/live-status')
+                    apiClient.get('/public/settings').catch(() => ({ data: {} })),
+                    apiClient.get('/youtube/public/uploads').catch(() => ({ data: {} })),
+                    apiClient.get('/youtube/public/live-status').catch(() => ({ data: {} }))
                 ]);
                 
                 const s = setRes.data || {};

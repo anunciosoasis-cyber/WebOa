@@ -2,14 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'path';
-import { existsSync } from 'fs';
 
-// Usa el paquete real si la ruta existe (dev con el monorepo completo),
-// de lo contrario usa el stub incluido en este repo.
-const externalDesignerSrc = resolve(__dirname, '../../bases para dev/editor grafico/AdminAnnouncements/packages/oasis-designer/src');
-const oasisDesignerAlias = existsSync(externalDesignerSrc)
-  ? resolve(externalDesignerSrc, 'lib.ts')
-  : resolve(__dirname, 'src/stubs/oasis-designer/index.jsx');
+// El editor gráfico vive dentro del repo (packages/oasis-designer) y se compila desde su código fuente.
+const oasisDesignerAlias = resolve(__dirname, 'packages/oasis-designer/src/lib.ts');
 
 export default defineConfig({
   base: '/', // <--- DEBE SER '/' PARA QUE REACT ROUTER FUNCIONE EN SUBRUTAS COMO /login o /obs-overlay
@@ -61,17 +56,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:3000',
         changeOrigin: true,
       }
-    },
-    fs: {
-      allow: [
-        // Allow serving files from the frontend root
-        '.',
-        // Allow serving files from the external designer package
-        resolve(__dirname, '../../bases para dev/editor grafico/AdminAnnouncements/packages/oasis-designer')
-      ]
     }
   }
 });

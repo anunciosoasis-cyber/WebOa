@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["vite/client"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": "./dist/types",
+    "rootDir": "src",
+    "jsx": "react-jsx",
+    "ignoreDeprecations": "5.0"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

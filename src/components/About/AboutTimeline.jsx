@@ -2,7 +2,8 @@
 
 import React, { useRef } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+import { Circle } from 'lucide-react';
+import LucideByName from './LucideByName';
 import { COLORS } from './AboutStyles';
 
 const DEFAULT_TIMELINE = [
@@ -27,8 +28,7 @@ const AboutTimeline = ({ historyBrief, timeline = DEFAULT_TIMELINE, isMobile }) 
     });
 
     const IconRenderer = ({ name, color }) => {
-        const Icon = LucideIcons[name] || LucideIcons.Circle;
-        return <Icon size={18} color={color} strokeWidth={2.5} />;
+        return <LucideByName name={name} fallback={Circle} size={18} color={color} strokeWidth={2.5} />;
     };
 
     return (

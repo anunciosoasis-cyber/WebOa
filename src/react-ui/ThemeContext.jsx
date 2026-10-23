@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { createTheme } from './styles/theme';
 
 const ThemeContext = createContext();
@@ -8,11 +8,14 @@ export const ThemeProvider = ({ children }) => {
         return localStorage.getItem('oasis_theme_mode') || 'light';
     });
 
-    const theme = createTheme(mode);
+    const theme = useMemo(() => createTheme(mode), [mode]);
 
-    const toggleMode = () => {
+    const toggleMode = useCallback(() => {
         setMode(prev => prev === 'dark' ? 'light' : 'dark');
-    };
+    }, []);
+
+    // Valor estable: evita re-renderizar a todos los consumidores en cada render del provider.
+    const value = useMemo(() => ({ mode, toggleMode, theme }), [mode, toggleMode, theme]);
 
     useEffect(() => {
         localStorage.setItem('oasis_theme_mode', mode);
@@ -20,7 +23,7 @@ export const ThemeProvider = ({ children }) => {
     }, [mode, theme.colors.background]);
 
     return (
-        <ThemeContext.Provider value={{ mode, toggleMode, theme }}>
+        <ThemeContext.Provider value={value}>
             {children}
         </ThemeContext.Provider>
     );

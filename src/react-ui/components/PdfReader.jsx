@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+import { BookOpen, Calendar, ChevronLeft, ChevronRight, Download, Expand, File, FileText, Minus, Plus, RefreshCcw, Shrink, X } from 'lucide-react';
+const LucideIcons = { BookOpen, Calendar, ChevronLeft, ChevronRight, Download, Expand, File, FileText, Minus, Plus, RefreshCcw, Shrink, X };
 import HTMLFlipBook from 'react-pageflip';
 import { Document, Page, pdfjs } from 'react-pdf';
 import apiClient from '../../api/client';

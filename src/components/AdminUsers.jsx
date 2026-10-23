@@ -64,7 +64,7 @@ const AdminUsers = () => {
             if (formData.id) {
                 await apiClient.put(`/users/${formData.id}`, formData);
             } else {
-                await apiClient.post('/register', { username: formData.name, email: formData.email, password: formData.password, role: formData.role });
+                await apiClient.post('/users', { username: formData.name, email: formData.email, password: formData.password, role: formData.role });
             }
             fetchUsers();
             setShowForm(false);
@@ -109,7 +109,7 @@ const AdminUsers = () => {
     };
 
     return (
-        <div className="container-fluid pb-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+        <div className="container-fluid pb-5" style={{ background: isDark ? 'transparent' : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
             <header className="mb-5 d-flex justify-content-between align-items-end">
                 <div>
                     <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Access Control</span>
@@ -160,7 +160,10 @@ const AdminUsers = () => {
                                         <Shield className="position-absolute top-50 start-0 translate-middle-y ms-3 opacity-25" size={18} />
                                         <select className="form-select oasis-input ps-5" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
                                             <option value="admin">Administrador</option>
+                                            <option value="pastor">Pastor</option>
                                             <option value="editor">Editor</option>
+                                            <option value="operator">Operador de transmisión</option>
+                                            <option value="member">Miembro</option>
                                         </select>
                                     </div>
                                 </div>

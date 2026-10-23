@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
-import fastapiClient from '../../../../api/fastapiClient';
+import mediaClient from '../../../../api/mediaClient';
 import himnarioData from '../../../../data/himnario.json';
+
+/** El coro se canta después de cada estrofa: se intercala para proyectarlo en orden. */
+const expandChorus = (hymn) => {
+    const chorus = hymn.stanzas.find(s => s.type === 'chorus' || s.number === '' || String(s.number).toLowerCase() === 'coro' || s.number === 0);
+    if (!chorus) return hymn;
+    const expandedStanzas = [];
+    hymn.stanzas.filter(s => s !== chorus).forEach(s => { expandedStanzas.push(s); expandedStanzas.push(chorus); });
+    return { ...hymn, stanzas: expandedStanzas };
+};
 
 export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymnalTemplate) => {
     const [himnarioList, setHimnarioList] = useState([]);
@@ -19,7 +28,7 @@ export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymn
         const loadHymns = async () => {
             setIsLoadingHymns(true);
             try {
-                const res = await fastapiClient.get('/hymns');
+                const res = await mediaClient.get('/hymns');
                 if (res.data && res.data.length > 0) {
                     const mappedData = res.data.map(h => ({
                         ...h,
@@ -32,7 +41,7 @@ export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymn
                             start_timestamp: s.start_timestamp,
                             end_timestamp: s.end_timestamp
                         })) : [{ type: 'stanza', number: 1, text: '(Instrumental)' }]
-                    }));
+                    })).map(expandChorus);
                     setHimnarioList(mappedData);
                     setSelectedHymn(mappedData[0]);
                     setSelectedStanza(mappedData[0].stanzas[0]);
@@ -40,21 +49,11 @@ export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymn
                     return;
                 }
             } catch (apiErr) {
-                console.warn("⚠️ FastAPI no disponible para Himnario. Usando respaldo local...", apiErr.message);
+                console.warn("⚠️ API de himnario no disponible. Usando respaldo local...", apiErr.message);
             }
 
             try {
-                let data = himnarioData;
-                data = data.map(hymn => {
-                    const chorus = hymn.stanzas.find(s => s.type === 'chorus' || s.number === '' || String(s.number).toLowerCase() === 'coro' || s.number === 0);
-                    if (chorus) {
-                        const expandedStanzas = [];
-                        const onlyStanzas = hymn.stanzas.filter(s => s !== chorus);
-                        onlyStanzas.forEach(s => { expandedStanzas.push(s); expandedStanzas.push(chorus); });
-                        return { ...hymn, stanzas: expandedStanzas };
-                    }
-                    return hymn;
-                });
+                const data = himnarioData.map(expandChorus);
                 if (data && data.length > 0) {
                     setHimnarioList(data);
                     setSelectedHymn(data[0]);

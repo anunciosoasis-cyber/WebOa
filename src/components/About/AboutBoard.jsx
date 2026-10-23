@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+import { ShieldCheck, Users } from 'lucide-react';
+import LucideByName from './LucideByName';
 import { COLORS } from './AboutStyles';
 
 // DATA PICTÓRICA POR DEFECTO - Estructura Colombia / América Latina
@@ -78,8 +79,7 @@ const AboutBoard = ({ boardMembers = [], onSelectMember, getImageUrl }) => {
     };
 
     const IconRenderer = ({ name }) => {
-        const Icon = LucideIcons[name] || LucideIcons.Users;
-        return <Icon size={12} />;
+        return <LucideByName name={name} fallback={Users} size={12} />;
     };
 
     return (
@@ -165,7 +165,7 @@ const AboutBoard = ({ boardMembers = [], onSelectMember, getImageUrl }) => {
                                     className="member-img"
                                 />
                                 <div className="card-overlay">
-                                    <LucideIcons.ShieldCheck size={28} color={COLORS.accent} />
+                                    <ShieldCheck size={28} color={COLORS.accent} />
                                     <span style={{ fontSize: '0.6rem', fontWeight: 800, marginTop: '8px', letterSpacing: '2px' }}>DATO PROTEGIDO</span>
                                 </div>
                             </div>

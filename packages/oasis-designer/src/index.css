@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: #f5f5f5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Solo aplicar Poppins a elementos de la interfaz, no al canvas */
+button, input:not(#preview-container *), select:not(#preview-container *), textarea:not(#preview-container *) {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* El canvas debe ser libre para usar sus propias fuentes */
+#preview-container * {
+  font-family: inherit;
+}

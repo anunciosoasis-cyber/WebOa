@@ -21,14 +21,19 @@ const detectPWA = () => {
     return false;
 };
 
+const MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT - 0.02}px)`;
+
 const useAppMode = () => {
-    const [width, setWidth] = useState(window.innerWidth);
+    // matchMedia solo dispara al cruzar el breakpoint; el antiguo listener de resize
+    // re-renderizaba los layouts completos en cada píxel de redimensionado.
+    const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches);
     const [isPWA, setIsPWA] = useState(detectPWA);
 
     useEffect(() => {
-        const onResize = () => setWidth(window.innerWidth);
-        window.addEventListener('resize', onResize);
-        return () => window.removeEventListener('resize', onResize);
+        const mql = window.matchMedia(MOBILE_QUERY);
+        const onChange = (e) => setIsMobile(e.matches);
+        mql.addEventListener('change', onChange);
+        return () => mql.removeEventListener('change', onChange);
     }, []);
 
     useEffect(() => {
@@ -39,7 +44,6 @@ const useAppMode = () => {
         return () => mql.removeEventListener('change', handler);
     }, []);
 
-    const isMobile = width < MOBILE_BREAKPOINT;
     const isDesktop = !isMobile;
     const isWeb = !isPWA;
 

@@ -1,0 +1,676 @@
+/*
+ * Oasis Church Login - Reference Card Design
+ * Estilo con fondo atmosférico difuminado, corte diagonal, insignia flotante y paleta Oasis
+ */
+
+.lg {
+    --lg-bg: #f8fafc;
+    --lg-text: #1e293b;
+    --lg-muted: #64748b;
+    --lg-label: #94a3b8;
+    --lg-line: #e2e8f0;
+    --lg-card-bg: #ffffff;
+    --lg-card-shadow: 0 25px 60px -12px rgba(18, 12, 31, 0.22), 0 0 1px rgba(0, 0, 0, 0.08);
+    --lg-gold: #f59e0b;
+    --lg-gold-dark: #d97706;
+    --lg-purple: #24124a;
+    --lg-purple-deep: #160b2e;
+
+    position: relative;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 72px 16px 36px;
+    overflow-x: hidden;
+    isolation: isolate;
+    color: var(--lg-text);
+    font-family: var(--oasis-font-body, system-ui, -apple-system, sans-serif);
+}
+
+.lg[data-mode='dark'] {
+    --lg-bg: #0f071a;
+    --lg-text: #f8fafc;
+    --lg-muted: rgba(255, 255, 255, 0.65);
+    --lg-label: rgba(255, 255, 255, 0.5);
+    --lg-line: rgba(255, 255, 255, 0.12);
+    --lg-card-bg: rgba(26, 13, 50, 0.92);
+    --lg-card-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(245, 158, 11, 0.2);
+}
+
+/* ── Fondo atmosférico difuminado con la foto de la congregación ────────── */
+.lg-ref-backdrop {
+    position: fixed;
+    inset: -30px;
+    z-index: -3;
+    background-size: cover;
+    background-position: center 30%;
+    filter: blur(28px) saturate(1.2) brightness(0.92);
+    transform: scale(1.08);
+    pointer-events: none;
+    transition: filter 0.3s ease;
+}
+
+.lg[data-mode='dark'] .lg-ref-backdrop {
+    filter: blur(32px) saturate(1.1) brightness(0.42);
+}
+
+.lg-ref-backdrop-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.35) 0%, rgba(241, 245, 249, 0.82) 100%);
+}
+
+.lg[data-mode='dark'] .lg-ref-backdrop-overlay {
+    background: radial-gradient(circle at 50% 40%, rgba(36, 18, 74, 0.45) 0%, rgba(15, 7, 26, 0.94) 100%);
+}
+
+/* ── Barra superior mínima ────────────────────────────────────────────── */
+.lg-top {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 20;
+}
+
+.lg-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--lg-text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.lg[data-mode='dark'] .lg-chip {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(36, 18, 74, 0.7);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.lg-chip:hover {
+    transform: translateY(-1.5px);
+    color: var(--lg-text);
+}
+
+/* ── Tarjeta de referencia centrada ───────────────────────────────────── */
+.lg-ref-card {
+    position: relative;
+    width: 100%;
+    max-width: 390px;
+    border-radius: 20px;
+    background: var(--lg-card-bg);
+    box-shadow: var(--lg-card-shadow);
+    overflow: visible;
+    transition: box-shadow 0.3s ease;
+}
+
+@media (min-width: 480px) {
+    .lg-ref-card {
+        max-width: 410px;
+    }
+}
+
+/* ── Cabecera con foto y corte diagonal ───────────────────────────────── */
+.lg-ref-header {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    border-radius: 20px 20px 0 0;
+    overflow: visible;
+}
+
+.lg-ref-header-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    border-radius: 20px 20px 0 0;
+    /* Corte diagonal de referencia: sube hacia la derecha */
+    clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
+    display: block;
+}
+
+.lg-ref-header-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px 20px 0 0;
+    clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
+    background: linear-gradient(
+        180deg,
+        rgba(15, 7, 26, 0.1) 0%,
+        rgba(15, 7, 26, 0.3) 60%,
+        rgba(15, 7, 26, 0.65) 100%
+    );
+    pointer-events: none;
+}
+
+/* ── Insignia circular superpuesta al corte diagonal ──────────────────── */
+.lg-ref-badge {
+    position: absolute;
+    left: 50%;
+    bottom: -36px;
+    transform: translateX(-50%);
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #2a1456 0%, #15092e 100%);
+    border: 3.5px solid #ffffff;
+    box-shadow: 0 10px 24px -4px rgba(36, 18, 74, 0.45), 0 0 0 1.5px rgba(245, 158, 11, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: transform 0.25s ease;
+}
+
+.lg[data-mode='dark'] .lg-ref-badge {
+    border-color: #1a0d32;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.65), 0 0 0 2px #f59e0b;
+}
+
+.lg-ref-badge:hover {
+    transform: translateX(-50%) scale(1.05);
+}
+
+.lg-ref-badge-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+.lg-ref-badge-label {
+    font-family: var(--oasis-font-brand, sans-serif);
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: #f59e0b;
+    margin-top: 1px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Cuerpo del formulario ────────────────────────────────────────────── */
+.lg-ref-body {
+    padding: 48px 32px 30px 32px;
+    position: relative;
+    z-index: 2;
+}
+
+@media (max-width: 420px) {
+    .lg-ref-body {
+        padding: 44px 22px 24px 22px;
+    }
+}
+
+.lg-ref-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.lg-ref-group {
+    margin-bottom: 20px;
+    position: relative;
+    text-align: left;
+}
+
+.lg-ref-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lg-label);
+    margin-bottom: 6px;
+}
+
+.lg-ref-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+}
+
+.lg-ref-label-row .lg-ref-label {
+    margin-bottom: 0;
+}
+
+.lg-ref-forgot-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--lg-label);
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.lg-ref-forgot-link:hover {
+    color: var(--lg-gold);
+    text-decoration: underline;
+}
+
+.lg-ref-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Línea minimalista estilo de referencia */
+.lg-ref-input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--lg-line);
+    border-radius: 0;
+    background: transparent;
+    padding: 6px 0 10px 0;
+    font-size: 14.5px;
+    font-family: inherit;
+    color: var(--lg-text);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lg-ref-input::placeholder {
+    color: var(--lg-label);
+    opacity: 0.75;
+}
+
+.lg-ref-input:focus {
+    border-bottom-color: var(--lg-gold);
+    box-shadow: 0 1px 0 var(--lg-gold);
+}
+
+.lg-ref-input-pass {
+    padding-right: 32px;
+}
+
+.lg-ref-eye {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-60%);
+    background: none;
+    border: none;
+    padding: 4px;
+    color: var(--lg-label);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.lg-ref-eye:hover {
+    color: var(--lg-text);
+}
+
+.lg-ref-input-icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-60%);
+    color: var(--lg-label);
+    pointer-events: none;
+}
+
+/* ── Botón de acción principal con paleta Oasis ───────────────────────── */
+.lg-ref-submit-btn {
+    width: 100%;
+    height: 48px;
+    margin-top: 14px;
+    border: none;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #1b0d36;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 10px 22px -6px rgba(245, 158, 11, 0.45);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.lg-ref-submit-btn:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 14px 26px -6px rgba(245, 158, 11, 0.6);
+}
+
+.lg-ref-submit-btn:active {
+    transform: scale(0.985);
+}
+
+.lg-ref-submit-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+/* ── Separador ────────────────────────────────────────────────────────── */
+.lg-ref-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0 14px 0;
+    color: var(--lg-label);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.lg-ref-divider::before,
+.lg-ref-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--lg-line);
+}
+
+/* ── Botón de Google personalizado de alta fidelidad ──────────────────── */
+.lg-ref-google-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.lg-ref-google-btn {
+    width: 100%;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 9px;
+    border: 1.5px solid var(--lg-line);
+    background: #ffffff;
+    color: #334155;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.lg[data-mode='dark'] .lg-ref-google-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #f1f5f9;
+}
+
+.lg-ref-google-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.lg[data-mode='dark'] .lg-ref-google-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.24);
+}
+
+.lg-ref-google-icon {
+    flex-shrink: 0;
+}
+
+/* ── Pie de tarjeta: alternar cuenta ──────────────────────────────────── */
+.lg-ref-footer {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lg-label);
+}
+
+.lg-ref-switch-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lg-gold);
+    cursor: pointer;
+    transition: text-decoration 0.2s;
+}
+
+.lg-ref-switch-btn:hover {
+    text-decoration: underline;
+}
+
+.lg-ref-back-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--lg-gold);
+    cursor: pointer;
+}
+
+.lg-ref-back-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Introducción de vistas secundarias ───────────────────────────────── */
+.lg-ref-view-intro {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.lg-ref-view-title {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin: 0 0 6px 0;
+    color: var(--lg-text);
+}
+
+.lg-ref-view-desc {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--lg-muted);
+    margin: 0;
+}
+
+.lg-ref-recovery-done {
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--lg-text);
+    margin-bottom: 16px;
+}
+
+.lg-ref-remembered-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    font-size: 12px;
+    color: var(--lg-text);
+}
+
+.lg-ref-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--lg-gold);
+    cursor: pointer;
+}
+
+.lg-ref-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Alertas y Mensajes ───────────────────────────────────────────────── */
+.lg-ref-alert {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: left;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lg-ref-alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #ef4444;
+}
+
+.lg-ref-alert-success {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+}
+
+/* ── Animaciones y Estados ────────────────────────────────────────────── */
+.lg-spin {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(27, 13, 54, 0.25);
+    border-top-color: #1b0d36;
+    animation: lg-spin 0.75s linear infinite;
+}
+
+@keyframes lg-spin {
+    to { transform: rotate(360deg); }
+}
+
+.lg-shake {
+    animation: lg-shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes lg-shake {
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+.lg-in {
+    opacity: 0;
+    animation: lg-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: calc(var(--i, 0) * 70ms + 280ms);
+}
+
+@keyframes lg-rise {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 16px, 0) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ── Cortina de navegación al salir ───────────────────────────────────── */
+.lg-curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    background: linear-gradient(160deg, #24124a 0%, #170a33 60%, #0d051c 100%);
+    display: grid;
+    place-items: center;
+    will-change: transform;
+    animation: lg-curtain-up 0.7s cubic-bezier(0.76, 0, 0.24, 1) 0.1s forwards;
+}
+
+.lg-curtain img {
+    width: 64px;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+    animation: lg-fade-out 0.3s ease 0.1s forwards;
+}
+
+.lg-curtain::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 4px;
+    background: #f59e0b;
+}
+
+.lg[data-leaving='true'] .lg-curtain {
+    animation: lg-curtain-down 0.5s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.lg[data-leaving='true'] .lg-curtain img {
+    animation: lg-fade-in 0.25s ease 0.3s both;
+}
+
+@keyframes lg-curtain-up {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(0, -101%, 0); }
+}
+
+@keyframes lg-curtain-down {
+    from { transform: translate3d(0, 101%, 0); }
+    to { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes lg-fade-out {
+    to { opacity: 0; }
+}
+
+@keyframes lg-fade-in {
+    from { opacity: 0; }
+    to { opacity: 0.9; }
+}
+
+/* ── Accesibilidad / Movimiento Reducido ───────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .lg-in,
+    .lg-shake {
+        animation: none !important;
+        opacity: 1;
+    }
+    .lg-curtain {
+        display: none;
+    }
+}

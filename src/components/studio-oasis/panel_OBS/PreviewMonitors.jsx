@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLiveKey, liveUrl } from '../../../api/liveChannel';
 import { motion } from 'framer-motion';
 import { MonitorPlay, Tv } from 'lucide-react';
 import CtrlCentralOpciones from './CenterControls';
@@ -15,6 +16,7 @@ const PreviewMonitors = ({
     isDark,
     handleTemplateChange
 }) => {
+    const liveKey = useLiveKey();
 
     // Función encargada de renderizar el overlay dentro del lienzo a escala completa de la miniatura
     const renderExactOverlayContent = (overlay) => {
@@ -112,7 +114,7 @@ const PreviewMonitors = ({
                             🎨 {isChroma ? 'Croma' : 'Video'}
                         </button>
                         <button
-                            onClick={() => window.open('/transmision/overlay', 'OBS_WINDOW', 'width=1920,height=1080')}
+                            onClick={() => window.open(liveUrl('/transmision/overlay', liveKey), 'OBS_WINDOW', 'width=1920,height=1080')}
                             className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors"
                         >
                             ↗ Full
@@ -164,7 +166,7 @@ const PreviewMonitors = ({
                         PANTALLA PROYECTOR
                     </span>
                     <button
-                        onClick={() => window.open('/transmision/proyector', 'PROYECTOR_WINDOW', 'width=1920,height=1080')}
+                        onClick={() => window.open(liveUrl('/transmision/proyector', liveKey), 'PROYECTOR_WINDOW', 'width=1920,height=1080')}
                         className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors"
                     >
                         ↗ Full

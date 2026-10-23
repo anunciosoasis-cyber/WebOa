@@ -157,7 +157,7 @@ const AdminForms = () => {
 
     if (editingForm) {
         return (
-            <div className="container-fluid pb-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+            <div className="container-fluid pb-5" style={{ background: isDark ? 'transparent' : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
                 <header className="mb-5 d-flex justify-content-between align-items-end">
                     <div>
                         <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Form Architecture</span>
@@ -278,7 +278,7 @@ const AdminForms = () => {
 
     if (selectingTemplate) {
         return (
-            <div className="container-fluid py-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+            <div className="container-fluid py-5" style={{ background: isDark ? 'transparent' : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
                 <header className="text-center mb-5">
                     <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Event Launchpad</span>
                     <h1 style={{ fontFamily: 'Moonrising', fontSize: '2.5rem', margin: '5px 0 0', color: isDark ? '#fff' : OASIS_COLORS.deepPurple }}>ELIGE UNA <span style={{ color: OASIS_COLORS.accent }}>PLANTILLA</span></h1>
@@ -335,7 +335,7 @@ const AdminForms = () => {
 
     if (viewingSubmissionsFor) {
         return (
-            <div className="container-fluid pb-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+            <div className="container-fluid pb-5" style={{ background: isDark ? 'transparent' : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
                 <header className="mb-5 d-flex justify-content-between align-items-end">
                     <div>
                         <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Data Analysis</span>
@@ -381,7 +381,7 @@ const AdminForms = () => {
     }
 
     return (
-        <div className="container-fluid pb-5" style={{ background: isDark ? OASIS_COLORS.midnight : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
+        <div className="container-fluid pb-5" style={{ background: isDark ? 'transparent' : '#FFFFFF', minHeight: '100vh', padding: '40px' }}>
             <header className="mb-5 d-flex justify-content-between align-items-end">
                 <div>
                     <span style={{ color: OASIS_COLORS.accent, fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '4px' }}>Community Outreach</span>

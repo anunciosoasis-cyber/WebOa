@@ -2,7 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+// Solo los iconos que se buscan por nombre: `import *` arrastraba toda la librería al bundle.
+import { BookOpen, ExternalLink, File as FileIcon, FileText, Image as ImageIcon, Link as LinkIcon, Music, X } from 'lucide-react';
+const LucideIcons = { BookOpen, ExternalLink, File: FileIcon, FileText, Image: ImageIcon, Link: LinkIcon, Music, X };
 import apiClient from '../../api/client';
 import PdfReader from '../components/PdfReader';
 
@@ -207,7 +209,8 @@ const Recursos = () => {
                         })}
                     </AnimatePresence>
                 </div>
-            </div>            {/* 4. LECTOR ONLINE EMERGENTE */}
+            </div>
+            {/* 4. LECTOR ONLINE EMERGENTE */}
             <PdfReader
                 isOpen={!!viewerOpen}
                 initialResource={viewerOpen}
