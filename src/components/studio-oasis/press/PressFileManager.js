@@ -47,7 +47,7 @@ export class PressFileManager {
         if (ast && ast.slides && ast.slides.length > 0) {
           if (!presentationTitle) presentationTitle = ast.title || file.name.split('.')[0];
 
-          const processed = ast.slides.map((s, idx) => {
+          const processed = await Promise.all(ast.slides.map(async (s, idx) => {
             const mainHeading =
               s.elements?.find((el) => el.type === 'heading')?.content ||
               s.title ||
@@ -61,19 +61,25 @@ export class PressFileManager {
               s.elements?.find((el) => el.type === 'image')?.content ||
               null;
 
-                        // PDF es imagen completa por página; PPTX con texto es diapositiva estructurada
+            // PDF es imagen completa por página; PPTX con texto es diapositiva estructurada
             const isPureImage = extension === 'pdf' || (!bodyTexts && !s.elements?.some((el) => el.type === 'heading') && !!imgContent);
+
+            let thumb = s.thumbnailUrl || null;
+            if (!thumb && imgContent) {
+              thumb = await createMiniThumbnail(imgContent, 160, 0.55);
+            }
 
             return {
               id: s.id || `slide-processed-${Date.now()}-${idx}`,
               title: mainHeading,
               subtitle: bodyTexts || (isPureImage ? '' : `Página ${idx + 1} de ${ast.slides.length}`),
-              fileUrl: isPureImage ? imgContent : null,
-              mediaUrl: isPureImage ? imgContent : null,
+              fileUrl: imgContent,
+              mediaUrl: imgContent,
+              thumbnailUrl: thumb,
               type: isPureImage ? 'image' : 'styled',
               elements: s.elements,
             };
-          });
+          }));
 
           slidesList.push(...processed);
         }
@@ -123,18 +129,23 @@ export class PressFileManager {
   /**
    * Procesa imágenes individuales directo a Data URL al instante
    */
-  processSingleImageFallback(file) {
-    return imageFileToDataUrl(file)
-      .then((dataUrl) => ({
+  async processSingleImageFallback(file) {
+    try {
+      const dataUrl = await imageFileToDataUrl(file);
+      const thumbUrl = await createMiniThumbnail(dataUrl, 160, 0.55);
+      return {
         id: `slide-img-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         title: file.name.replace(/\.[^/.]+$/, ''),
         subtitle: 'Anuncio gráfico',
         fileUrl: dataUrl,
         mediaUrl: dataUrl,
+        thumbnailUrl: thumbUrl,
         type: 'image',
         mediaType: 'image',
-      }))
-      .catch(() => null);
+      };
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -213,3 +224,34 @@ export const imageFileToDataUrl = (file, maxSide = 1280, quality = 0.75) => new 
 });
 
 export default PressFileManager;
+
+
+/**
+ * Crea una miniatura ultra-ligera (160x90, JPEG 0.55, ~2 KB) para el control remoto móvil
+ */
+export const createMiniThumbnail = (dataUrlOrImage, maxSide = 160, quality = 0.55) => new Promise((resolve) => {
+  if (!dataUrlOrImage || typeof dataUrlOrImage !== 'string') return resolve(null);
+  if (/^https?:\/\//.test(dataUrlOrImage)) return resolve(dataUrlOrImage);
+  if (!dataUrlOrImage.startsWith('data:image/')) return resolve(null);
+
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      } else {
+        resolve(null);
+      }
+    } catch {
+      resolve(null);
+    }
+  };
+  img.onerror = () => resolve(null);
+  img.src = dataUrlOrImage;
+});

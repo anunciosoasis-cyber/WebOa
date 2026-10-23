@@ -21,10 +21,12 @@ const ProtectedRoute = ({ redirectPath = '/login', adminOnly = true }) => {
 
     const token = localStorage.getItem('auth_token');
 
-    // 1. Si no hay token de autenticación, expulsar inmediatamente al login
-    if (!token) {
+    // 1. Si no hay token de autenticación o es inválido, expulsar inmediatamente al login
+    if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
+        localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
         localStorage.removeItem('auth_refresh');
+        sessionStorage.clear();
         return <Navigate to={redirectPath} state={{ from: location }} replace />;
     }
 

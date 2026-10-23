@@ -27,6 +27,31 @@ export class PPTXParser {
     });
   }
 
+  private async makeThumb(dataUri: string, maxW = 160, maxH = 90): Promise<string | null> {
+    if (!dataUri || !dataUri.startsWith('data:image/')) return null;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = maxW;
+          c.height = maxH;
+          const ctx = c.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, maxW, maxH);
+            resolve(c.toDataURL('image/jpeg', 0.55));
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUri;
+    });
+  }
+
   public async parseFile(file: File): Promise<PresentationAST> {
     const extension = file.name.split('.').pop()?.toLowerCase();
 
@@ -180,10 +205,17 @@ export class PPTXParser {
             });
           }
 
+          let thumbUrl: string | undefined = undefined;
+          if (slideImageUri) {
+            thumbUrl = (await this.makeThumb(slideImageUri)) || undefined;
+          }
+
           slides.push({
             id: `slide-pptx-${i + 1}`,
             index: i,
             title: slideTitle,
+            fileUrl: slideImageUri || undefined,
+            thumbnailUrl: thumbUrl,
             background: { type: 'gradient', value: 'linear-gradient(135deg, #120C1F 0%, #1b0d36 100%)' },
             elements
           });
@@ -230,10 +262,25 @@ export class PPTXParser {
         await page.render({ canvasContext: context, viewport }).promise;
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
+        // Generar miniatura ultraligera (160x90, ~2.5 KB) para el control remoto
+        let thumbUrl: string | undefined = undefined;
+        try {
+          const thumbCanvas = document.createElement('canvas');
+          thumbCanvas.width = 160;
+          thumbCanvas.height = 90;
+          const thumbCtx = thumbCanvas.getContext('2d');
+          if (thumbCtx) {
+            thumbCtx.drawImage(canvas, 0, 0, 160, 90);
+            thumbUrl = thumbCanvas.toDataURL('image/jpeg', 0.55);
+          }
+        } catch {}
+
         slides.push({
           id: `slide-pdf-${i}`,
           index: i - 1,
           title: `${fileNameClean} — Diapositiva ${i}`,
+          fileUrl: dataUrl,
+          thumbnailUrl: thumbUrl,
           elements: [
             {
               id: `el-pdf-img-${i}`,

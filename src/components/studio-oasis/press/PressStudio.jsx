@@ -24,6 +24,64 @@ const DEFAULT_SLIDES = [
 ];
 const newSlideId = () => `slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+
+// Obtiene una imagen ligera y segura para el control remoto (<80 KB en base64 o URL remota)
+const getSafeRemoteImage = (slide) => {
+  if (!slide) return null;
+  if (slide.thumbnailUrl && typeof slide.thumbnailUrl === 'string') {
+    return slide.thumbnailUrl;
+  }
+  const candidate = slide.fileUrl || slide.mediaUrl || slide.elements?.find((el) => el.type === 'image')?.content;
+  if (typeof candidate === 'string') {
+    if (/^https?:\/\//.test(candidate)) return candidate;
+    // Máximo 80 KB para la imagen de previsualización activa en WebSocket
+    if (candidate.startsWith('data:image/') && candidate.length <= 80_000) return candidate;
+  }
+  return slide.thumbnailUrl || null;
+};
+
+const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank) => {
+  const active = allSlides[activeIndex];
+  const next = allSlides[activeIndex + 1];
+
+  const activeImg = getSafeRemoteImage(active);
+  const nextImg = getSafeRemoteImage(next);
+
+  return {
+    currentSlide: activeIndex + 1,
+    totalSlides: allSlides.length,
+    isBlank: Boolean(currentBlank),
+    title: currentTitle || 'Oasis Press',
+    activeSlideTitle: active?.title || `Diapositiva ${activeIndex + 1}`,
+    nextSlideTitle: next ? (next.title || `Diapositiva ${activeIndex + 2}`) : 'Fin de Presentación',
+    activeSlideUrl: activeImg,
+    nextSlideUrl: nextImg,
+    activeSlide: active ? {
+      title: active.title || `Diapositiva ${activeIndex + 1}`,
+      subtitle: active.subtitle || '',
+      type: active.type || 'styled',
+      fileUrl: activeImg,
+      background: shareableUrl(active.background) || null,
+    } : null,
+    nextSlide: next ? {
+      title: next.title || `Diapositiva ${activeIndex + 2}`,
+      subtitle: next.subtitle || '',
+      type: next.type || 'styled',
+      fileUrl: nextImg,
+      background: shareableUrl(next.background) || null,
+    } : null,
+    slidesSummary: allSlides.map((sl, i) => ({
+      index: i + 1,
+      title: sl.title || `Diapositiva ${i + 1}`,
+      subtitle: sl.subtitle || '',
+      type: sl.type || 'styled',
+      // ¡Ultra-ligero! Solo miniaturas de ~2 KB o URLs http, garantizando que el paquete completo nunca sature el WebSocket
+      thumbnail: sl.thumbnailUrl || (typeof sl.fileUrl === 'string' && sl.fileUrl.startsWith('http') ? sl.fileUrl : null),
+    })),
+    timestamp: Date.now(),
+  };
+};
+
 export const PressStudio = () => {
   const [presentationManager] = useState(() => new PresentationManager());
   const [fileManager] = useState(() => new PressFileManager());
@@ -133,42 +191,7 @@ export const PressStudio = () => {
 
   // Control remoto (celular) por el canal en tiempo real
   const remoteStateRef = useRef(null);
-  remoteStateRef.current = (() => {
-    const active = slides[currentSlideIndex];
-    const next = slides[currentSlideIndex + 1];
-    return {
-      currentSlide: currentSlideIndex + 1,
-      totalSlides: slides.length,
-      isBlank,
-      title: presentationTitle,
-      activeSlideTitle: active?.title || `Diapositiva ${currentSlideIndex + 1}`,
-      nextSlideTitle: next ? (next.title || `Diapositiva ${currentSlideIndex + 2}`) : 'Fin de Presentación',
-      activeSlideUrl: shareableUrl(active?.fileUrl || active?.mediaUrl),
-      nextSlideUrl: shareableUrl(next?.fileUrl || next?.mediaUrl),
-      activeSlide: active ? {
-        title: active.title || `Diapositiva ${currentSlideIndex + 1}`,
-        subtitle: active.subtitle || '',
-        type: active.type || 'styled',
-        fileUrl: shareableUrl(active.fileUrl || active.mediaUrl) || null,
-        background: shareableUrl(active.background) || shareableUrl(pressBackground) || null,
-      } : null,
-      nextSlide: next ? {
-        title: next.title || `Diapositiva ${currentSlideIndex + 2}`,
-        subtitle: next.subtitle || '',
-        type: next.type || 'styled',
-        fileUrl: shareableUrl(next.fileUrl || next.mediaUrl) || null,
-        background: shareableUrl(next.background) || shareableUrl(pressBackground) || null,
-      } : null,
-      slidesSummary: slides.map((sl, i) => ({
-        index: i + 1,
-        title: sl.title || `Diapositiva ${i + 1}`,
-        subtitle: sl.subtitle || '',
-        type: sl.type || 'styled',
-        thumbnail: shareableUrl(sl.fileUrl || sl.mediaUrl || sl.background) || shareableUrl(pressBackground) || null,
-      })),
-      timestamp: Date.now(),
-    };
-  })();
+  remoteStateRef.current = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank);
   const announcedDecksRef = useRef(new Set());
   const slideCountRef = useRef(slides.length);
   slideCountRef.current = slides.length;
@@ -233,9 +256,11 @@ export const PressStudio = () => {
     };
   }, [liveKey]);
 
-  // Cada cambio de diapositiva se refleja en el celular
+  // Cada cambio de diapositiva se refleja en el celular con payload optimizado
   useEffect(() => {
-    pressChannelRef.current?.send({ type: 'broadcast', event: 'ppt_state', payload: remoteStateRef.current });
+    const payload = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank);
+    remoteStateRef.current = payload;
+    pressChannelRef.current?.send({ type: 'broadcast', event: 'ppt_state', payload });
   }, [currentSlideIndex, slides, isBlank, presentationTitle]);
 
   // PresentationManager mount & sync
@@ -262,9 +287,20 @@ export const PressStudio = () => {
       if (result.slides && result.slides.length > 0) {
         setSlides(result.slides);
         setCurrentSlideIndex(0);
+        setIsBlank(false);
+        const newTitle = result.title || presentationTitle;
         if (result.title) {
           setPresentationTitle(result.title);
         }
+        // Emitir inmediatamente al celular para sincronizar el archivo externo al instante
+        const immediatePayload = createRemotePayload(result.slides, 0, newTitle, false);
+        remoteStateRef.current = immediatePayload;
+        pressChannelRef.current?.send({
+          type: 'broadcast',
+          event: 'ppt_state',
+          payload: immediatePayload,
+        });
+        showToast(`${result.slides.length} diapositivas listas y sincronizadas con el control remoto`, 'success', 3000);
       }
     } catch (err) {
       console.error('Error al procesar la presentación:', err);

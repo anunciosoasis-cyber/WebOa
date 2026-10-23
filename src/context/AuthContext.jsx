@@ -123,13 +123,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /** Cerrar sesión — limpia localStorage y estado local */
+  /** Cerrar sesión — limpia almacenamiento local de inmediato y expulsa al login */
   const signOut = async () => {
-    await apiClient.post('/logout', { refreshToken: localStorage.getItem(REFRESH_KEY) }).catch(() => {});
+    const rf = localStorage.getItem(REFRESH_KEY);
+    // 1. Limpieza inmediata y total de tokens y sesión en el navegador
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
+    sessionStorage.clear();
     setUser(null);
+
+    // 2. Notificar al backend en segundo plano sin retrasar la interfaz
+    if (rf) {
+      apiClient.post('/logout', { refreshToken: rf }).catch(() => {});
+    }
+
+    // 3. Redirección forzada inmediata para limpiar el árbol de rutas
+    window.location.replace('/login');
   };
 
   /** Solicitar recuperación de contraseña por email */

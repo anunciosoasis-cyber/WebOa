@@ -17,12 +17,13 @@ const SlideMiniPreview = ({ slide, title, url, isBlank, isSmall = false }) => {
     );
   }
 
-  // 1. Imagen pura (subida directa o exportada)
-  if (url || slide?.fileUrl) {
+  // 1. Imagen pura o preview visual (subida directa, PDF o miniatura)
+  const imageSrc = url || slide?.fileUrl || slide?.thumbnailUrl || slide?.thumbnail;
+  if (imageSrc) {
     return (
       <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
         <img
-          src={url || slide.fileUrl}
+          src={imageSrc}
           alt={title || 'Diapositiva'}
           className="w-full h-full object-contain"
         />
@@ -98,7 +99,9 @@ export const RemoteView = () => {
           setSessionData((prev) => ({
             ...prev,
             ...payload,
-            slidesSummary: payload.slidesSummary?.length ? payload.slidesSummary : prev.slidesSummary,
+            slidesSummary: Array.isArray(payload.slidesSummary) && payload.slidesSummary.length > 0
+              ? payload.slidesSummary
+              : prev.slidesSummary,
           }));
           setStatus('conectado');
           clearTimeout(waitTimer);
