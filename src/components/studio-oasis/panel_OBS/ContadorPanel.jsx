@@ -105,6 +105,7 @@ const ContadorPanel = ({
                 targetTime: Date.now() + (localRemaining * 1000),
                 template: countdownTemplate,
                 customBg: uploadedImage,
+                pattern: selectedPattern,
                 target: target // Enviar bandera de destino ('all', 'obs', 'proyector')
             });
         }

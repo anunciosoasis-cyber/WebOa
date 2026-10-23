@@ -88,7 +88,8 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
         setSelectedStanza: (s) => himnarioRef.current?.setSelectedStanza(s),
         globalTemplate,
         get remoteTargetVerseRef() { return bibliaRef.current?.remoteTargetVerseRef; },
-        setSelectedBook: (b) => bibliaRef.current?.setSelectedBook(b),
+        // La app manda solo { name }: se usa el libro completo (id y capítulos) para el selector y el respaldo bolls.life
+        setSelectedBook: (b) => bibliaRef.current?.setSelectedBook(BIBLE_BOOKS.find((x) => x.name === b?.name) || b),
         setSelectedChapter: (c) => bibliaRef.current?.setSelectedChapter(c),
         setSelectedVerseObj: (v) => bibliaRef.current?.setSelectedVerseObj(v)
     });

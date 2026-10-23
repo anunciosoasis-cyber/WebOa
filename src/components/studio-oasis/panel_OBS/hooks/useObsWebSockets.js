@@ -69,7 +69,8 @@ export const useObsWebSockets = (colors, setters) => {
                 const current = liveOverlayRef.current;
                 // Solo sincronizar si hay una proyección activa enviada en OBS (evita enviar himnos/textos viejos guardados)
                 if (current && current.mode && current.mode !== 'hidden' && current.mode !== 'slide' && current._activeInOBS) {
-                    await channel.send({ type: 'broadcast', event: 'update_overlay', payload: current });
+                    // _sync: es una repetición, no una orden nueva (el proyector no tapa su diapositiva con esto)
+                    await channel.send({ type: 'broadcast', event: 'update_overlay', payload: { ...current, _sync: true } });
                 }
             })
             .on('broadcast', { event: 'update_overlay' }, ({ payload }) => {

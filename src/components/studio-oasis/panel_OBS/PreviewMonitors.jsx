@@ -1,7 +1,8 @@
 import React from 'react';
 import { useLiveKey, liveUrl } from '../../../api/liveChannel';
 import { motion } from 'framer-motion';
-import { MonitorPlay, Tv } from 'lucide-react';
+import { MonitorPlay, Tv, Copy, ExternalLink } from 'lucide-react';
+import { useToast } from '../../../react-ui/components/Toast';
 import CtrlCentralOpciones from './CenterControls';
 
 const PreviewMonitors = ({
@@ -94,7 +95,21 @@ const PreviewMonitors = ({
         );
     };
 
+    const { showToast } = useToast();
     const isChroma = obsMonitorBg === 'chroma';
+
+    const copyObsUrl = () => {
+        const url = `${window.location.origin}${liveUrl('/transmision/overlay', liveKey)}`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Enlace transparente para OBS copiado al portapapeles', 'success');
+            }).catch(() => {
+                prompt('Copia este enlace para OBS:', url);
+            });
+        } else {
+            prompt('Copia este enlace para OBS:', url);
+        }
+    };
 
     return (
         <div className="w-full flex flex-col lg:flex-row gap-4 items-center justify-between min-h-[145px] select-none text-gray-900">
@@ -108,16 +123,17 @@ const PreviewMonitors = ({
                     </span>
                     <div className="flex items-center gap-1">
                         <button
-                            onClick={() => setObsMonitorBg(prev => prev === 'video' ? 'chroma' : 'video')}
-                            className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors"
+                            onClick={copyObsUrl}
+                            className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors flex items-center gap-1"
+                            title="Copiar URL transparente para la fuente de Navegador en OBS Studio"
                         >
-                            🎨 {isChroma ? 'Croma' : 'Video'}
+                            <Copy size={9} /> Copiar URL
                         </button>
                         <button
                             onClick={() => window.open(liveUrl('/transmision/overlay', liveKey), 'OBS_WINDOW', 'width=1920,height=1080')}
-                            className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors"
+                            className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors flex items-center gap-1"
                         >
-                            ↗ Full
+                            <ExternalLink size={9} /> Full
                         </button>
                     </div>
                 </div>

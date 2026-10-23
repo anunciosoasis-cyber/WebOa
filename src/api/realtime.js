@@ -78,7 +78,8 @@ class LiveChannel {
 
         const onMessage = (msg) => {
             if (msg?.channel !== this.name) return;
-            for (const handler of this.handlers.get(msg.event) || []) handler({ type: 'broadcast', event: msg.event, payload: msg.payload });
+            // ts: hora del servidor (ver live.gateway.ts); en el último estado repetido al entrar es la original
+            for (const handler of this.handlers.get(msg.event) || []) handler({ type: 'broadcast', event: msg.event, payload: msg.payload, ts: msg.ts });
         };
         const join = () => socket.emit('join', { channel: this.name }, (ack) => callback?.(ack?.ok ? 'SUBSCRIBED' : 'CHANNEL_ERROR'));
         const onDisconnect = () => callback?.('CLOSED');

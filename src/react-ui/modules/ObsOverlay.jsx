@@ -17,7 +17,11 @@ const ObsOverlay = () => {
         overlay_accent_color: '#f59e0b'
     });
 
-    const isChroma = new URLSearchParams(window.location.search).get('chroma') === 'true';
+    const chromaParam = new URLSearchParams(window.location.search).get('chroma');
+    const chromaColor = (chromaParam === 'blue' || chromaParam === 'true') 
+        ? '#0000FF' 
+        : (chromaParam === 'green' ? '#00FF00' : 'transparent');
+    const isChroma = chromaColor !== 'transparent';
 
     const [now, setNow] = useState(Date.now());
 
@@ -96,8 +100,8 @@ const ObsOverlay = () => {
         return () => {
             supabase.removeChannel(channel);
             window.removeEventListener('storage', handleStorageChange);
-            document.body.style.backgroundColor = '#0000FF';
-            document.documentElement.style.backgroundColor = '#0000FF';
+            document.body.style.backgroundColor = '';
+            document.documentElement.style.backgroundColor = '';
         };
     }, []);
 
@@ -114,15 +118,18 @@ const ObsOverlay = () => {
             height: '100vh',
             overflow: 'hidden',
             position: 'relative',
-            backgroundColor: '#0000FF',
+            backgroundColor: chromaColor,
             fontFamily: 'Inter, sans-serif'
         }}>
-            {/* Forzar fondo azul Croma en HTML y BODY para OBS */}
+            {/* Transparencia nativa completa para OBS Studio (Browser Source con canal alfa RGBA) */}
             <style>
                 {`
                     html, body, #root {
-                        background-color: #0000FF !important;
-                        background: #0000FF !important;
+                        background-color: ${chromaColor} !important;
+                        background: ${chromaColor} !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: hidden !important;
                     }
                 `}
             </style>

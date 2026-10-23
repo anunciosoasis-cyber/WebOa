@@ -9,9 +9,11 @@ import PressRemote from './PressRemote';
 import PressThumbnails from './PressThumbnails';
 import PressUploader from './PressUploader';
 import PressEditModal from './PressEditModal';
+import { DEFAULT_SLIDE_STYLE } from './SlideCanvasView';
 import QRCode from 'qrcode';
 import { realtime } from '../../../api/realtime';
-import { useLiveKey, liveUrl, pressChannel, shareableUrl } from '../../../api/liveChannel';
+import { useLiveKey, liveUrl, pressChannel, shareableUrl, loadCurrentRoom } from '../../../api/liveChannel';
+import apiClient from '../../../api/client';
 
 const SLIDES_KEY = 'oasis_press_slides';
 // Ejemplo inicial: se puede editar, reordenar o borrar desde la tira de diapositivas
@@ -22,6 +24,23 @@ const DEFAULT_SLIDES = [
   { id: 4, title: 'Sermón: La Esperanza que Transforma', subtitle: 'Pr. Felipe Miranda', type: 'styled' },
   { id: 5, title: 'Himno Final #340 & Bendición', subtitle: 'En celestial morada', type: 'styled' },
 ];
+// Presentaciones de la app ya insertadas aquí (no se repiten al recuperar las pendientes)
+const IMPORTED_KEY = 'oasis_press_imported_decks';
+const readImported = () => {
+  try {
+    const raw = localStorage.getItem(IMPORTED_KEY);
+    return raw === null ? null : new Set(JSON.parse(raw));
+  } catch { return new Set(); }
+};
+const deckSlides = ({ deckId, title, slides }) => (slides || []).map((sl, i) => ({
+  id: `deck-${deckId}-${i}`,
+  title: sl.title || `${title} — ${i + 1}`,
+  subtitle: title,
+  fileUrl: sl.url,
+  mediaUrl: sl.url,
+  type: 'image',
+  mediaType: 'image',
+}));
 const newSlideId = () => `slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 
@@ -196,6 +215,54 @@ export const PressStudio = () => {
   const slideCountRef = useRef(slides.length);
   slideCountRef.current = slides.length;
 
+  // Lo que llega de la app se inserta después de la actual y pasa al aire: quien lo envió espera verlo.
+  const insertFromApp = (incoming, message) => {
+    if (!incoming.length) return;
+    const at = Math.min(remoteStateRef.current?.currentSlide ?? 0, slideCountRef.current);
+    setSlides((prev) => [...prev.slice(0, at), ...incoming, ...prev.slice(at)]);
+    setCurrentSlideIndex(at);
+    setIsBlank(false);
+    showToast(message, 'success', 4000);
+  };
+
+  const importedDecksRef = useRef(undefined);
+  if (importedDecksRef.current === undefined) importedDecksRef.current = readImported();
+  const importDecks = (decks) => {
+    const seen = importedDecksRef.current || new Set();
+    const fresh = decks.filter((d) => !seen.has(d.deckId));
+    if (!fresh.length) return;
+    fresh.forEach((d) => seen.add(d.deckId));
+    importedDecksRef.current = seen;
+    try { localStorage.setItem(IMPORTED_KEY, JSON.stringify([...seen].slice(-200))); } catch { /* sin espacio: solo en memoria */ }
+    const incoming = fresh.flatMap(deckSlides);
+    insertFromApp(incoming, `${incoming.length} diapositiva(s) de "${fresh.map((d) => d.title).join('", "')}" recibidas desde la app y al aire`);
+  };
+
+  // Subidas de la app que terminaron con el Estudio cerrado (el aviso en vivo se perdió): se recuperan al abrir.
+  useEffect(() => {
+    if (!liveKey) return;
+    let alive = true;
+    (async () => {
+      try {
+        const [room, { data }] = await Promise.all([loadCurrentRoom(), apiClient.get('/slides/decks')]);
+        const since = Date.now() - 12 * 60 * 60 * 1000;
+        const pending = (data || [])
+          .filter((d) => d.roomId && d.roomId === room?.id && d.status === 'ready' && new Date(d.createdAt).getTime() > since)
+          .reverse()
+          .map((d) => ({ deckId: d.id, title: d.title, slides: d.slides }));
+        if (!alive) return;
+        // Primera vez en este equipo: lo anterior ya se recibió en vivo, solo se marca
+        if (importedDecksRef.current === null) {
+          importedDecksRef.current = new Set(pending.map((d) => d.deckId));
+          try { localStorage.setItem(IMPORTED_KEY, JSON.stringify([...importedDecksRef.current])); } catch { /* solo en memoria */ }
+          return;
+        }
+        importDecks(pending);
+      } catch { /* sin sesión o sin el módulo de medios: solo tiempo real */ }
+    })();
+    return () => { alive = false; };
+  }, [liveKey]);
+
   useEffect(() => {
     if (!liveKey) return;
     const channel = pressChannel(liveKey);
@@ -223,6 +290,24 @@ export const PressStudio = () => {
         }
       })
       .on('broadcast', { event: 'ppt_request_state' }, sendState)
+      // Diapositiva de texto creada en la app: solo campos de texto y estilo (nada de URLs de medios)
+      .on('broadcast', { event: 'ppt_add_slide' }, ({ payload }) => {
+        const sl = payload?.slide;
+        if (!sl || typeof sl.title !== 'string') return;
+        const text = (v) => (typeof v === 'string' ? v.slice(0, 500) : '');
+        const ev = sl.eventData || {};
+        const st = sl.style || {};
+        const slide = {
+          id: newSlideId(),
+          type: 'styled',
+          title: text(sl.title),
+          subtitle: text(sl.subtitle),
+          eventData: { tag: text(ev.tag), speaker: text(ev.speaker), eventDate: text(ev.eventDate), location: text(ev.location) },
+          style: { ...DEFAULT_SLIDE_STYLE, ...Object.fromEntries(['bgColor', 'textColor', 'accentColor', 'fontFamily'].filter((k) => typeof st[k] === 'string').map((k) => [k, st[k].slice(0, 40)])) },
+          hidden: {},
+        };
+        insertFromApp([slide], `Diapositiva "${slide.title}" recibida desde la app y al aire`);
+      })
       .on('broadcast', { event: 'ppt_request_slide' }, () => {
         pushSlideToScreens();
       })
@@ -236,20 +321,7 @@ export const PressStudio = () => {
         }
       })
       .on('broadcast', { event: 'press_slides_added' }, ({ payload }) => {
-        const incoming = (payload?.slides || []).map((sl, i) => ({
-          id: `deck-${payload.deckId}-${i}`,
-          title: sl.title || `${payload.title} — ${i + 1}`,
-          subtitle: payload.title,
-          fileUrl: sl.url,
-          mediaUrl: sl.url,
-          type: 'image',
-          mediaType: 'image',
-        }));
-        if (!incoming.length) return;
-        // Se insertan justo después de la diapositiva actual (no interrumpen lo que está al aire)
-        const at = remoteStateRef.current?.currentSlide ?? 0;
-        setSlides((prev) => [...prev.slice(0, at), ...incoming, ...prev.slice(at)]);
-        showToast(`${incoming.length} diapositiva(s) de "${payload.title}" añadidas después de la actual`, 'success', 4000);
+        if (payload?.deckId) importDecks([payload]);
       })
       .subscribe((status) => { if (status === 'SUBSCRIBED') sendState(); });
     pressChannelRef.current = channel;

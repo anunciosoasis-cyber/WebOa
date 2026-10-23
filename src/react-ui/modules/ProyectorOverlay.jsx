@@ -276,11 +276,21 @@ const ProyectorOverlay = () => {
         const channel = overlayChannel(liveKey);
         channelRef.current = channel;
 
+        // Hora del servidor de lo último que se pintó: al reconectar, el servidor repite el último overlay y la
+        // última diapositiva con su hora original; lo más viejo no debe tapar lo más reciente.
+        let lastTs = 0;
+        const isStale = (ts) => {
+            if (!ts) return false;
+            if (ts < lastTs) return true;
+            lastTs = ts;
+            return false;
+        };
+
         // Diapositivas de Oasis Press desde otro equipo
         const slidesChannel = pressChannel(liveKey);
-        slidesChannel.on('broadcast', { event: 'ppt_slide' }, ({ payload }) => {
+        slidesChannel.on('broadcast', { event: 'ppt_slide' }, ({ payload, ts }) => {
             const data = sanitizeOverlay(payload);
-            if (data && (!data.target || data.target === 'all' || data.target === 'proyector')) {
+            if (data && (!data.target || data.target === 'all' || data.target === 'proyector') && !isStale(ts)) {
                 setOverlayData(data);
                 try { localStorage.setItem('obs_overlay_data', JSON.stringify(data)); } catch(e){}
             }
@@ -296,6 +306,10 @@ const ProyectorOverlay = () => {
                 if (data.target && data.target !== 'all' && data.target !== 'proyector') {
                     return;
                 }
+                // Re-sincronización del Estudio (otra pantalla pidió request_sync): solo sirve si aquí no hay nada
+                const current = stateRef.current.overlayData?.mode;
+                if (data._sync && current && current !== 'hidden') return;
+                if (isStale(payload.ts)) return;
                 // Si la pantalla tiene diapositivas de Oasis Press activas, ignorar órdenes 'hidden' que vienen de OBS
                 if (data.mode === 'hidden' && stateRef.current.overlayData?.mode === 'slide') {
                     return;
