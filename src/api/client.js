@@ -25,7 +25,7 @@ const apiClient = axios.create({
  */
 function resolveCurrentTenant() {
     const storedTenant = localStorage.getItem('active_tenant_id') || localStorage.getItem('tenant_id');
-    if (storedTenant) return storedTenant;
+    if (storedTenant && storedTenant !== 'www' && storedTenant !== 'api') return storedTenant;
 
     const hostname = window.location.hostname;
     // Si es IP o localhost
@@ -35,7 +35,11 @@ function resolveCurrentTenant() {
 
     const parts = hostname.split('.');
     if (parts.length >= 3) {
-        return parts[0]; // subdominio
+        const sub = parts[0].toLowerCase();
+        // Si el subdominio es www o api, es el dominio principal de la iglesia por defecto
+        if (sub !== 'www' && sub !== 'api') {
+            return sub; // subdominio real de iglesia (ej: medellin, bogota)
+        }
     }
 
     return 'default';
