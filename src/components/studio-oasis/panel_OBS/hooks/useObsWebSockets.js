@@ -12,29 +12,40 @@ export const useObsWebSockets = (colors, setters) => {
         catch { return { mode: 'hidden' }; }
     });
 
-    // Los manejadores del canal se registran una sola vez: leen siempre los valores actuales desde refs.
-    // Antes capturaban los del primer render (canal null, himnario vacío) y la selección remota no salía al aire.
     const channelRef = useRef(null);
     const settersRef = useRef(setters);
     settersRef.current = setters;
     const colorsRef = useRef(colors);
     colorsRef.current = colors;
+    const liveOverlayRef = useRef(liveOverlay);
+    liveOverlayRef.current = liveOverlay;
 
     const pushToOBS = async (mode, title, content, extra = {}) => {
         try {
             const c = colorsRef.current;
+            const currentTemplate = (
+                extra.template || 
+                liveOverlayRef.current?.template || 
+                localStorage.getItem('oasis_presentation_template') || 
+                'classic'
+            ).toLowerCase();
+
             const payload = {
                 mode,
-                title,
-                content,
-                template: extra.template || 'classic',
+                title: title || '',
+                content: content || '',
+                template: currentTemplate,
                 subText: extra.subText || '',
                 bg_color: c.bg,
                 text_color: c.text,
                 accent_color: c.accent,
                 ...extra
             };
+
             localStorage.setItem('obs_overlay_data', JSON.stringify(payload));
+            if (payload.template) {
+                localStorage.setItem('oasis_presentation_template', payload.template);
+            }
             setLiveOverlay(payload);
             if (channelRef.current) {
                 await channelRef.current.send({ type: 'broadcast', event: 'update_overlay', payload });
@@ -54,12 +65,23 @@ export const useObsWebSockets = (colors, setters) => {
         channel
             .on('broadcast', { event: 'request_sync' }, async () => {
                 const lastData = localStorage.getItem('obs_overlay_data');
-                if (lastData) await channel.send({ type: 'broadcast', event: 'update_overlay', payload: JSON.parse(lastData) });
+                if (lastData) {
+                    try {
+                        const parsed = JSON.parse(lastData);
+                        // Solo sincronizar si hay una proyección activa, nunca re-proyectar estado oculto o basura
+                        if (parsed && parsed.mode && parsed.mode !== 'hidden') {
+                            await channel.send({ type: 'broadcast', event: 'update_overlay', payload: parsed });
+                        }
+                    } catch(e) {}
+                }
             })
             .on('broadcast', { event: 'update_overlay' }, ({ payload }) => {
                 if (payload) {
                     setLiveOverlay(payload);
-                    localStorage.setItem('obs_overlay_data', JSON.stringify(payload));
+                    try {
+                        localStorage.setItem('obs_overlay_data', JSON.stringify(payload));
+                        if (payload.template) localStorage.setItem('oasis_presentation_template', payload.template.toLowerCase());
+                    } catch(e){}
                     if (payload.mode !== 'hidden') {
                         s().setIsBibleLive(true);
                         if (payload.mode === 'bible') {
@@ -85,28 +107,40 @@ export const useObsWebSockets = (colors, setters) => {
                 }
             })
             .on('broadcast', { event: 'remote_keydown' }, ({ payload }) => {
+                // Protección crucial: SOLO reaccionar a flechas remotas si lo que está en el aire es himno o biblia
+                const currentAirMode = liveOverlayRef.current?.mode;
+                if (currentAirMode !== 'himno' && currentAirMode !== 'bible') {
+                    return;
+                }
+
                 if (payload && payload.key) {
                     if (payload.key === 'ArrowRight' || payload.key === 'ArrowDown') {
-                        const nextStanzaBtn = document.getElementById('btn-next-stanza');
-                        const nextVerseBtn = document.getElementById('btn-next-verse');
-                        if (nextStanzaBtn && !nextStanzaBtn.disabled) nextStanzaBtn.click();
-                        else if (nextVerseBtn && !nextVerseBtn.disabled) nextVerseBtn.click();
+                        if (currentAirMode === 'himno') {
+                            const nextStanzaBtn = document.getElementById('btn-next-stanza');
+                            if (nextStanzaBtn && !nextStanzaBtn.disabled) nextStanzaBtn.click();
+                        } else if (currentAirMode === 'bible') {
+                            const nextVerseBtn = document.getElementById('btn-next-verse');
+                            if (nextVerseBtn && !nextVerseBtn.disabled) nextVerseBtn.click();
+                        }
                     }
                     else if (payload.key === 'ArrowLeft' || payload.key === 'ArrowUp') {
-                        const prevStanzaBtn = document.getElementById('btn-prev-stanza');
-                        const prevVerseBtn = document.getElementById('btn-prev-verse');
-                        if (prevStanzaBtn && !prevStanzaBtn.disabled) prevStanzaBtn.click();
-                        else if (prevVerseBtn && !prevVerseBtn.disabled) prevVerseBtn.click();
+                        if (currentAirMode === 'himno') {
+                            const prevStanzaBtn = document.getElementById('btn-prev-stanza');
+                            if (prevStanzaBtn && !prevStanzaBtn.disabled) prevStanzaBtn.click();
+                        } else if (currentAirMode === 'bible') {
+                            const prevVerseBtn = document.getElementById('btn-prev-verse');
+                            if (prevVerseBtn && !prevVerseBtn.disabled) prevVerseBtn.click();
+                        }
                     }
                     else if (payload.key === 'PageDown' || payload.key === 'NextHymn') {
-                        const nextHymnBtn = document.getElementById('btn-next-hymn');
-                        if (nextHymnBtn && !nextHymnBtn.disabled) nextHymnBtn.click();
-                        else if (s().handleNextHymn) s().handleNextHymn();
+                        if (currentAirMode === 'himno') {
+                            if (s().handleNextHymn) s().handleNextHymn();
+                        }
                     }
                     else if (payload.key === 'PageUp' || payload.key === 'PrevHymn') {
-                        const prevHymnBtn = document.getElementById('btn-prev-hymn');
-                        if (prevHymnBtn && !prevHymnBtn.disabled) prevHymnBtn.click();
-                        else if (s().handlePrevHymn) s().handlePrevHymn();
+                        if (currentAirMode === 'himno') {
+                            if (s().handlePrevHymn) s().handlePrevHymn();
+                        }
                     }
                 }
             })
@@ -116,11 +150,15 @@ export const useObsWebSockets = (colors, setters) => {
                     const found = (s().himnarioList || []).find(h => h.number === targetNum) || payload.hymn;
                     if (s().handleHymnSelect) s().handleHymnSelect(found);
 
-                    // stanzaIndex (opcional, contrato v1): la app elige la estrofa; sin él, la primera
                     const stanza = found.stanzas?.[Math.min(Math.max(0, payload.stanzaIndex || 0), found.stanzas.length - 1)];
                     if (stanza) {
                         if (s().setSelectedStanza) s().setSelectedStanza(stanza);
-                        pushRef.current('himno', `Himno ${found.number} - ${found.title}`, stanza.text, { template: s().hymnalTemplate || 'classic', subText: stanza.number ? `Estrofa ${stanza.number}` : 'Coro' });
+                        // Preservar la plantilla activa del payload o del overlay en vivo
+                        const tmpl = (payload.template || liveOverlayRef.current?.template || s().hymnalTemplate || 'classic').toLowerCase();
+                        pushRef.current('himno', `Himno ${found.number} - ${found.title}`, stanza.text, { 
+                            template: tmpl, 
+                            subText: stanza.subText || (stanza.number ? `Estrofa ${stanza.number}` : 'Coro') 
+                        });
                         s().setIsBibleLive(true);
                     }
                 }
@@ -136,7 +174,8 @@ export const useObsWebSockets = (colors, setters) => {
                     if (s().setActivePreviewSource) s().setActivePreviewSource('biblia');
                     if (s().setActiveTab) s().setActiveTab('biblia');
                     if (s().setIsBibleLive) s().setIsBibleLive(true);
-                    pushRef.current('bible', title, verseText, { template: s().globalTemplate || 'classic' });
+                    const tmpl = (payload.template || liveOverlayRef.current?.template || s().bibleTemplate || 'classic').toLowerCase();
+                    pushRef.current('bible', title, verseText, { template: tmpl });
                 }
             });
 

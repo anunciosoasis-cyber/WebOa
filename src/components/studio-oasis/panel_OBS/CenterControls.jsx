@@ -9,7 +9,10 @@ const CtrlCentralOpciones = ({
     handleTemplateChange,
     liveOverlay
 }) => {
-    const [currentStyle, setCurrentStyle] = useState('CLASSIC');
+    const [currentStyle, setCurrentStyle] = useState(() => {
+        try { return (localStorage.getItem('oasis_presentation_template') || 'CLASSIC').toUpperCase(); }
+        catch { return 'CLASSIC'; }
+    });
     const estilos = [
         { id: 'CLASSIC', icon: LayoutTemplate, tooltip: 'Clásico' },
         { id: 'MINIMAL', icon: Sparkles, tooltip: 'Minimalista' },
@@ -41,8 +44,6 @@ const CtrlCentralOpciones = ({
                             template: currentStyle.toLowerCase(),
                             subText: liveOverlay.subText || ''
                         });
-                    } else {
-                        pushToOBS(activePreviewSource);
                     }
                 }}
                 className="w-full h-[30px] bg-white shadow-sm hover:shadow-md rounded-full flex flex-col items-center justify-center font-moonrising text-[10px] font-bold uppercase tracking-wider text-slate-800 border border-gray-100/70 transition-all active:scale-[0.98]"

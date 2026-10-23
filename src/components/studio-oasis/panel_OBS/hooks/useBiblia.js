@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import mediaClient from '../../../../api/mediaClient';
 
-export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleTemplate) => {
+export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleTemplate, liveOverlay) => {
     const [selectedBook, setSelectedBook] = useState({ id: 1, name: "Génesis", chapters: 50 });
     const [selectedChapter, setSelectedChapter] = useState(1);
     const [verses, setVerses] = useState([]);
@@ -10,10 +10,12 @@ export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleT
     const remoteTargetVerseRef = useRef(null);
 
     useEffect(() => {
+        let isMounted = true;
         const fetchChapter = async () => {
             if (!selectedBook || !selectedChapter) return;
             setIsLoadingVerses(true);
             const apply = (data) => {
+                if (!isMounted) return;
                 setVerses(data);
                 const targetV = remoteTargetVerseRef.current ? data.find(v => v.verse === remoteTargetVerseRef.current) : null;
                 if (targetV) {
@@ -40,10 +42,11 @@ export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleT
             } catch (err) {
                 console.error("Error cargando versículos.", err);
             } finally {
-                setIsLoadingVerses(false);
+                if (isMounted) setIsLoadingVerses(false);
             }
         };
         fetchChapter();
+        return () => { isMounted = false; };
     }, [selectedBook, selectedChapter]);
 
     const currentVerseIndex = verses.findIndex(v => v.verse === selectedVerseObj?.verse);
@@ -55,7 +58,10 @@ export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleT
             const newVerse = verses[currentVerseIndex - 1];
             setSelectedVerseObj(newVerse);
             setActivePreviewSource('biblia');
-            pushToOBS('bible', `${selectedBook.name} ${selectedChapter}:${newVerse.verse}`, newVerse.text, { template: bibleTemplate });
+            // Solo proyectar al aire si la biblia está actualmente en vivo
+            if (liveOverlay?.mode === 'bible') {
+                pushToOBS('bible', `${selectedBook.name} ${selectedChapter}:${newVerse.verse}`, newVerse.text, { template: bibleTemplate });
+            }
         }
     };
 
@@ -64,7 +70,10 @@ export const useBiblia = (pushToOBS, setActivePreviewSource, isBibleLive, bibleT
             const newVerse = verses[currentVerseIndex + 1];
             setSelectedVerseObj(newVerse);
             setActivePreviewSource('biblia');
-            pushToOBS('bible', `${selectedBook.name} ${selectedChapter}:${newVerse.verse}`, newVerse.text, { template: bibleTemplate });
+            // Solo proyectar al aire si la biblia está actualmente en vivo
+            if (liveOverlay?.mode === 'bible') {
+                pushToOBS('bible', `${selectedBook.name} ${selectedChapter}:${newVerse.verse}`, newVerse.text, { template: bibleTemplate });
+            }
         }
     };
 

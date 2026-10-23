@@ -5,21 +5,9 @@ import { supabase } from '../../api/supabaseClient';
 import { liveKeyFromUrl, overlayChannel, pressChannel, sanitizeOverlay, privateFallbackKey } from '../../api/liveChannel';
 import SlideCanvasView from '../../components/studio-oasis/press/SlideCanvasView';
 import mediaClient from '../../api/mediaClient';
-import himnarioDataRaw from '../../data/himnario.json';
+import { processedLocalHymns, processHymnList } from '../../utils/hymnProcessor';
 
-const himnarioData = himnarioDataRaw.map(hymn => {
-    const chorus = hymn.stanzas?.find(s => s.type === 'chorus' || s.number === '' || String(s.number).toLowerCase() === 'coro' || s.number === 0);
-    if (chorus) {
-        const expandedStanzas = [];
-        const onlyStanzas = hymn.stanzas.filter(s => s !== chorus);
-        onlyStanzas.forEach(s => { 
-            expandedStanzas.push(s); 
-            expandedStanzas.push(chorus); 
-        });
-        return { ...hymn, stanzas: expandedStanzas };
-    }
-    return hymn;
-});
+const himnarioData = processedLocalHymns;
 
 // Import newly created components
 import BackgroundManager from './ProyectorOver/components/BackgroundManager';
@@ -91,6 +79,20 @@ const ProyectorOverlay = () => {
     const [currentHymn, setCurrentHymn] = useState(null);
     const [currentStanzaIdx, setCurrentStanzaIdx] = useState(0);
     const [currentVerseIdx, setCurrentVerseIdx] = useState(0);
+    const [himnsList, setHimnsList] = useState(processedLocalHymns);
+
+    useEffect(() => {
+        const loadApiHymns = async () => {
+            try {
+                const res = await mediaClient.get('/hymns');
+                if (res.data && res.data.length > 0) {
+                    const processed = processHymnList(res.data);
+                    if (processed.length > 0) setHimnsList(processed);
+                }
+            } catch(e) {}
+        };
+        loadApiHymns();
+    }, []);
 
     const stateRef = useRef({});
     const channelRef = useRef(null);
@@ -128,18 +130,22 @@ const ProyectorOverlay = () => {
     }, [overlayData.mode, overlayData.targetTime]);
 
     const projectToAll = (mode, title, content, extra = {}) => {
+        const template = (extra.template || overlayData.template || localStorage.getItem('oasis_presentation_template') || 'classic').toLowerCase();
         const payload = {
             mode,
             title,
             content,
-            template: extra.template || overlayData.template || 'classic',
+            template,
             subText: extra.subText || '',
             bg_color: overlayData.bg_color || '#0F172A',
             text_color: overlayData.text_color || '#ffffff',
             accent_color: overlayData.accent_color || '#f59e0b'
         };
         setOverlayData(payload);
-        try { localStorage.setItem('obs_overlay_data', JSON.stringify(payload)); } catch(e){}
+        try { 
+            localStorage.setItem('obs_overlay_data', JSON.stringify(payload)); 
+            localStorage.setItem('oasis_presentation_template', template);
+        } catch(e){}
         if (channelRef.current) {
             channelRef.current.send({ type: 'broadcast', event: 'update_overlay', payload });
         }
@@ -550,7 +556,7 @@ const ProyectorOverlay = () => {
                 handlePrevNav={handlePrevNav} handleNextNav={handleNextNav}
                 handlePrevHymnNav={handlePrevHymnNav} handleNextHymnNav={handleNextHymnNav}
                 hymnSearchTerm={hymnSearchTerm} setHymnSearchTerm={setHymnSearchTerm}
-                himnarioData={himnarioData}
+                himnarioData={himnsList.length > 0 ? himnsList : himnarioData}
                 setCurrentHymn={setCurrentHymn} setCurrentStanzaIdx={setCurrentStanzaIdx}
                 projectToAll={projectToAll} channelRef={channelRef}
                 BIBLE_BOOKS={BIBLE_BOOKS}

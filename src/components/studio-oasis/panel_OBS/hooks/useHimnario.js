@@ -1,20 +1,11 @@
 import { useState, useEffect } from 'react';
 import mediaClient from '../../../../api/mediaClient';
-import himnarioData from '../../../../data/himnario.json';
+import { processHymnList, processedLocalHymns } from '../../../../utils/hymnProcessor';
 
-/** El coro se canta después de cada estrofa: se intercala para proyectarlo en orden. */
-const expandChorus = (hymn) => {
-    const chorus = hymn.stanzas.find(s => s.type === 'chorus' || s.number === '' || String(s.number).toLowerCase() === 'coro' || s.number === 0);
-    if (!chorus) return hymn;
-    const expandedStanzas = [];
-    hymn.stanzas.filter(s => s !== chorus).forEach(s => { expandedStanzas.push(s); expandedStanzas.push(chorus); });
-    return { ...hymn, stanzas: expandedStanzas };
-};
-
-export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymnalTemplate) => {
-    const [himnarioList, setHimnarioList] = useState([]);
-    const [selectedHymn, setSelectedHymn] = useState(null);
-    const [selectedStanza, setSelectedStanza] = useState(null);
+export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymnalTemplate, liveOverlay) => {
+    const [himnarioList, setHimnarioList] = useState(processedLocalHymns);
+    const [selectedHymn, setSelectedHymn] = useState(processedLocalHymns[0] || null);
+    const [selectedStanza, setSelectedStanza] = useState(processedLocalHymns[0]?.stanzas[0] || null);
     const [isLoadingHymns, setIsLoadingHymns] = useState(false);
     const [hymnSearchTerm, setHymnSearchTerm] = useState('');
     const [isHymnDropdownOpen, setIsHymnDropdownOpen] = useState(false);
@@ -25,49 +16,46 @@ export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymn
     const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState(15);
 
     useEffect(() => {
+        let isMounted = true;
         const loadHymns = async () => {
             setIsLoadingHymns(true);
             try {
                 const res = await mediaClient.get('/hymns');
-                if (res.data && res.data.length > 0) {
-                    console.log('[AME] Himnos cargados con exito desde Adventist Media Engine:', res.data.length);
-                    const mappedData = res.data.map(h => ({
-                        ...h,
-                        mp3Url: h.audio_url || h.mp3Url,
-                        mp3UrlInstr: h.instrumental_url || h.mp3UrlInstr,
-                        stanzas: (h.slides && h.slides.length > 0) ? h.slides.map(s => ({
-                            type: s.slide_type,
-                            number: s.slide_number,
-                            text: Array.isArray(s.lines) ? s.lines.join('\r\n') : s.lines,
-                            start_timestamp: s.start_timestamp,
-                            end_timestamp: s.end_timestamp
-                        })) : [{ type: 'stanza', number: 1, text: '(Instrumental)' }]
-                    })).map(expandChorus);
-                    setHimnarioList(mappedData);
-                    setSelectedHymn(mappedData[0]);
-                    setSelectedStanza(mappedData[0].stanzas[0]);
-                    setIsLoadingHymns(false);
-                    return;
+                if (res.data && res.data.length > 0 && isMounted) {
+                    const processed = processHymnList(res.data);
+                    if (processed.length > 0) {
+                        console.log('[AME] Himnos cargados con exito desde Adventist Media Engine:', processed.length);
+                        setHimnarioList(processed);
+                        setSelectedHymn(prev => prev ? (processed.find(h => h.number === prev.number) || processed[0]) : processed[0]);
+                        setSelectedStanza(prev => {
+                            if (!prev) return processed[0]?.stanzas[0] || null;
+                            return prev;
+                        });
+                        setIsLoadingHymns(false);
+                        return;
+                    }
                 }
             } catch (apiErr) {
-                console.warn("⚠️ API de himnario no disponible. Usando respaldo local...", apiErr.message);
+                console.warn("⚠️ API de himnario no disponible. Usando respaldo local procesado...", apiErr.message);
             }
 
-            try {
-                const data = himnarioData.map(expandChorus);
-                if (data && data.length > 0) {
-                    setHimnarioList(data);
-                    setSelectedHymn(data[0]);
-                    setSelectedStanza(data[0].stanzas[0]);
+            if (isMounted) {
+                setHimnarioList(processedLocalHymns);
+                if (!selectedHymn && processedLocalHymns.length > 0) {
+                    setSelectedHymn(processedLocalHymns[0]);
+                    setSelectedStanza(processedLocalHymns[0].stanzas[0]);
                 }
-            } catch (err) { console.error("Error cargando himnos locales:", err); } finally { setIsLoadingHymns(false); }
+                setIsLoadingHymns(false);
+            }
         };
         loadHymns();
+        return () => { isMounted = false; };
     }, []);
 
     const handleHymnSelect = (hymn) => {
+        if (!hymn) return;
         setSelectedHymn(hymn);
-        setSelectedStanza(hymn.stanzas[0]);
+        setSelectedStanza(hymn.stanzas ? hymn.stanzas[0] : null);
         setHymnSearchTerm(`${hymn.number} - ${hymn.title}`);
         setIsHymnDropdownOpen(false);
         setActivePreviewSource('himnario');
@@ -83,8 +71,13 @@ export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymn
         const prevIdx = (idx - 1 + himnarioList.length) % himnarioList.length;
         const prevHymn = himnarioList[prevIdx];
         handleHymnSelect(prevHymn);
-        if (prevHymn.stanzas && prevHymn.stanzas[0]) {
-            pushToOBS('himno', `Himno ${prevHymn.number} - ${prevHymn.title}`, prevHymn.stanzas[0].text, { template: hymnalTemplate, subText: prevHymn.stanzas[0].number ? `Estrofa ${prevHymn.stanzas[0].number}` : 'Coro' });
+        // Solo enviar al aire si el himnario está actualmente proyectándose
+        if (liveOverlay?.mode === 'himno' && prevHymn.stanzas && prevHymn.stanzas[0]) {
+            const s = prevHymn.stanzas[0];
+            pushToOBS('himno', `Himno ${prevHymn.number} - ${prevHymn.title}`, s.text, { 
+                template: hymnalTemplate, 
+                subText: s.subText || (s.number ? `Estrofa ${s.number}` : 'Coro') 
+            });
         }
     };
 
@@ -94,30 +87,47 @@ export const useHimnario = (pushToOBS, setActivePreviewSource, isBibleLive, hymn
         const nextIdx = (idx + 1) % himnarioList.length;
         const nextHymn = himnarioList[nextIdx];
         handleHymnSelect(nextHymn);
-        if (nextHymn.stanzas && nextHymn.stanzas[0]) {
-            pushToOBS('himno', `Himno ${nextHymn.number} - ${nextHymn.title}`, nextHymn.stanzas[0].text, { template: hymnalTemplate, subText: nextHymn.stanzas[0].number ? `Estrofa ${nextHymn.stanzas[0].number}` : 'Coro' });
+        // Solo enviar al aire si el himnario está actualmente proyectándose
+        if (liveOverlay?.mode === 'himno' && nextHymn.stanzas && nextHymn.stanzas[0]) {
+            const s = nextHymn.stanzas[0];
+            pushToOBS('himno', `Himno ${nextHymn.number} - ${nextHymn.title}`, s.text, { 
+                template: hymnalTemplate, 
+                subText: s.subText || (s.number ? `Estrofa ${s.number}` : 'Coro') 
+            });
         }
     };
 
     const handlePrevStanza = () => {
         if (!selectedHymn || !selectedHymn.stanzas || !selectedStanza) return;
-        const idx = selectedHymn.stanzas.findIndex(s => s === selectedStanza);
+        const idx = selectedHymn.stanzas.findIndex(s => s === selectedStanza || s.text === selectedStanza.text);
         if (idx > 0) {
             const newStanza = selectedHymn.stanzas[idx - 1];
             setSelectedStanza(newStanza);
             setActivePreviewSource('himnario');
-            pushToOBS('himno', `Himno ${selectedHymn.number} - ${selectedHymn.title}`, newStanza.text, { template: hymnalTemplate, subText: newStanza.number ? `Estrofa ${newStanza.number}` : 'Coro' });
+            // Solo proyectar si el modo actual en vivo es himno
+            if (liveOverlay?.mode === 'himno') {
+                pushToOBS('himno', `Himno ${selectedHymn.number} - ${selectedHymn.title}`, newStanza.text, { 
+                    template: hymnalTemplate, 
+                    subText: newStanza.subText || (newStanza.number ? `Estrofa ${newStanza.number}` : 'Coro') 
+                });
+            }
         }
     };
 
     const handleNextStanza = () => {
         if (!selectedHymn || !selectedHymn.stanzas || !selectedStanza) return;
-        const idx = selectedHymn.stanzas.findIndex(s => s === selectedStanza);
+        const idx = selectedHymn.stanzas.findIndex(s => s === selectedStanza || s.text === selectedStanza.text);
         if (idx >= 0 && idx < selectedHymn.stanzas.length - 1) {
             const newStanza = selectedHymn.stanzas[idx + 1];
             setSelectedStanza(newStanza);
             setActivePreviewSource('himnario');
-            pushToOBS('himno', `Himno ${selectedHymn.number} - ${selectedHymn.title}`, newStanza.text, { template: hymnalTemplate, subText: newStanza.number ? `Estrofa ${newStanza.number}` : 'Coro' });
+            // Solo proyectar si el modo actual en vivo es himno
+            if (liveOverlay?.mode === 'himno') {
+                pushToOBS('himno', `Himno ${selectedHymn.number} - ${selectedHymn.title}`, newStanza.text, { 
+                    template: hymnalTemplate, 
+                    subText: newStanza.subText || (newStanza.number ? `Estrofa ${newStanza.number}` : 'Coro') 
+                });
+            }
         }
     };
 

@@ -42,11 +42,12 @@ const LocalSearchOverlay = ({
         setCurrentHymn(h);
         setCurrentStanzaIdx(0);
         const firstStanza = h.stanzas && h.stanzas[0] ? h.stanzas[0] : { text: '', number: 1 };
+        const tmpl = (overlayData.template || localStorage.getItem('oasis_presentation_template') || 'classic').toLowerCase();
         projectToAll('himno', `Himno ${h.number} - ${h.title}`, firstStanza.text, { 
-            template: overlayData.template || 'classic', 
-            subText: firstStanza.number ? `Estrofa ${firstStanza.number}` : 'Coro' 
+            template: tmpl, 
+            subText: firstStanza.subText || (firstStanza.number ? `Estrofa ${firstStanza.number}` : 'Coro') 
         });
-        channelRef.current?.send({ type: 'broadcast', event: 'remote_select_hymn', payload: { hymn: h } });
+        channelRef.current?.send({ type: 'broadcast', event: 'remote_select_hymn', payload: { hymn: h, template: tmpl } });
         setShowHymnSuggestions(false);
         setHymnSearchTerm('');
     };
@@ -77,8 +78,6 @@ const LocalSearchOverlay = ({
             handleProjectBibleInline();
         } else if (showHymnModal && hymnSuggestions.length > 0) {
             handleProjectHymn(hymnSuggestions[0]);
-        } else {
-            channelRef.current?.send({ type: 'broadcast', event: 'request_sync', payload: {} });
         }
     };
 

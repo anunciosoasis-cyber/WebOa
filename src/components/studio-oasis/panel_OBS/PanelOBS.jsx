@@ -53,7 +53,7 @@ const BIBLE_BOOKS = [
 const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, isDark, startService, endService }, ref) => {
     const { showToast } = useToast();
     const [isBibleLive, setIsBibleLive] = useState(false);
-    const [globalTemplate, setGlobalTemplate] = useState('CLASSIC');
+    const [globalTemplate, setGlobalTemplate] = useState('classic');
     const [countdownTemplate, setCountdownTemplate] = useState('classic');
     const [activeTab, setActiveTab] = useState('biblia');
     const [activePreviewSource, setActivePreviewSource] = useState('biblia');
@@ -72,10 +72,10 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
     const pushToOBSRef = useRef(null);
     const pushToOBS = (...args) => pushToOBSRef.current && pushToOBSRef.current(...args);
 
-    const biblia = useBiblia(pushToOBS, setActivePreviewSource, isBibleLive, bibleTemplate);
+    const biblia = useBiblia(pushToOBS, setActivePreviewSource, isBibleLive, bibleTemplate, obsWS.liveOverlay);
     const { selectedBook, setSelectedBook, selectedChapter, setSelectedChapter, verses, selectedVerseObj, setSelectedVerseObj, isLoadingVerses, remoteTargetVerseRef, handlePrevVerse, handleNextVerse } = biblia;
 
-    const himnario = useHimnario(pushToOBS, setActivePreviewSource, isBibleLive, hymnalTemplate);
+    const himnario = useHimnario(pushToOBS, setActivePreviewSource, isBibleLive, hymnalTemplate, obsWS.liveOverlay);
     const { himnarioList, selectedHymn, setSelectedHymn, selectedStanza, setSelectedStanza, isLoadingHymns, hymnSearchTerm, setHymnSearchTerm, isHymnDropdownOpen, setIsHymnDropdownOpen, handleHymnSelect, handlePrevHymn, handleNextHymn, handlePrevStanza, handleNextStanza, isAutoAdvanceHymn, setIsAutoAdvanceHymn, autoAdvanceSeconds, setAutoAdvanceSeconds, autoAdvanceCountdown, setAutoAdvanceCountdown } = himnario;
 
     const obsWS = useObsWebSockets(colors, {
@@ -122,31 +122,34 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
 
     const handleTemplateChange = (tmpl) => {
         const lowerTmpl = tmpl.toLowerCase();
-        if (activePreviewSource === 'biblia') {
-            setBibleTemplate(lowerTmpl);
-            if (isBibleLive && selectedVerseObj) {
+        setBibleTemplate(lowerTmpl);
+        setHymnalTemplate(lowerTmpl);
+        setPreacherStyle(lowerTmpl);
+        setAnnouncementStyle(lowerTmpl);
+        setGlobalTemplate(lowerTmpl);
+        try { localStorage.setItem('oasis_presentation_template', lowerTmpl); } catch(e){}
+
+        if (liveOverlay && liveOverlay.mode && liveOverlay.mode !== 'hidden') {
+            if (activePreviewSource === 'biblia' && isBibleLive && selectedVerseObj) {
                 pushToOBS('bible', `${selectedBook?.name} ${selectedChapter}:${selectedVerseObj.verse}`, selectedVerseObj.text, { template: lowerTmpl });
+            } else if (activePreviewSource === 'himnario' && isBibleLive && selectedStanza) {
+                pushToOBS('himno', `Himno ${selectedHymn?.number} - ${selectedHymn?.title}`, selectedStanza.text, { 
+                    template: lowerTmpl, 
+                    subText: selectedStanza.subText || (selectedStanza.number ? `Estrofa ${selectedStanza.number}` : 'Coro') 
+                });
+            } else {
+                pushToOBS(liveOverlay.mode, liveOverlay.title, liveOverlay.content, { template: lowerTmpl, subText: liveOverlay.subText || '' });
             }
-        } else if (activePreviewSource === 'himnario') {
-            setHymnalTemplate(lowerTmpl);
-            if (isBibleLive && selectedStanza) {
-                pushToOBS('himno', `Himno ${selectedHymn?.number}`, selectedStanza.text, { template: lowerTmpl, subText: selectedStanza.number ? `Estrofa ${selectedStanza.number}` : 'Coro' });
-            }
-        } else if (activePreviewSource === 'preacher') {
-            setPreacherStyle(lowerTmpl);
-        } else if (activePreviewSource === 'anuncio') {
-            setAnnouncementStyle(lowerTmpl);
         }
-        setGlobalTemplate(tmpl); // Update global for BannersPanel UI sync
     };
 
     // Solo cuando el operador cambia la plantilla; comparar con el valor anterior es idempotente en StrictMode
     const prevGlobalTemplate = useRef(globalTemplate);
     useEffect(() => {
-        if (prevGlobalTemplate.current === globalTemplate) return;
+        if (prevGlobalTemplate.current.toLowerCase() === globalTemplate.toLowerCase()) return;
         prevGlobalTemplate.current = globalTemplate;
-        if (liveOverlay && liveOverlay.mode && liveOverlay.mode !== 'hidden' && liveOverlay.template !== globalTemplate) {
-            const extra = { template: globalTemplate };
+        if (liveOverlay && liveOverlay.mode && liveOverlay.mode !== 'hidden' && (liveOverlay.template || '').toLowerCase() !== globalTemplate.toLowerCase()) {
+            const extra = { template: globalTemplate.toLowerCase() };
             if (liveOverlay.subText) extra.subText = liveOverlay.subText;
             if (liveOverlay.accent_color) extra.accent_color = liveOverlay.accent_color;
             if (liveOverlay.bg_color) extra.bg_color = liveOverlay.bg_color;
@@ -155,33 +158,7 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
             pushToOBS(liveOverlay.mode, liveOverlay.title, liveOverlay.content, extra);
         }
     }, [globalTemplate]); // Push update automatically if the template is changed while live
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (activeTab === 'biblia') { document.getElementById('btn-next-verse')?.click(); }
-                else { document.getElementById('btn-next-stanza')?.click(); }
-            }
-            else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (activeTab === 'biblia') { document.getElementById('btn-prev-verse')?.click(); }
-                else { document.getElementById('btn-prev-stanza')?.click(); }
-            }
-            else if (e.key === 'Enter' || (e.key === ' ' && e.target === document.body)) {
-                e.preventDefault();
-                if (activeTab === 'biblia') { document.getElementById('btn-project-bible')?.click(); }
-                else if (activeTab === 'himnario') { document.getElementById('btn-project-hymn')?.click(); }
-                else { document.getElementById('btn-send-to-air')?.click(); }
-            }
-            else if (e.key === 'Escape') {
-                e.preventDefault();
-                document.getElementById('btn-clear-obs')?.click();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [activeTab]);
+    /* Keydown navigation handled contextually in ContenidoPanel */
 
 
     const openOBSWindow = () => window.open(liveUrl('/transmision/overlay', obsWS.liveKey), 'OBS_WINDOW', 'width=1920,height=1080');

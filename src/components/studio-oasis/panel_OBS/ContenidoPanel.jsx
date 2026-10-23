@@ -213,7 +213,7 @@ const ContenidoPanel = ({
                         <div className="bg-ui-bg shadow-neumorph rounded-xl h-[36px] flex items-center justify-center border border-white/50 px-3 w-full hover:border-white/70 transition-colors">
                             <span className="text-[9.5px] font-moonrising font-bold text-gray-700 truncate tracking-wider">
                                 {selectedHymn && selectedStanza 
-                                    ? `#${selectedHymn.number} - ${selectedStanza.type === 'chorus' ? 'CORO' : `ESTROFA ${selectedStanza.number || ''}`}`
+                                    ? `#${selectedHymn.number} - ${selectedStanza.subText || (selectedStanza.type === 'chorus' ? 'CORO' : `ESTROFA ${selectedStanza.number || ''}`)}`
                                     : (selectedHymn ? `#${selectedHymn.number} - ${selectedHymn.title.toUpperCase()}` : "SELECCIONE HIMNO")}
                             </span>
                         </div>
@@ -238,9 +238,9 @@ const ContenidoPanel = ({
                                     id={activeTab === 'biblia' ? 'btn-project-bible' : 'btn-project-hymn'}
                                     onClick={() => {
                                         if (activeTab === 'biblia') {
-                                            if (selectedVerseObj) pushToOBS('bible', `${selectedBook?.name} ${selectedChapter}:${selectedVerseObj.verse}`, selectedVerseObj.text, { template: globalTemplate });
+                                            if (selectedVerseObj) pushToOBS('bible', `${selectedBook?.name} ${selectedChapter}:${selectedVerseObj.verse}`, selectedVerseObj.text, { template: (globalTemplate || 'classic').toLowerCase() });
                                         } else {
-                                            if (selectedStanza) pushToOBS('himno', `Himno ${selectedHymn?.number}`, selectedStanza.text, { template: globalTemplate, subText: selectedStanza.number ? `Estrofa ${selectedStanza.number}` : 'Coro' });
+                                            if (selectedStanza) pushToOBS('himno', `Himno ${selectedHymn?.number} - ${selectedHymn?.title}`, selectedStanza.text, { template: (globalTemplate || 'classic').toLowerCase(), subText: selectedStanza.subText || (selectedStanza.number ? `Estrofa ${selectedStanza.number}` : 'Coro') });
                                         }
                                     }}
                                     className="w-8 h-8 bg-oasis-yellow rounded-full flex items-center justify-center shadow-[0_3px_8px_rgba(245,158,11,0.4)] text-white hover:scale-110 active:scale-95 transition-all border border-white/40 hover:shadow-[0_4px_12px_rgba(245,158,11,0.6)]"
@@ -290,7 +290,7 @@ const ContenidoPanel = ({
                             selectedHymn && selectedStanza ? (
                                 <div className="animate-in fade-in zoom-in duration-300 w-full">
                                     <span className="block text-oasis-yellow text-[8.5px] font-moonrising font-bold mb-2 tracking-widest uppercase">
-                                        HIMNO {selectedHymn.number} • {selectedStanza.type === 'chorus' ? 'CORO' : `ESTROFA ${selectedStanza.number || ''}`}
+                                        HIMNO {selectedHymn.number} • {selectedStanza.subText || (selectedStanza.type === 'chorus' ? 'CORO' : `ESTROFA ${selectedStanza.number || ''}`)}
                                     </span>
                                     <p className="text-white text-[11px] leading-snug font-sans font-medium whitespace-pre-line drop-shadow-md">
                                         {selectedStanza.text}
