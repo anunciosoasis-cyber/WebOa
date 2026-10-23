@@ -82,11 +82,12 @@ export const overlayChannel = (key) => realtime.channel(`oasis_live_${key}`);
 export const pressChannel = (key) => realtime.channel(`oasis_press_${key}`);
 
 // Supabase limita el tamaño de cada mensaje; las imágenes locales grandes (data:) o los vídeos (blob:) no viajan.
-const MAX_INLINE_IMAGE = 2_000_000;
+const MAX_INLINE_IMAGE = 3_000_000;
 export const shareableUrl = (url) => {
     if (typeof url !== 'string') return null;
     if (/^https?:\/\//.test(url)) return url;
     if (url.startsWith('data:image/') && url.length <= MAX_INLINE_IMAGE) return url;
+    if (/^(#|rgb|hsl|linear-gradient|radial-gradient)/i.test(url)) return url;
     return null;
 };
 
@@ -96,18 +97,22 @@ const MEDIA_FIELDS = ['imageUrl', 'customBg', 'bgImage', 'background'];
 
 /**
  * Filtra un mensaje recibido antes de pintarlo en pantalla (defensa en profundidad además de la clave):
- * modo conocido, textos acotados e imágenes solo http(s) o data:image.
+ * modo conocido, textos acotados e imágenes solo http(s), data:image o colores/gradientes CSS.
  */
 export const sanitizeOverlay = (payload) => {
     if (!payload || typeof payload !== 'object' || !OVERLAY_MODES.has(payload.mode)) return null;
     const clean = {};
     for (const [k, v] of Object.entries(payload)) {
-        // Los medios (data:/http) no se recortan: se validan aparte; recortarlos rompía las imágenes
         if (typeof v === 'string') clean[k] = MEDIA_FIELDS.includes(k) ? v : v.slice(0, MAX_TEXT);
         else if (typeof v === 'number' || typeof v === 'boolean' || v === null) clean[k] = v;
-        else if (Array.isArray(v) || typeof v === 'object') clean[k] = v; // p. ej. listas de estrofas: React las pinta como texto
+        else if (Array.isArray(v) || typeof v === 'object') clean[k] = v;
     }
-    const safeMedia = (v) => (v == null || /^(https?:\/\/|data:(image|video)\/|blob:)/.test(String(v)) ? v : null);
+    const safeMedia = (v) => {
+        if (v == null) return null;
+        const str = String(v).trim();
+        if (/^(https?:\/\/|data:(image|video)\/|blob:|#|rgb|hsl|linear-gradient|radial-gradient)/i.test(str)) return str;
+        return null;
+    };
     for (const field of MEDIA_FIELDS) {
         if (field in clean) clean[field] = safeMedia(clean[field]);
     }
@@ -118,6 +123,7 @@ export const sanitizeOverlay = (payload) => {
             mediaUrl: safeMedia(clean.slide.mediaUrl),
             background: safeMedia(clean.slide.background),
             bgImage: safeMedia(clean.slide.bgImage),
+            thumbnailUrl: safeMedia(clean.slide.thumbnailUrl),
         };
     }
     return clean;

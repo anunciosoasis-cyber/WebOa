@@ -15,11 +15,26 @@ export class PPTXParser {
 
   private async ensurePdfJs(): Promise<any> {
     if ((window as any).pdfjsLib) return (window as any).pdfjsLib;
+    try {
+      const pdfjs = await import('pdfjs-dist');
+      if (pdfjs) {
+        const workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version || '5.4.296'}/build/pdf.worker.min.mjs`;
+        if (pdfjs.GlobalWorkerOptions) {
+          pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+        }
+        (window as any).pdfjsLib = pdfjs;
+        return pdfjs;
+      }
+    } catch (e) {
+      console.warn('Import directo de pdfjs-dist falló, usando CDN:', e);
+    }
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
       script.onload = () => {
-        (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        try {
+          (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        } catch {}
         resolve((window as any).pdfjsLib);
       };
       script.onerror = reject;
@@ -249,28 +264,33 @@ export class PPTXParser {
     try {
       const pdfjs = await this.ensurePdfJs();
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await (loadingTask.promise || loadingTask);
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 1.5 }); // Escala 1.5 para equilibrio ideal HD y rendimiento
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+        const scale = Math.min(1.6, Math.max(1.0, 1440 / unscaledViewport.width));
+        const viewport = page.getViewport({ scale });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        canvas.width = Math.round(viewport.width);
+        canvas.height = Math.round(viewport.height);
 
         await page.render({ canvasContext: context, viewport }).promise;
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
 
-        // Generar miniatura ultraligera (160x90, ~2.5 KB) para el control remoto
+        // Generar miniatura ultraligera (~2-3 KB) para el control remoto y carrusel
         let thumbUrl: string | undefined = undefined;
         try {
           const thumbCanvas = document.createElement('canvas');
-          thumbCanvas.width = 160;
-          thumbCanvas.height = 90;
+          const tw = 180;
+          const th = Math.max(1, Math.round(tw * (viewport.height / viewport.width)));
+          thumbCanvas.width = tw;
+          thumbCanvas.height = th;
           const thumbCtx = thumbCanvas.getContext('2d');
           if (thumbCtx) {
-            thumbCtx.drawImage(canvas, 0, 0, 160, 90);
+            thumbCtx.drawImage(canvas, 0, 0, tw, th);
             thumbUrl = thumbCanvas.toDataURL('image/jpeg', 0.55);
           }
         } catch {}
@@ -281,6 +301,8 @@ export class PPTXParser {
           title: `${fileNameClean} — Diapositiva ${i}`,
           fileUrl: dataUrl,
           thumbnailUrl: thumbUrl,
+          type: 'image',
+          mediaType: 'image',
           elements: [
             {
               id: `el-pdf-img-${i}`,

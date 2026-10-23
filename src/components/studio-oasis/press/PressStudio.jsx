@@ -25,7 +25,7 @@ const DEFAULT_SLIDES = [
 const newSlideId = () => `slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 
-// Obtiene una imagen ligera y segura para el control remoto (<80 KB en base64 o URL remota)
+// Obtiene una imagen ligera y segura para el control remoto (<350 KB en base64 o URL remota)
 const getSafeRemoteImage = (slide) => {
   if (!slide) return null;
   if (slide.thumbnailUrl && typeof slide.thumbnailUrl === 'string') {
@@ -34,8 +34,7 @@ const getSafeRemoteImage = (slide) => {
   const candidate = slide.fileUrl || slide.mediaUrl || slide.elements?.find((el) => el.type === 'image')?.content;
   if (typeof candidate === 'string') {
     if (/^https?:\/\//.test(candidate)) return candidate;
-    // Máximo 80 KB para la imagen de previsualización activa en WebSocket
-    if (candidate.startsWith('data:image/') && candidate.length <= 80_000) return candidate;
+    if (candidate.startsWith('data:image/') && candidate.length <= 350_000) return candidate;
   }
   return slide.thumbnailUrl || null;
 };
@@ -61,6 +60,7 @@ const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank)
       subtitle: active.subtitle || '',
       type: active.type || 'styled',
       fileUrl: activeImg,
+      thumbnailUrl: active?.thumbnailUrl || activeImg,
       background: shareableUrl(active.background) || null,
     } : null,
     nextSlide: next ? {
@@ -68,6 +68,7 @@ const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank)
       subtitle: next.subtitle || '',
       type: next.type || 'styled',
       fileUrl: nextImg,
+      thumbnailUrl: next?.thumbnailUrl || nextImg,
       background: shareableUrl(next.background) || null,
     } : null,
     slidesSummary: allSlides.map((sl, i) => ({
@@ -75,8 +76,7 @@ const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank)
       title: sl.title || `Diapositiva ${i + 1}`,
       subtitle: sl.subtitle || '',
       type: sl.type || 'styled',
-      // ¡Ultra-ligero! Solo miniaturas de ~2 KB o URLs http, garantizando que el paquete completo nunca sature el WebSocket
-      thumbnail: sl.thumbnailUrl || (typeof sl.fileUrl === 'string' && sl.fileUrl.startsWith('http') ? sl.fileUrl : null),
+      thumbnail: sl.thumbnailUrl || (typeof sl.fileUrl === 'string' && (sl.fileUrl.startsWith('http') || sl.fileUrl.length < 200_000) ? sl.fileUrl : null),
     })),
     timestamp: Date.now(),
   };
@@ -223,6 +223,9 @@ export const PressStudio = () => {
         }
       })
       .on('broadcast', { event: 'ppt_request_state' }, sendState)
+      .on('broadcast', { event: 'ppt_request_slide' }, () => {
+        pushSlideToScreens();
+      })
       // Diapositivas subidas desde la app (las convierte el servidor y llegan ya como imágenes)
       .on('broadcast', { event: 'press_progress' }, ({ payload }) => {
         if (payload?.status === 'failed') {

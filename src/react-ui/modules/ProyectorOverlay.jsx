@@ -248,7 +248,13 @@ const ProyectorOverlay = () => {
     useEffect(() => {
         const initial = localStorage.getItem('obs_overlay_data');
         if (initial) {
-            try { setOverlayData(JSON.parse(initial)); } catch(e){}
+            try {
+                const parsed = JSON.parse(initial);
+                // Solo cargar datos si son recientes (menos de 15 minutos)
+                if (parsed && (!parsed.timestamp || Date.now() - parsed.timestamp < 15 * 60 * 1000)) {
+                    setOverlayData(parsed);
+                }
+            } catch(e){}
         }
 
         // Escuchar cambios de diapositivas en tiempo real desde otras pestañas/ventanas
@@ -274,13 +280,24 @@ const ProyectorOverlay = () => {
         const slidesChannel = pressChannel(liveKey);
         slidesChannel.on('broadcast', { event: 'ppt_slide' }, ({ payload }) => {
             const data = sanitizeOverlay(payload);
-            if (data && (!data.target || data.target === 'all' || data.target === 'proyector')) setOverlayData(data);
-        }).subscribe();
+            if (data && (!data.target || data.target === 'all' || data.target === 'proyector')) {
+                setOverlayData(data);
+                try { localStorage.setItem('obs_overlay_data', JSON.stringify(data)); } catch(e){}
+            }
+        }).subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                slidesChannel.send({ type: 'broadcast', event: 'ppt_request_slide', payload: {} });
+            }
+        });
 
         channel.on('broadcast', { event: 'update_overlay' }, (payload) => {
             const data = sanitizeOverlay(payload.payload);
             if (data) {
                 if (data.target && data.target !== 'all' && data.target !== 'proyector') {
+                    return;
+                }
+                // Si la pantalla tiene diapositivas de Oasis Press activas, ignorar órdenes 'hidden' que vienen de OBS
+                if (data.mode === 'hidden' && stateRef.current.overlayData?.mode === 'slide') {
                     return;
                 }
                 setOverlayData(data);
@@ -312,7 +329,10 @@ const ProyectorOverlay = () => {
             }
         }).subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
-                await channel.send({ type: 'broadcast', event: 'request_sync', payload: {} });
+                // Solo pedir sync a OBS si no hay ninguna diapositiva ya cargada
+                if (!stateRef.current.overlayData?.mode || stateRef.current.overlayData.mode === 'hidden') {
+                    await channel.send({ type: 'broadcast', event: 'request_sync', payload: {} });
+                }
             }
         });
 
@@ -417,23 +437,24 @@ const ProyectorOverlay = () => {
                 `}
             </style>
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
                 {overlayData.mode === 'blank' ? (
                     <motion.div
                         key="blank"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        transition={{ duration: 0.25 }}
                         style={{ position: 'absolute', inset: 0, backgroundColor: '#000000', zIndex: 9999 }}
                     />
                 ) : (overlayData.mode === 'slide' && overlayData.slide) ? (
-                    // Oasis Press: el mismo componente que la vista previa, en 16:9 centrado
+                    // Oasis Press: transición suave y orgánica sin parpadeo (cross-fade fluido)
                     <motion.div
-                        key={`press-${overlayData.timestamp}`}
-                        initial={{ opacity: 0, scale: 0.99 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        key={`press-${overlayData.slide.id || overlayData.timestamp || 'slide'}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                        transition={{ duration: 0.35, ease: 'easeInOut' }}
                         style={{ position: 'absolute', inset: 0, zIndex: 20, backgroundColor: '#000000', display: 'grid', placeItems: 'center' }}
                     >
                         <div style={{ width: 'min(100vw, calc(100vh * 16 / 9))', aspectRatio: '16 / 9' }}>
@@ -443,10 +464,10 @@ const ProyectorOverlay = () => {
                 ) : (overlayData.imageUrl || overlayData.mode === 'slide' || overlayData.mode === 'presentation') ? (
                     <motion.div
                         key={`slide-${overlayData.imageUrl || overlayData.title}-${overlayData.timestamp}`}
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.35, ease: 'easeInOut' }}
                         style={{
                             position: 'absolute',
                             inset: 0,

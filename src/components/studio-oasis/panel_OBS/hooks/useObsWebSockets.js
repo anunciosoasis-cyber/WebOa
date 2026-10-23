@@ -39,6 +39,8 @@ export const useObsWebSockets = (colors, setters) => {
                 bg_color: c.bg,
                 text_color: c.text,
                 accent_color: c.accent,
+                _activeInOBS: mode !== 'hidden',
+                _pushedAt: Date.now(),
                 ...extra
             };
 
@@ -64,15 +66,10 @@ export const useObsWebSockets = (colors, setters) => {
         const s = () => settersRef.current;
         channel
             .on('broadcast', { event: 'request_sync' }, async () => {
-                const lastData = localStorage.getItem('obs_overlay_data');
-                if (lastData) {
-                    try {
-                        const parsed = JSON.parse(lastData);
-                        // Solo sincronizar si hay una proyección activa, nunca re-proyectar estado oculto o basura
-                        if (parsed && parsed.mode && parsed.mode !== 'hidden') {
-                            await channel.send({ type: 'broadcast', event: 'update_overlay', payload: parsed });
-                        }
-                    } catch(e) {}
+                const current = liveOverlayRef.current;
+                // Solo sincronizar si hay una proyección activa enviada en OBS (evita enviar himnos/textos viejos guardados)
+                if (current && current.mode && current.mode !== 'hidden' && current.mode !== 'slide' && current._activeInOBS) {
+                    await channel.send({ type: 'broadcast', event: 'update_overlay', payload: current });
                 }
             })
             .on('broadcast', { event: 'update_overlay' }, ({ payload }) => {

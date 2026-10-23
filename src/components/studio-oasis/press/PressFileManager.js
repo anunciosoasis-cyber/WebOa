@@ -77,6 +77,7 @@ export class PressFileManager {
               mediaUrl: imgContent,
               thumbnailUrl: thumb,
               type: isPureImage ? 'image' : 'styled',
+              mediaType: isPureImage ? 'image' : undefined,
               elements: s.elements,
             };
           }));
