@@ -39,8 +39,8 @@ const deckSlides = ({ deckId, title, slides }) => (slides || []).map((sl, i) => 
   subtitle: title,
   fileUrl: sl.url,
   mediaUrl: sl.url,
-  type: 'image',
-  mediaType: 'image',
+  type: sl.type === 'video' ? 'video' : 'image',
+  mediaType: sl.type === 'video' ? 'video' : 'image',
 }));
 const newSlideId = () => `slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -78,7 +78,14 @@ const appSlideFields = (sl) => {
   };
 };
 
-const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank, appliedOps = []) => {
+// Imagen o vídeo de una diapositiva creada en la app: URL del servidor (https) o imagen data: (nada de blob: ni otros esquemas)
+const appMedia = (sl) => {
+  const url = sl?.mediaUrl;
+  if (typeof url !== 'string' || !shareableUrl(url) || !/^(data:image\/|https?:\/\/)/.test(url)) return null;
+  return { mediaUrl: url, fileUrl: url, mediaType: sl.mediaType === 'video' ? 'video' : 'image' };
+};
+
+const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank, appliedOps = [], globalBackground = null) => {
   const active = allSlides[activeIndex];
   const next = allSlides[activeIndex + 1];
 
@@ -116,10 +123,15 @@ const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank,
       title: sl.title || `Diapositiva ${i + 1}`,
       subtitle: sl.subtitle || '',
       type: sl.type || 'styled',
-      thumbnail: sl.thumbnailUrl || (typeof sl.fileUrl === 'string' && (sl.fileUrl.startsWith('http') || sl.fileUrl.length < 200_000) ? sl.fileUrl : null),
+      thumbnail: sl.thumbnailUrl || (sl.mediaType !== 'video' && sl.type !== 'video' && typeof sl.fileUrl === 'string' && (sl.fileUrl.startsWith('http') || sl.fileUrl.length < 50_000) ? sl.fileUrl : null),
+      mediaType: sl.mediaType || (sl.type === 'video' ? 'video' : undefined),
+      mediaUrl: typeof sl.mediaUrl === 'string' && (sl.mediaUrl.startsWith('http') || (sl.mediaUrl.startsWith('data:image/') && sl.mediaUrl.length < 50_000)) ? sl.mediaUrl : undefined,
       // Datos para editarla desde la app (solo diapositivas de texto)
       ...(EDITABLE_TYPES.has(sl.type || 'styled') ? { editable: true, eventData: sl.eventData || {}, style: { ...DEFAULT_SLIDE_STYLE, ...(sl.style || {}) } } : {}),
+      hasBackground: !!sl.background,
     })),
+    // Fondo general de las diapositivas de texto (la app muestra si hay uno y permite quitarlo)
+    hasBackground: !!globalBackground,
     // Cambios de la app ya aplicados aquí: la app deja de reenviarlos (ver ppt_add/update/delete_slide)
     appliedOps,
     timestamp: Date.now(),
@@ -225,13 +237,15 @@ export const PressStudio = () => {
 
   // Solo cuando el operador cambia de diapositiva o activa la pantalla negra: abrir Studio o añadir
   // diapositivas ya no se adueña del proyector. Comparar con el valor anterior es idempotente en StrictMode.
-  const prevSync = useRef({ currentSlideIndex, isBlank });
+  const activeBackground = slides[currentSlideIndex]?.background || null;
+  const prevSync = useRef({ currentSlideIndex, isBlank, pressBackground, activeBackground });
   useEffect(() => {
     const prev = prevSync.current;
-    if (prev.currentSlideIndex === currentSlideIndex && prev.isBlank === isBlank) return;
-    prevSync.current = { currentSlideIndex, isBlank };
+    if (prev.currentSlideIndex === currentSlideIndex && prev.isBlank === isBlank
+      && prev.pressBackground === pressBackground && prev.activeBackground === activeBackground) return;
+    prevSync.current = { currentSlideIndex, isBlank, pressBackground, activeBackground };
     pushSlideToScreens();
-  }, [currentSlideIndex, isBlank]);
+  }, [currentSlideIndex, isBlank, pressBackground, activeBackground]);
 
   // Operaciones de la app ya aplicadas (opId): la app las reenvía hasta verlas en ppt_state, así nunca se duplican.
   // Se guardan para que una recarga del Estudio no vuelva a aplicar algo que la app aún no vio confirmado.
@@ -244,7 +258,7 @@ export const PressStudio = () => {
 
   // Control remoto (celular) por el canal en tiempo real
   const remoteStateRef = useRef(null);
-  remoteStateRef.current = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank, appliedOpsRef.current);
+  remoteStateRef.current = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank, appliedOpsRef.current, pressBackground);
   const announcedDecksRef = useRef(new Set());
   const slideCountRef = useRef(slides.length);
   slideCountRef.current = slides.length;
@@ -276,6 +290,17 @@ export const PressStudio = () => {
     fresh.forEach((d) => seen.add(d.deckId));
     importedDecksRef.current = seen;
     try { localStorage.setItem(IMPORTED_KEY, JSON.stringify([...seen].slice(-200))); } catch { /* sin espacio: solo en memoria */ }
+    const own = fresh.find((d) => d.deckId === serverDeckRef.current?.deckId);
+    if (own) {
+      finishServerDeck();
+      const ownSlides = deckSlides(own);
+      setSlides(ownSlides);
+      setCurrentSlideIndex(0);
+      setIsBlank(false);
+      if (own.title) setPresentationTitle(own.title);
+      showToast(`${ownSlides.length} diapositivas listas, tal cual el archivo original`, 'success', 4000);
+      return;
+    }
     const incoming = fresh.flatMap(deckSlides);
     insertFromApp(incoming, `${incoming.length} diapositiva(s) de "${fresh.map((d) => d.title).join('", "')}" recibidas desde la app y al aire`);
   };
@@ -337,7 +362,8 @@ export const PressStudio = () => {
       // Diapositivas de texto desde la app: crear, editar y borrar (idempotentes por opId)
       .on('broadcast', { event: 'ppt_add_slide' }, ({ payload }) => {
         if (typeof payload?.slide?.title !== 'string') return;
-        const slide = { id: newSlideId(), type: 'styled', hidden: {}, ...appSlideFields(payload.slide) };
+        const media = appMedia(payload.slide);
+        const slide = { id: newSlideId(), type: media ? 'hybrid_announcement' : 'styled', hidden: {}, ...appSlideFields(payload.slide), ...(media || {}) };
         slide.style = { ...DEFAULT_SLIDE_STYLE, ...slide.style };
         applyOnce(payload.opId ?? newSlideId(), () => insertFromApp([slide], `Diapositiva "${slide.title}" recibida desde la app y al aire`));
         sendState();
@@ -346,8 +372,11 @@ export const PressStudio = () => {
         if (!payload?.id || !payload?.slide) return;
         applyOnce(payload.opId ?? newSlideId(), () => {
           const fields = appSlideFields(payload.slide);
+          const hasMediaKey = 'mediaUrl' in payload.slide;
+          const media = appMedia(payload.slide);
           setSlides((prev) => prev.map((sl) => (String(sl.id) !== String(payload.id) || !EDITABLE_TYPES.has(sl.type || 'styled') ? sl : {
             ...sl,
+            ...(hasMediaKey ? (media ? { ...media, type: 'hybrid_announcement' } : { mediaUrl: null, fileUrl: null }) : {}),
             title: fields.title,
             subtitle: fields.subtitle,
             eventData: { ...(sl.eventData || {}), ...fields.eventData },
@@ -370,12 +399,33 @@ export const PressStudio = () => {
         });
         sendState();
       })
+      .on('broadcast', { event: 'ppt_set_background' }, ({ payload }) => {
+        const bg = payload?.background;
+        const valid = bg === null || (typeof bg === 'string' && !!shareableUrl(bg) && /^(data:image\/|https?:\/\/)/.test(bg));
+        applyOnce(payload?.opId ?? newSlideId(), () => {
+          // Inválida o muy pesada: se confirma igual (la app deja de reenviarla) y se avisa aquí
+          if (!valid) return showToast('La imagen de fondo enviada desde la app no es válida o es muy pesada', 'error', 4000);
+          if (payload.id) {
+            setSlides((prev) => prev.map((sl) => (String(sl.id) === String(payload.id) ? { ...sl, background: bg } : sl)));
+            showToast(bg ? 'Fondo de la diapositiva cambiado desde la app' : 'Fondo de la diapositiva quitado desde la app', 'success', 3000);
+          } else if (bg) {
+            setPressBackground(bg);
+            try { localStorage.setItem(BG_KEY, bg); } catch { /* muy pesada: solo hasta recargar */ }
+            showToast('Fondo de las diapositivas cambiado desde la app', 'success', 3000);
+          } else {
+            clearBackground();
+            showToast('Fondo de las diapositivas quitado desde la app', 'info', 3000);
+          }
+        });
+        sendState();
+      })
       .on('broadcast', { event: 'ppt_request_slide' }, () => {
         pushSlideToScreens();
       })
       // Diapositivas subidas desde la app (las convierte el servidor y llegan ya como imágenes)
       .on('broadcast', { event: 'press_progress' }, ({ payload }) => {
         if (payload?.status === 'failed') {
+          if (payload.deckId && payload.deckId === serverDeckRef.current?.deckId) return serverDeckFailed(payload.error);
           showToast(`No se pudieron convertir las diapositivas: ${payload.error || 'error desconocido'}`, 'error', 6000);
         } else if (payload?.status === 'processing' && !announcedDecksRef.current.has(payload.deckId)) {
           announcedDecksRef.current.add(payload.deckId);
@@ -395,10 +445,10 @@ export const PressStudio = () => {
 
   // Cada cambio de diapositiva se refleja en el celular con payload optimizado
   useEffect(() => {
-    const payload = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank, appliedOpsRef.current);
+    const payload = createRemotePayload(slides, currentSlideIndex, presentationTitle, isBlank, appliedOpsRef.current, pressBackground);
     remoteStateRef.current = payload;
     pressChannelRef.current?.send({ type: 'broadcast', event: 'ppt_state', payload });
-  }, [currentSlideIndex, slides, isBlank, presentationTitle]);
+  }, [currentSlideIndex, slides, isBlank, presentationTitle, pressBackground]);
 
   // PresentationManager mount & sync
   useEffect(() => {
@@ -414,10 +464,58 @@ export const PressStudio = () => {
   }, [currentSlideIndex, presentationManager]);
 
   // Gestor de carga de archivos (Servicio independiente PressFileManager)
-  const handleFileUpload = async (e) => {
-    const files = e.target.files;
-    if (!files || !files.length) return;
+  // Presentación que este equipo mandó a convertir: { deckId, files, poll }
+  const serverDeckRef = useRef(null);
+  useEffect(() => () => clearInterval(serverDeckRef.current?.poll), []);
+  const finishServerDeck = () => {
+    clearInterval(serverDeckRef.current?.poll);
+    serverDeckRef.current = null;
+    setIsLoading(false);
+  };
+  const serverDeckFailed = (error) => {
+    const files = serverDeckRef.current?.files;
+    finishServerDeck();
+    showToast(`El servidor no pudo convertir la presentación (${error || 'error desconocido'}). Se cargó una versión simplificada; para verla idéntica, súbela como PDF.`, 'warning', 9000);
+    if (files) loadLocally(files);
+  };
 
+  const isDocument = (f) => /\.(pptx?|pdf)$/i.test(f.name);
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!files.length) return;
+    if (!files.some(isDocument)) return loadLocally(files);
+
+    // PowerPoint/PDF: el servidor convierte cada diapositiva en imagen (fondos, fuentes y diseño exactos).
+    // Llega por la sala (press_slides_added) o, si eso falla, consultando el estado del deck.
+    setIsLoading(true);
+    try {
+      const room = await loadCurrentRoom();
+      const form = new FormData();
+      form.append('roomId', room.id);
+      form.append('title', files[0].name.replace(/\.[^.]+$/, ''));
+      files.forEach((f) => form.append('files', f));
+      // multipart explícito: el cliente trae JSON por defecto y axios convertiría el FormData en JSON (sin archivos)
+      const { data } = await apiClient.post('/slides', form, { timeout: 0, headers: { 'Content-Type': 'multipart/form-data' } });
+      showToast('Convirtiendo la presentación para que se vea igual que el original…', 'info', 4000);
+      const poll = setInterval(async () => {
+        try {
+          const { data: deck } = await apiClient.get(`/slides/decks/${data.deckId}`);
+          if (deck.status === 'ready') importDecks([{ deckId: deck.id, title: deck.title, slides: deck.slides }]);
+          else if (deck.status === 'failed') serverDeckFailed(deck.error);
+        } catch { /* sin red: se reintenta */ }
+      }, 4000);
+      serverDeckRef.current = { deckId: data.deckId, files, poll };
+    } catch (err) {
+      setIsLoading(false);
+      const reason = err?.response?.data?.message || err?.message || 'sin conexión';
+      showToast(`No se pudo enviar al servidor (${reason}). Se cargó una versión simplificada.`, 'warning', 8000);
+      loadLocally(files);
+    }
+  };
+
+  // Lector del navegador: imágenes tal cual; PowerPoint/PDF solo como respaldo (pierde parte del diseño)
+  const loadLocally = async (files) => {
     setIsLoading(true);
     try {
       const result = await fileManager.processFiles(files);
@@ -430,7 +528,7 @@ export const PressStudio = () => {
           setPresentationTitle(result.title);
         }
         // Emitir inmediatamente al celular para sincronizar el archivo externo al instante
-        const immediatePayload = createRemotePayload(result.slides, 0, newTitle, false, appliedOpsRef.current);
+        const immediatePayload = createRemotePayload(result.slides, 0, newTitle, false, appliedOpsRef.current, pressBackground);
         remoteStateRef.current = immediatePayload;
         pressChannelRef.current?.send({
           type: 'broadcast',

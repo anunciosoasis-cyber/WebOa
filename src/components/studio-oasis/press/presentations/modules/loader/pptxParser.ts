@@ -42,6 +42,35 @@ export class PPTXParser {
     });
   }
 
+  private async compressBlobImage(blob: Blob, maxDim = 960, quality = 0.72): Promise<string | null> {
+    const rawUri = await this.blobToDataURI(blob);
+    if (!rawUri || !/data:image\/(png|jpe?g|webp|gif)/i.test(rawUri)) {
+      return null;
+    }
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const currentMax = Math.max(img.width, img.height);
+          const scale = currentMax > maxDim ? maxDim / currentMax : 1;
+          const w = Math.max(1, Math.round(img.width * scale));
+          const h = Math.max(1, Math.round(img.height * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(rawUri);
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch {
+          resolve(rawUri);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = rawUri;
+    });
+  }
+
   private async makeThumb(dataUri: string, maxW = 160, maxH = 90): Promise<string | null> {
     if (!dataUri || !dataUri.startsWith('data:image/')) return null;
     return new Promise((resolve) => {
@@ -130,12 +159,21 @@ export class PPTXParser {
           return numA - numB;
         });
 
-      // Extraer imágenes de medios en ppt/media/
-      const mediaFiles = Object.keys(zip.files).filter(path => path.startsWith('ppt/media/'));
+      // Extraer imágenes de medios en ppt/media/ (solo formatos web estándar y comprimidas a tamaño liviano)
+      const mediaFiles = Object.keys(zip.files).filter(path => 
+        path.startsWith('ppt/media/') && /\.(png|jpe?g|webp|gif)$/i.test(path)
+      );
       const mediaMap: Record<string, string> = {};
       for (const mediaPath of mediaFiles) {
-        const blob = await zip.files[mediaPath].async('blob');
-        mediaMap[mediaPath] = await this.blobToDataURI(blob);
+        try {
+          const blob = await zip.files[mediaPath].async('blob');
+          const compressed = await this.compressBlobImage(blob, 960, 0.72);
+          if (compressed) {
+            mediaMap[mediaPath] = compressed;
+          }
+        } catch (e) {
+          console.warn(`Error procesando imagen ${mediaPath}:`, e);
+        }
       }
 
       const mediaKeys = Object.keys(mediaMap);
@@ -270,7 +308,7 @@ export class PPTXParser {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const unscaledViewport = page.getViewport({ scale: 1.0 });
-        const scale = Math.min(1.6, Math.max(1.0, 1440 / unscaledViewport.width));
+        const scale = Math.min(1.3, Math.max(0.6, 1280 / unscaledViewport.width));
         const viewport = page.getViewport({ scale });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -278,7 +316,7 @@ export class PPTXParser {
         canvas.height = Math.round(viewport.height);
 
         await page.render({ canvasContext: context, viewport }).promise;
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
 
         // Generar miniatura ultraligera (~2-3 KB) para el control remoto y carrusel
         let thumbUrl: string | undefined = undefined;

@@ -1,18 +1,21 @@
-// RemoteView.jsx — Control remoto inteligente para smartphone (vía código QR)
+// RemoteView.jsx — Control remoto de Oasis Press para el celular (se abre con el QR del Estudio)
 // Comunicación en tiempo real bidireccional sobre WebSocket con Estudio Oasis y Proyector
 import React, { useState, useEffect, useRef } from 'react';
 import { realtime } from '../../../api/realtime';
 import { liveKeyFromUrl, pressChannel } from '../../../api/liveChannel';
-import { ChevronLeft, ChevronRight, EyeOff, Eye, Sparkles, Layers } from 'lucide-react';
+import {
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MonitorOff, Monitor, Radio, WifiOff,
+  LoaderCircle, Presentation, ArrowRight, Images,
+} from 'lucide-react';
 
-/** Tarjeta miniatura responsiva para la pantalla del celular */
+const GOLD = '#F59E0B';
+
+/** Vista de una diapositiva (al aire, siguiente o miniatura). El contenido conserva sus colores; el marco es claro. */
 const SlideMiniPreview = ({ slide, title, url, isBlank, isSmall = false }) => {
   if (isBlank) {
     return (
-      <div className="w-full h-full bg-black flex flex-col items-center justify-center text-center p-2">
-        <span className="text-rose-500 font-mono text-[11px] font-black uppercase tracking-widest animate-pulse">
-          [ PANTALLA NEGRA ]
-        </span>
+      <div className="w-full h-full bg-black flex items-center justify-center" aria-label="Pantalla negra">
+        <MonitorOff className="text-white/70" size={isSmall ? 16 : 34} aria-hidden="true" />
       </div>
     );
   }
@@ -22,49 +25,63 @@ const SlideMiniPreview = ({ slide, title, url, isBlank, isSmall = false }) => {
   if (imageSrc) {
     return (
       <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
-        <img
-          src={imageSrc}
-          alt={title || 'Diapositiva'}
-          className="w-full h-full object-contain"
-        />
+        <img src={imageSrc} alt={title || 'Diapositiva'} className="w-full h-full object-contain" />
       </div>
     );
   }
 
-  // 2. Diapositiva con fondo personalizado o del sistema
+  // 2. Diapositiva de texto con fondo personalizado o del sistema
   const bg = slide?.background;
-  const slideTitle = slide?.title || title || 'Diapositiva Oasis';
+  const slideTitle = slide?.title || title || 'Diapositiva';
   const slideSubtitle = slide?.subtitle || '';
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-slate-950 flex flex-col items-center justify-center text-center p-2.5">
+    <div className="relative w-full h-full overflow-hidden flex flex-col items-center justify-center text-center p-2.5">
       {bg ? (
         <>
           <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/75" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-black/70" />
         </>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1b0d36] via-[#120C1F] to-[#08050D]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2a1650] via-[#160d29] to-[#0b0714]" />
       )}
-      <div className="relative z-10 w-full px-1.5 flex flex-col items-center justify-center">
+      <div className="relative z-10 w-full px-1.5">
         <h4
-          className={`font-black text-[#FFB800] leading-tight line-clamp-2 uppercase tracking-wide ${
-            isSmall ? 'text-[9px]' : 'text-xs sm:text-sm'
-          }`}
-          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.85)' }}
+          className={`font-black leading-tight line-clamp-2 uppercase tracking-wide ${isSmall ? 'text-[8px]' : 'text-sm'}`}
+          style={{ color: '#FBBF24', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
         >
           {slideTitle}
         </h4>
         {slideSubtitle && !isSmall && (
-          <p
-            className="text-[10px] text-slate-200 font-semibold line-clamp-1 mt-1 opacity-90"
-            style={{ textShadow: '0 1px 4px rgba(0,0,0,0.85)' }}
-          >
+          <p className="text-[11px] text-white/85 font-semibold line-clamp-1 mt-1" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
             {slideSubtitle}
           </p>
         )}
       </div>
     </div>
+  );
+};
+
+/** Botón redondo de la barra de control: solo ícono, con nombre accesible. */
+const ControlButton = ({ label, onClick, disabled, children, variant = 'soft', size = 'md' }) => {
+  const sizes = { sm: 'w-11 h-11', md: 'w-14 h-14', lg: 'w-[72px] h-[72px]' };
+  const variants = {
+    soft: 'bg-slate-100 text-slate-700 active:bg-slate-200',
+    primary: 'text-white shadow-[0_10px_24px_rgba(245,158,11,0.45)] active:brightness-95',
+    danger: 'bg-rose-500 text-white shadow-[0_10px_24px_rgba(244,63,94,0.4)]',
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className={`${sizes[size]} ${variants[variant]} rounded-full grid place-items-center transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:pointer-events-none focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-300`}
+      style={variant === 'primary' ? { background: `linear-gradient(145deg, #FBBF24, ${GOLD})` } : undefined}
+    >
+      {children}
+    </button>
   );
 };
 
@@ -133,27 +150,18 @@ export const RemoteView = () => {
   const sendCommand = (action, extra = {}) => {
     triggerVibration();
 
-    // Actualización visual optimista instantánea
     if (action === 'NEXT') {
-      setSessionData((prev) => ({
-        ...prev,
-        currentSlide: Math.min(prev.totalSlides, prev.currentSlide + 1),
-        isBlank: false,
-      }));
+      setSessionData((prev) => ({ ...prev, currentSlide: Math.min(prev.totalSlides, prev.currentSlide + 1), isBlank: false }));
     } else if (action === 'PREV') {
-      setSessionData((prev) => ({
-        ...prev,
-        currentSlide: Math.max(1, prev.currentSlide - 1),
-        isBlank: false,
-      }));
+      setSessionData((prev) => ({ ...prev, currentSlide: Math.max(1, prev.currentSlide - 1), isBlank: false }));
+    } else if (action === 'FIRST') {
+      setSessionData((prev) => ({ ...prev, currentSlide: 1, isBlank: false }));
+    } else if (action === 'LAST') {
+      setSessionData((prev) => ({ ...prev, currentSlide: prev.totalSlides, isBlank: false }));
     } else if (action === 'TOGGLE_BLANK') {
       setSessionData((prev) => ({ ...prev, isBlank: !prev.isBlank }));
     } else if (action === 'GOTO' && typeof extra.index === 'number') {
-      setSessionData((prev) => ({
-        ...prev,
-        currentSlide: extra.index + 1,
-        isBlank: false,
-      }));
+      setSessionData((prev) => ({ ...prev, currentSlide: extra.index + 1, isBlank: false }));
     }
 
     channelRef.current?.send({
@@ -172,190 +180,168 @@ export const RemoteView = () => {
     }
   }, [sessionData.currentSlide]);
 
-  const statusLabel = {
-    'sin-clave': 'Enlace incompleto: escanea el código QR desde Studio Oasis',
-    conectando: 'Conectando con la sala de transmisión…',
-    'sin-estudio': 'Buscando el estudio… (Asegúrate de tener Oasis Press abierto en el PC)',
+  const statusInfo = {
+    'sin-clave': { icon: WifiOff, text: 'Enlace incompleto: escanea el QR desde el Estudio' },
+    conectando: { icon: LoaderCircle, text: 'Conectando con la sala…', spin: true },
+    'sin-estudio': { icon: WifiOff, text: 'Abre Oasis Press en el Estudio para controlarlo' },
     conectado: null,
   }[status];
 
+  const live = status === 'conectado';
+  const { currentSlide, totalSlides, isBlank } = sessionData;
+  const progress = totalSlides > 0 ? Math.min(100, (currentSlide / totalSlides) * 100) : 0;
+  const atStart = currentSlide <= 1;
+  const atEnd = currentSlide >= totalSlides;
+
   return (
-    <div className="min-h-screen bg-[#0F172A] p-3 sm:p-5 flex items-center justify-center font-sans select-none text-slate-100">
-      <div className="bg-[#1E293B] rounded-[36px] p-5 sm:p-6 shadow-2xl border border-slate-700/60 max-w-sm w-full space-y-4 flex flex-col justify-between">
-        {/* HEADER MARCA OASIS PRESS & BADGE ESTADO */}
-        <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
-          <div>
-            <span className="text-[9px] font-black text-slate-400 tracking-wider uppercase block">
-              CONTROL REMOTO
-            </span>
-            <h1 className="text-2xl font-black tracking-tight text-white leading-none">
-              OASIS<span className="text-[#FFB800]">PRESS</span>
-            </h1>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-slate-700">
+    <div className="min-h-[100dvh] bg-[#F5F6FA] text-slate-900 font-sans select-none">
+      <div className="max-w-md mx-auto px-4 pb-[calc(150px+env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))]">
+        {/* Barra superior: marca + estado */}
+        <header className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-2.5">
             <span
-              className={`w-2 h-2 rounded-full ${
-                status === 'conectado' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-              }`}
-            />
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-300">
-              {status === 'conectado' ? 'EN VIVO' : 'CONECTANDO'}
+              className="w-10 h-10 rounded-2xl grid place-items-center text-white shadow-[0_6px_16px_rgba(245,158,11,0.35)]"
+              style={{ background: `linear-gradient(145deg, #FBBF24, ${GOLD})` }}
+              aria-hidden="true"
+            >
+              <Presentation size={20} />
             </span>
+            <div className="leading-none">
+              <h1 className="font-moonrising text-[17px] font-black tracking-wide">
+                Oasis<span style={{ color: GOLD }}>Press</span>
+              </h1>
+              <p className="font-moonrising text-[11px] tracking-wide text-slate-400 mt-1 truncate max-w-[170px]">{sessionData.title}</p>
+            </div>
           </div>
-        </div>
 
-        {statusLabel && (
-          <p
+          <span
             role="status"
-            className="text-[11px] font-semibold text-amber-300 bg-amber-950/60 border border-amber-800/80 rounded-2xl px-3 py-2 m-0 text-center"
+            aria-label={live ? 'Conectado en vivo' : 'Sin conexión con el Estudio'}
+            className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-[12px] font-bold ${
+              live ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+            }`}
           >
-            {statusLabel}
-          </p>
+            {live ? <Radio size={15} className="animate-pulse" aria-hidden="true" /> : <LoaderCircle size={15} className="animate-spin" aria-hidden="true" />}
+            {live ? 'En vivo' : '…'}
+          </span>
+        </header>
+
+        {statusInfo && (
+          <div className="mt-3 flex items-center gap-2.5 rounded-2xl bg-white px-3.5 py-3 shadow-[0_4px_18px_rgba(15,23,42,0.06)]">
+            <statusInfo.icon size={18} className={`text-amber-500 shrink-0 ${statusInfo.spin ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <p className="m-0 text-[13px] font-semibold text-slate-600">{statusInfo.text}</p>
+          </div>
         )}
 
-        {/* PANTALLA PRINCIPAL EN VIVO (PANTALLA PROYECTOR) */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between items-center px-1">
-            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-              AL AIRE (PROYECTOR)
-            </span>
-            <span className="text-[11px] font-mono font-bold text-[#FFB800] bg-black/40 px-2.5 py-0.5 rounded-full border border-slate-700">
-              {sessionData.currentSlide} / {sessionData.totalSlides}
-            </span>
-          </div>
-
-          <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-slate-700/80">
+        {/* Al aire */}
+        <section aria-label="Diapositiva al aire" className="mt-4">
+          <div className="relative w-full aspect-video rounded-[22px] overflow-hidden bg-black shadow-[0_14px_40px_rgba(15,23,42,0.18)]">
             <SlideMiniPreview
               slide={sessionData.activeSlide}
               title={sessionData.activeSlideTitle}
               url={sessionData.activeSlideUrl}
-              isBlank={sessionData.isBlank}
+              isBlank={isBlank}
             />
-          </div>
-        </div>
-
-        {/* PANTALLA SECUNDARIA MINIATURA (SIGUIENTE) */}
-        <div className="flex items-center gap-3 bg-slate-850/60 p-2.5 rounded-2xl border border-slate-800">
-          <div className="w-24 aspect-video bg-black rounded-xl overflow-hidden border border-slate-700/80 shrink-0">
-            <SlideMiniPreview
-              slide={sessionData.nextSlide}
-              title={sessionData.nextSlideTitle}
-              url={sessionData.nextSlideUrl}
-              isSmall={true}
-            />
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-[9px] font-black text-[#FFB800] uppercase tracking-wider block">
-              A CONTINUACIÓN
+            <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 h-6 px-2 rounded-full bg-black/55 backdrop-blur text-white text-[10px] font-black tracking-wider">
+              <span className={`w-1.5 h-1.5 rounded-full ${isBlank ? 'bg-slate-400' : 'bg-red-500 animate-pulse'}`} aria-hidden="true" />
+              {isBlank ? 'OFF' : 'LIVE'}
             </span>
-            <p className="text-xs font-bold text-slate-200 truncate mt-0.5">
-              {sessionData.nextSlideTitle || 'Fin de Presentación'}
-            </p>
+            <span className="absolute bottom-2.5 right-2.5 h-6 px-2.5 rounded-full bg-black/55 backdrop-blur text-white text-[11px] font-bold tabular-nums grid place-items-center">
+              {currentSlide}/{totalSlides}
+            </span>
           </div>
-        </div>
+        </section>
 
-        {/* TIRA DE MINIATURAS DEL SISTEMA (CAROUSEL DE TODAS LAS DIAPOSITIVAS) */}
+        {/* Siguiente */}
+        <section aria-label="Siguiente diapositiva" className="mt-3 flex items-center gap-3 rounded-[20px] bg-white p-2.5 shadow-[0_4px_18px_rgba(15,23,42,0.06)]">
+          <div className="w-24 aspect-video rounded-xl overflow-hidden bg-black shrink-0">
+            {atEnd ? (
+              <div className="w-full h-full bg-slate-100 grid place-items-center">
+                <Monitor size={18} className="text-slate-300" aria-hidden="true" />
+              </div>
+            ) : (
+              <SlideMiniPreview slide={sessionData.nextSlide} title={sessionData.nextSlideTitle} url={sessionData.nextSlideUrl} isSmall />
+            )}
+          </div>
+          <ArrowRight size={16} className="text-amber-500 shrink-0" aria-hidden="true" />
+          <p className="m-0 min-w-0 flex-1 text-[13px] font-bold text-slate-700 truncate">
+            {atEnd ? 'Fin' : sessionData.nextSlideTitle}
+          </p>
+        </section>
+
+        {/* Todas las diapositivas: tocar una la pone al aire */}
         {sessionData.slidesSummary?.length > 0 && (
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                <Layers size={11} /> Miniaturas ({sessionData.slidesSummary.length})
-              </span>
-              <span className="text-[9px] text-slate-500 font-semibold">Toca para proyectar</span>
+          <section aria-label="Diapositivas" className="mt-4">
+            <div className="flex items-center gap-1.5 px-1 mb-2 text-slate-400">
+              <Images size={14} aria-hidden="true" />
+              <span className="text-[12px] font-bold tabular-nums">{sessionData.slidesSummary.length}</span>
             </div>
-
-            <div
-              ref={thumbnailsScrollRef}
-              className="flex gap-2 overflow-x-auto pb-1.5 pt-0.5 scroll-smooth custom-scrollbar"
-              style={{ scrollSnapType: 'x mandatory' }}
-            >
+            <div ref={thumbnailsScrollRef} className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scroll-smooth [scrollbar-width:none]" style={{ scrollSnapType: 'x mandatory' }}>
               {sessionData.slidesSummary.map((sl, i) => {
-                const isActive = sessionData.currentSlide === sl.index;
+                const isActive = currentSlide === sl.index;
                 return (
                   <button
-                    key={sl.index || i}
+                    key={sl.id || sl.index || i}
                     type="button"
                     data-active={isActive ? 'true' : undefined}
+                    aria-label={`Proyectar diapositiva ${sl.index}: ${sl.title}`}
+                    aria-current={isActive ? 'true' : undefined}
                     onClick={() => sendCommand('GOTO', { index: i })}
-                    className={`relative shrink-0 w-20 aspect-video rounded-xl overflow-hidden text-left border transition-all duration-150 ${
-                      isActive
-                        ? 'border-[#FFB800] ring-2 ring-[#FFB800] shadow-md scale-105'
-                        : 'border-slate-700/80 bg-slate-900 opacity-70 hover:opacity-100'
+                    className={`relative shrink-0 w-28 aspect-video rounded-2xl overflow-hidden bg-black transition-all duration-150 active:scale-95 ${
+                      isActive ? 'ring-[3px] ring-amber-400 ring-offset-2 ring-offset-[#F5F6FA] shadow-[0_8px_20px_rgba(245,158,11,0.35)]' : 'shadow-[0_4px_12px_rgba(15,23,42,0.12)]'
                     }`}
+                    style={{ scrollSnapAlign: 'center' }}
                   >
                     {sl.thumbnail ? (
                       <img src={sl.thumbnail} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-indigo-950 to-slate-950 p-1 flex items-center justify-center text-center">
-                        <span className="text-[8px] font-black text-[#FFB800] line-clamp-2 leading-none uppercase">
-                          {sl.title}
-                        </span>
-                      </div>
+                      <SlideMiniPreview slide={sl} title={sl.title} isSmall />
                     )}
-                    <span
-                      className={`absolute top-0.5 left-0.5 text-[8px] font-mono font-black px-1 rounded ${
-                        isActive ? 'bg-[#FFB800] text-slate-950' : 'bg-black/70 text-white'
-                      }`}
-                    >
-                      #{sl.index}
+                    <span className={`absolute top-1 left-1 min-w-[20px] h-5 px-1 rounded-full grid place-items-center text-[10px] font-black tabular-nums ${
+                      isActive ? 'bg-amber-400 text-slate-900' : 'bg-black/60 text-white'
+                    }`}>
+                      {sl.index}
                     </span>
                   </button>
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
-
-        {/* CONTROLES DE NAVEGACIÓN PRINCIPALES */}
-        <div className="bg-slate-900/90 rounded-3xl p-3 border border-slate-700/80 space-y-2.5">
-          <div className="flex items-center justify-between gap-3">
-            {/* Flecha Anterior */}
-            <button
-              type="button"
-              onClick={() => sendCommand('PREV')}
-              disabled={sessionData.currentSlide <= 1}
-              className="flex-1 py-4 rounded-2xl bg-slate-800 hover:bg-slate-750 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all border border-slate-700 flex items-center justify-center gap-1.5 font-black text-sm uppercase tracking-wider text-white shadow-sm"
-              title="Diapositiva Anterior"
-            >
-              <ChevronLeft size={22} className="text-[#FFB800]" /> Anterior
-            </button>
-
-            {/* Flecha Siguiente */}
-            <button
-              type="button"
-              onClick={() => sendCommand('NEXT')}
-              disabled={sessionData.currentSlide >= sessionData.totalSlides}
-              className="flex-1 py-4 rounded-2xl bg-[#FFB800] hover:bg-[#F3AD00] active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center justify-center gap-1.5 font-black text-sm uppercase tracking-wider text-slate-950 shadow-lg shadow-[#FFB800]/20"
-              title="Siguiente Diapositiva"
-            >
-              Siguiente <ChevronRight size={22} />
-            </button>
-          </div>
-
-          {/* Botón Pantalla Negra */}
-          <button
-            type="button"
-            onClick={() => sendCommand('TOGGLE_BLANK')}
-            className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border ${
-              sessionData.isBlank
-                ? 'bg-rose-600 hover:bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-600/30'
-                : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700'
-            }`}
-          >
-            {sessionData.isBlank ? (
-              <>
-                <Eye size={15} /> Restaurar Proyector
-              </>
-            ) : (
-              <>
-                <EyeOff size={15} /> Pantalla Negra (Blank)
-              </>
-            )}
-          </button>
-        </div>
       </div>
+
+      {/* Barra de control fija abajo, como una app */}
+      <nav
+        aria-label="Controles de la presentación"
+        className="fixed inset-x-0 bottom-0 z-20 bg-white/95 backdrop-blur-xl rounded-t-[30px] shadow-[0_-10px_40px_rgba(15,23,42,0.10)]"
+      >
+        <div className="max-w-md mx-auto px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
+          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
+            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: GOLD }} />
+          </div>
+          <div className="mt-3.5 flex items-center justify-between">
+            <ControlButton label="Primera diapositiva" size="sm" onClick={() => sendCommand('FIRST')} disabled={atStart}>
+              <ChevronsLeft size={20} aria-hidden="true" />
+            </ControlButton>
+            <ControlButton label="Diapositiva anterior" onClick={() => sendCommand('PREV')} disabled={atStart}>
+              <ChevronLeft size={28} aria-hidden="true" />
+            </ControlButton>
+            <ControlButton
+              label={isBlank ? 'Volver a proyectar' : 'Pantalla negra'}
+              variant={isBlank ? 'danger' : 'soft'}
+              onClick={() => sendCommand('TOGGLE_BLANK')}
+            >
+              {isBlank ? <Monitor size={22} aria-hidden="true" /> : <MonitorOff size={22} aria-hidden="true" />}
+            </ControlButton>
+            <ControlButton label="Diapositiva siguiente" variant="primary" size="lg" onClick={() => sendCommand('NEXT')} disabled={atEnd}>
+              <ChevronRight size={34} aria-hidden="true" />
+            </ControlButton>
+            <ControlButton label="Última diapositiva" size="sm" onClick={() => sendCommand('LAST')} disabled={atEnd}>
+              <ChevronsRight size={20} aria-hidden="true" />
+            </ControlButton>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 };

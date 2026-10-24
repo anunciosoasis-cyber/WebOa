@@ -18,7 +18,7 @@ export const PressUploader = ({ isLoading = false, onFileUpload }) => {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.pptx,image/*"
+        accept=".pdf,.pptx,.ppt,image/*"
         multiple
         onChange={onFileUpload}
         className="hidden"

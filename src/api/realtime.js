@@ -104,7 +104,7 @@ class LiveChannel {
         if (this.noop) return Promise.resolve('ok');
         const { socket } = socketFor(this.key);
         return new Promise((resolve) => {
-            socket.timeout(5000).emit('broadcast', { channel: this.name, event, payload }, (err, ack) => {
+            socket.timeout(10000).emit('broadcast', { channel: this.name, event, payload }, (err, ack) => {
                 if (err || !ack?.ok) console.warn('[Sala] Evento no enviado:', event, err?.message || ack?.error);
                 resolve(err || !ack?.ok ? 'error' : 'ok');
             });

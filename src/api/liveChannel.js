@@ -100,8 +100,10 @@ const MEDIA_FIELDS = ['imageUrl', 'customBg', 'bgImage', 'background'];
  * modo conocido, textos acotados e imágenes solo http(s), data:image o colores/gradientes CSS.
  */
 export const sanitizeOverlay = (payload) => {
-    if (!payload || typeof payload !== 'object' || !OVERLAY_MODES.has(payload.mode)) return null;
-    const clean = {};
+    if (!payload || typeof payload !== 'object') return null;
+    const mode = payload.mode || payload.type;
+    if (!OVERLAY_MODES.has(mode)) return null;
+    const clean = { mode, type: mode };
     for (const [k, v] of Object.entries(payload)) {
         if (typeof v === 'string') clean[k] = MEDIA_FIELDS.includes(k) ? v : v.slice(0, MAX_TEXT);
         else if (typeof v === 'number' || typeof v === 'boolean' || v === null) clean[k] = v;
