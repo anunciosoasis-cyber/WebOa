@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
+    CalendarDays,
     CalendarX2,
     CheckCircle2,
     Sparkles,
@@ -13,6 +14,7 @@ import {
 import { useTheme } from '../ThemeContext';
 import apiClient from '../../api/client';
 import FormViewer from '../components/FormViewer';
+import oasisCommunityImg from '../../img/comunidad-oasis.jpg';
 
 /**
  * Componente Inscripciones (Público)
@@ -39,6 +41,11 @@ const Inscripciones = () => {
     };
 
     const getEventAccent = (form) => form?.styles?.primaryColor || oasis.gold;
+    const getEventCover = (form) =>
+        form?.styles?.coverImage ||
+        form?.styles?.backgroundImage ||
+        form?.styles?.imageUrl ||
+        oasisCommunityImg;
 
     useEffect(() => {
         apiClient
@@ -183,9 +190,10 @@ const Inscripciones = () => {
                     >
                         {(() => {
                             const accent = getEventAccent(selectedForm);
+                            const coverImg = getEventCover(selectedForm);
                             return (
                                 <>
-                                    {/* Hero Cinematográfico adaptado al color del evento */}
+                                    {/* Hero Cinematográfico adaptado al color e imagen del evento */}
                                     <div
                                         style={{
                                             background: `linear-gradient(160deg, ${oasis.midnight} 0%, ${oasis.deepPurple} 100%)`,
@@ -195,12 +203,27 @@ const Inscripciones = () => {
                                             borderBottom: `2px solid ${accent}55`
                                         }}
                                     >
+                                        <img
+                                            src={coverImg}
+                                            alt=""
+                                            aria-hidden="true"
+                                            style={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover',
+                                                opacity: 0.24,
+                                                filter: 'saturate(1.08) contrast(1.05)',
+                                                pointerEvents: 'none'
+                                            }}
+                                        />
                                         <div
                                             aria-hidden="true"
                                             style={{
                                                 position: 'absolute',
                                                 inset: 0,
-                                                background: `radial-gradient(circle at 50% 35%, ${accent}2E 0%, transparent 65%)`,
+                                                background: `radial-gradient(circle at 50% 35%, ${accent}38 0%, rgba(18, 12, 31, 0.8) 58%, rgba(8, 5, 13, 0.96) 100%)`,
                                                 pointerEvents: 'none'
                                             }}
                                         />
@@ -241,7 +264,7 @@ const Inscripciones = () => {
                                                         color: accent
                                                     }}
                                                 >
-                                                    <i className={`bi ${selectedForm.styles?.icon || 'bi-calendar-event'} fs-4`}></i>
+                                                    <CalendarDays size={24} color={accent} />
                                                 </div>
                                                 <span
                                                     style={{
@@ -462,6 +485,7 @@ const Inscripciones = () => {
                                 <div className="row g-4 justify-content-center">
                                     {forms.map((form, idx) => {
                                         const accent = getEventAccent(form);
+                                        const coverImg = getEventCover(form);
                                         const isFull = form.capacity > 0 && form.submissionCount >= form.capacity;
                                         const remaining = form.capacity > 0 ? Math.max(0, form.capacity - (form.submissionCount || 0)) : null;
 
@@ -498,53 +522,96 @@ const Inscripciones = () => {
                                                         transition: 'all 0.35s cubic-bezier(0.22, 1, 0.36, 1)'
                                                     }}
                                                 >
-                                                    {/* Top Event-Specific Cinema Accent Bar */}
-                                                    <div
-                                                        style={{
-                                                            height: '6px',
-                                                            width: '100%',
-                                                            background: `linear-gradient(90deg, ${accent}, ${oasis.deepPurple})`
-                                                        }}
-                                                    />
+                                                    {/* Cinematic Cover Image Header */}
+                                                    <div style={{ position: 'relative', height: '175px', overflow: 'hidden', backgroundColor: oasis.midnight }}>
+                                                        <img
+                                                            src={coverImg}
+                                                            alt={form.title}
+                                                            className="ev-card-cover-img"
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'cover',
+                                                                objectPosition: 'center 42%',
+                                                                filter: 'saturate(1.06) contrast(1.05)'
+                                                            }}
+                                                        />
+                                                        <div
+                                                            style={{
+                                                                position: 'absolute',
+                                                                inset: 0,
+                                                                background: `linear-gradient(180deg, rgba(8, 5, 13, 0.2) 0%, rgba(18, 12, 31, 0.88) 100%), radial-gradient(circle at 85% 20%, ${accent}44 0%, transparent 60%)`
+                                                            }}
+                                                        />
 
-                                                    <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                                                        {/* Top Accent Strip */}
+                                                        <div
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: 0,
+                                                                left: 0,
+                                                                right: 0,
+                                                                height: '4px',
+                                                                background: `linear-gradient(90deg, ${accent}, ${oasis.deepPurple})`
+                                                            }}
+                                                        />
+
+                                                        {/* Icon & Capacity Badges over Cover */}
+                                                        <div
+                                                            style={{
+                                                                position: 'absolute',
+                                                                bottom: '14px',
+                                                                left: '18px',
+                                                                right: '18px',
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                zIndex: 2
+                                                            }}
+                                                        >
                                                             <div
                                                                 style={{
-                                                                    width: '54px',
-                                                                    height: '54px',
-                                                                    borderRadius: '16px',
-                                                                    background: `${accent}18`,
-                                                                    border: `1px solid ${accent}44`,
+                                                                    width: '42px',
+                                                                    height: '42px',
+                                                                    borderRadius: '13px',
+                                                                    background: 'rgba(18, 12, 31, 0.78)',
+                                                                    backdropFilter: 'blur(10px)',
+                                                                    border: `1px solid ${accent}66`,
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     justifyContent: 'center',
                                                                     color: accent
                                                                 }}
                                                             >
-                                                                <i className={`bi ${form.styles?.icon || 'bi-calendar-event'} fs-3`}></i>
+                                                                <CalendarDays size={20} color={accent} />
                                                             </div>
 
-                                                            {form.capacity > 0 && (
-                                                                <span
-                                                                    style={{
-                                                                        display: 'inline-flex',
-                                                                        alignItems: 'center',
-                                                                        gap: '5px',
-                                                                        padding: '5px 10px',
-                                                                        borderRadius: '999px',
-                                                                        fontSize: '0.68rem',
-                                                                        fontWeight: 800,
-                                                                        backgroundColor: isFull ? 'rgba(220, 38, 38, 0.12)' : `${accent}18`,
-                                                                        color: isFull ? '#DC2626' : accent
-                                                                    }}
-                                                                >
-                                                                    <Users size={12} />
-                                                                    {isFull ? 'Agotado' : `${remaining} cupos`}
-                                                                </span>
-                                                            )}
+                                                            <span
+                                                                style={{
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '5px',
+                                                                    padding: '5px 11px',
+                                                                    borderRadius: '999px',
+                                                                    fontSize: '0.68rem',
+                                                                    fontWeight: 800,
+                                                                    backgroundColor: isFull ? 'rgba(220, 38, 38, 0.88)' : 'rgba(18, 12, 31, 0.78)',
+                                                                    backdropFilter: 'blur(10px)',
+                                                                    border: `1px solid ${isFull ? 'rgba(255,255,255,0.2)' : `${accent}66`}`,
+                                                                    color: isFull ? '#FFFFFF' : accent
+                                                                }}
+                                                            >
+                                                                <Users size={12} />
+                                                                {form.capacity > 0
+                                                                    ? isFull
+                                                                        ? 'Agotado'
+                                                                        : `${remaining} cupos`
+                                                                    : 'Inscripción abierta'}
+                                                            </span>
                                                         </div>
+                                                    </div>
 
+                                                    <div style={{ padding: '24px 26px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                                                         <h4
                                                             style={{
                                                                 fontFamily: 'Moonrising, sans-serif',
@@ -563,7 +630,7 @@ const Inscripciones = () => {
                                                                 fontSize: '0.88rem',
                                                                 lineHeight: 1.6,
                                                                 flexGrow: 1,
-                                                                marginBottom: '22px'
+                                                                marginBottom: '20px'
                                                             }}
                                                         >
                                                             {form.description}
@@ -571,7 +638,7 @@ const Inscripciones = () => {
 
                                                         <div
                                                             style={{
-                                                                paddingTop: '16px',
+                                                                paddingTop: '14px',
                                                                 borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(18, 12, 31, 0.06)'}`,
                                                                 display: 'flex',
                                                                 justifyContent: 'space-between',
@@ -612,6 +679,12 @@ const Inscripciones = () => {
             </AnimatePresence>
 
             <style>{`
+                .ev-card-cover-img {
+                    transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+                }
+                .ev-cine-card:hover .ev-card-cover-img {
+                    transform: scale(1.07);
+                }
                 .ev-cine-card:hover {
                     transform: translateY(-8px);
                     box-shadow: 0 28px 56px -14px rgba(18, 12, 31, 0.22) !important;
