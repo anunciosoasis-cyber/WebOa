@@ -55,6 +55,15 @@ const CalendarSection = ({ announcements }) => {
         return null; // Si no se pudo parsear (ej. "Próximo Sábado") no aparecerá en la grilla exacta
     };
 
+    // Fecha del flyer: "2026 | 07 NOVIEMBRE" (tolera errores de tipeo: basta el inicio del mes)
+    const parseFlyerDate = (text) => {
+        const m = String(text || '').toLowerCase().match(/(\d{4})\s*\|\s*(\d{1,2})\s+([a-záéíóú]+)/);
+        if (!m) return null;
+        const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const idx = months.findIndex((p) => m[3].startsWith(p));
+        return idx === -1 ? null : `${m[1]}-${String(idx + 1).padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+    };
+
     const normalizeAnnouncement = (ann) => {
         let form = {};
         if (ann?.formData && typeof ann.formData === 'string') {
@@ -67,8 +76,11 @@ const CalendarSection = ({ announcements }) => {
             try { form = JSON.parse(ann.content); } catch { /* ignore */ }
         }
 
+        const flyer = form?.flyer || {};
         const rawDate = pickFirst(ann?.date, form?.date, '');
-        const parsedDate = parseSpanishDate(rawDate) || ann?.eventDate;
+        // Manda la fecha impresa en el flyer (el campo `date` guardado puede venir corrido un día por zona horaria);
+        // un aviso de cambio (pospuesto) se agenda en su nueva fecha
+        const parsedDate = parseFlyerDate(flyer.newDateText) || parseFlyerDate(flyer.dateText) || parseSpanishDate(rawDate) || ann?.eventDate;
 
         return {
             ...ann,
@@ -76,7 +88,7 @@ const CalendarSection = ({ announcements }) => {
             title: pickFirst(ann?.title, form?.title, 'Evento'),
             rawDate: rawDate,
             date: parsedDate, // YYYY-MM-DD para la lógica del calendario
-            time: pickFirst(ann?.time, form?.time, ''),
+            time: pickFirst(ann?.time, form?.time, flyer.newTimeText, flyer.timeText, ''),
             location: pickFirst(ann?.location, form?.location, ''),
         };
     };
@@ -125,7 +137,7 @@ const CalendarSection = ({ announcements }) => {
             window.removeEventListener('storage', handleStorage);
             window.removeEventListener(ANNOUNCEMENTS_UPDATED_EVENT, loadEvents);
         };
-    }, [loadEvents]);
+    }, [loadEvents, announcements]);
 
     const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
     const getFirstDayOfMonth = (y, m) => {
@@ -254,8 +266,8 @@ const CalendarSection = ({ announcements }) => {
                                     }}>
                                         <span style={{ color: colors.deepPurple, fontWeight: '800', fontSize: '0.95rem' }}>{ev.title}</span>
                                         <div style={{ display: 'flex', gap: '15px', fontSize: '0.75rem', color: '#666', fontWeight: '600' }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><LucideIcons.Clock size={12} color={colors.accent}/> {ev.time || '10:00 AM'}</span>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><LucideIcons.MapPin size={12} color={colors.accent}/> {ev.location || 'Templo'}</span>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><LucideIcons.Clock size={12} color={colors.accent}/> {ev.time || 'Hora por confirmar'}</span>
+                                            {!!ev.location && <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><LucideIcons.MapPin size={12} color={colors.accent}/> {ev.location}</span>}
                                         </div>
                                     </div>
                                 ))}

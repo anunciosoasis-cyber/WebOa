@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, ChevronLeft, ChevronRight, Clock, User, MapPin, Sparkles } from 'lucide-react';
+import { X, Calendar, ChevronLeft, ChevronRight, Clock, User, MapPin, Sparkles, Maximize, Minimize } from 'lucide-react';
 import apiClient from '../../../api/client';
 
 const ANNOUNCEMENTS_REFRESH_MS = 30000;
@@ -8,7 +8,7 @@ const ANNOUNCEMENTS_UPDATED_EVENT = 'oasis:announcements-updated';
 const ANNOUNCEMENTS_UPDATED_KEY = 'oasis_announcements_updated_at';
 
 // Componente individual de imagen de tarjeta con fallback automático inteligente
-const CardImage = ({ primarySrc, fallbackSrc, alt, title, tag }) => {
+const CardImage = ({ primarySrc, fallbackSrc, alt, title, tag, fit = 'cover' }) => {
     const [src, setSrc] = useState(primarySrc || fallbackSrc || '');
     const [hasError, setHasError] = useState(false);
 
@@ -96,7 +96,7 @@ const CardImage = ({ primarySrc, fallbackSrc, alt, title, tag }) => {
             style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
+                objectFit: fit,
                 display: 'block'
             }}
         />
@@ -112,6 +112,22 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
     const [scrollIndex, setScrollIndex] = useState(0);
+    const viewerRef = useRef(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    useEffect(() => {
+        const onChange = () => setIsFullscreen(!!viewerRef.current && document.fullscreenElement === viewerRef.current);
+        document.addEventListener('fullscreenchange', onChange);
+        return () => document.removeEventListener('fullscreenchange', onChange);
+    }, []);
+
+    const toggleFullscreen = (e) => {
+        e?.stopPropagation();
+        const el = viewerRef.current;
+        if (!el) return;
+        if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+        else el.requestFullscreen?.().catch(() => {});
+    };
 
     const items = propItems !== undefined ? propItems : internalItems;
     const loading = propLoading !== undefined ? propLoading : internalLoading;
@@ -151,6 +167,7 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
             annSubtitle = parts[1] || annSubtitle;
         }
 
+        const flyer = form?.flyer || {};
         const rawImg = pickFirst(ann?.imageUrl, ann?.image_url, form?.imageUrl, '');
         const fallbackBg = form?.bgImage && typeof form.bgImage === 'string' && form.bgImage.startsWith('http') ? form.bgImage : '';
 
@@ -160,10 +177,10 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
             title: annTitle,
             subtitle: annSubtitle,
             title3: pickFirst(form?.title3, ''),
-            speaker: pickFirst(form?.speaker, ann?.speaker, ann?.description, ''),
-            content: pickFirst(ann?.content, form?.content, ''),
+            speaker: pickFirst(form?.speaker, ann?.speaker, flyer.preacherName, ''),
+            content: pickFirst(ann?.content, form?.content, ann?.description, ''),
             date: pickFirst(ann?.date, form?.date, ''),
-            time: pickFirst(ann?.time, form?.time, ''),
+            time: pickFirst(ann?.time, form?.time, flyer.timeText, flyer.newTimeText, ''),
             location: pickFirst(ann?.location, form?.location, ''),
             image: rawImg ? resolveImageUrl(rawImg) : '',
             fallbackBg: fallbackBg,
@@ -290,7 +307,7 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
             if (!selectedId) return;
             if (e.key === 'ArrowRight') handleNext();
             else if (e.key === 'ArrowLeft') handlePrev();
-            else if (e.key === 'Escape') setSelectedId(null);
+            else if (e.key === 'Escape' && !document.fullscreenElement) setSelectedId(null);
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
@@ -627,29 +644,18 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
                                     {cardData.title}
                                 </span>
 
-                                {!!cardData.subtitle && (
-                                    <span style={{
-                                        color: '#F59E0B',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 700,
-                                        lineHeight: '1.2'
-                                    }}>
-                                        {cardData.subtitle}
-                                    </span>
-                                )}
-
-                                {!!cardData.speaker && (
+                                {!!cardData.time && (
                                     <div style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '5px',
                                         marginTop: '4px',
-                                        color: 'rgba(255,255,255,0.7)',
+                                        color: 'rgba(255,255,255,0.8)',
                                         fontSize: '0.75rem',
-                                        fontWeight: 600
+                                        fontWeight: 700
                                     }}>
-                                        <User size={13} color="#F59E0B" />
-                                        <span>{cardData.speaker}</span>
+                                        <Clock size={13} color="#F59E0B" />
+                                        <span>{cardData.time}</span>
                                     </div>
                                 )}
                             </div>
@@ -722,14 +728,41 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
                             className="announcement-modal-container"
                         >
                             {/* IZQUIERDA: IMAGEN / POSTER */}
-                            <div className="announcement-modal-left">
-                                <CardImage
-                                    primarySrc={selectedData.image}
-                                    fallbackSrc={selectedData.fallbackBg}
-                                    alt={selectedData.title}
-                                    title={selectedData.title}
-                                    tag={selectedData.tag}
-                                />
+                            <div className="announcement-modal-left" ref={viewerRef} onDoubleClick={toggleFullscreen}>
+                                {/* Fondo: la misma imagen desenfocada, para que la imagen completa no quede sobre negro plano */}
+                                {!!(selectedData.image || selectedData.fallbackBg) && (
+                                    <>
+                                        {/* animation:none — la animación global de <img> (oasisFadeIn) termina en blur(0) y anularía el desenfoque */}
+                                        <img src={selectedData.image || selectedData.fallbackBg} alt="" aria-hidden="true" style={{
+                                            position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                                            animation: 'none', filter: 'blur(40px) brightness(0.5) saturate(1.3)', transform: 'scale(1.25)'
+                                        }} />
+                                        {/* Viñeta: oscurece los bordes para que el flyer resalte al centro */}
+                                        <div aria-hidden="true" style={{
+                                            position: 'absolute', inset: 0, pointerEvents: 'none',
+                                            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 35%, rgba(0,0,0,0.6) 100%)'
+                                        }} />
+                                    </>
+                                )}
+                                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                                    <CardImage
+                                        primarySrc={selectedData.image}
+                                        fallbackSrc={selectedData.fallbackBg}
+                                        alt={selectedData.title}
+                                        title={selectedData.title}
+                                        tag={selectedData.tag}
+                                        fit="contain"
+                                    />
+                                </div>
+                                <button
+                                    onClick={toggleFullscreen}
+                                    className="announcement-close-btn"
+                                    style={{ left: 'auto', right: '20px' }}
+                                    aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Ver en pantalla completa'}
+                                    title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+                                >
+                                    {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                                </button>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -866,7 +899,8 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
                                                     color: 'rgba(255,255,255,0.8)',
                                                     fontSize: '0.95rem',
                                                     lineHeight: '1.7',
-                                                    marginTop: '12px'
+                                                    marginTop: '12px',
+                                                    whiteSpace: 'pre-line'
                                                 }}>
                                                     {selectedData.content}
                                                 </div>
