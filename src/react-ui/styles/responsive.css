@@ -314,26 +314,6 @@
         font-size: 0.75rem !important;
     }
     
-    /* Footer */
-    footer {
-        padding: 32px 16px !important;
-    }
-    
-    footer h5 {
-        font-size: 1rem !important;
-    }
-    
-    footer p,
-    footer ul {
-        font-size: 0.85rem !important;
-    }
-    
-    /* Social Buttons */
-    footer .btn-light {
-        width: 36px !important;
-        height: 36px !important;
-    }
-    
     /* Announcement Modal */
     .fullscreen-modal {
         padding: 16px !important;

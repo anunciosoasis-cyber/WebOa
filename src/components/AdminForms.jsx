@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../api/client';
-import { uploadToCloudinary } from '../api/cloudinary';
 import { useTheme } from '../react-ui/ThemeContext';
 import { useToast } from '../react-ui/components/Toast';
 import ConfirmationModal from '../react-ui/components/ConfirmationModal';
@@ -154,18 +153,23 @@ const AdminForms = () => {
         if (!file) return;
         setUploadingCover(true);
         try {
-            const result = await uploadToCloudinary(file, 'oasis-events');
-            if (result.success && result.imageUrl) {
+            // Pasa por el backend: valida formato/tamaño y usa la cuenta de Cloudinary de producción
+            const body = new FormData();
+            body.append('file', file);
+            body.append('folder', 'oasis-events');
+            const { data } = await apiClient.post('/upload', body, { headers: { 'Content-Type': 'multipart/form-data' } });
+            if (data?.url) {
                 setEditingForm(prev => ({
                     ...prev,
-                    styles: { ...prev.styles, coverImage: result.imageUrl }
+                    styles: { ...prev.styles, coverImage: data.url }
                 }));
                 showToast('Imagen subida correctamente', 'success');
             } else {
-                showToast(result.error || 'No se pudo subir la imagen', 'error');
+                showToast(data?.message || 'No se pudo subir la imagen', 'error');
             }
         } catch (err) {
-            showToast('Error al subir imagen: ' + err.message, 'error');
+            const msg = err.response?.status === 413 ? 'La imagen supera 15 MB' : (err.response?.data?.message || err.message);
+            showToast('Error al subir imagen: ' + msg, 'error');
         } finally {
             setUploadingCover(false);
             if (coverFileInputRef.current) coverFileInputRef.current.value = '';

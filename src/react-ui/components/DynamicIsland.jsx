@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import QuickFormModal from './QuickFormModal';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePlayer } from '../../context/PlayerContext';
+import { nextService } from '../../utils/nextService';
 
 /* -------------------------------------------------------------------------- */
 /*  Cinematic Animated Icons — Unified Oasis Palette (#120C1F + #F59E0B)     */
@@ -446,14 +447,6 @@ const RotatingText = ({ items, interval = 2800, style }) => {
 
 const captionStyle = { fontSize: '0.72rem', fontWeight: 700, color: 'rgba(18, 12, 31, 0.62)' };
 
-// shortcut: culto fijo sábado 9:00 hora local; leer de settings cuando el admin exponga el horario.
-const nextService = (now) => {
-    const d = new Date(now);
-    d.setHours(9, 0, 0, 0);
-    d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7));
-    if (d <= now) d.setDate(d.getDate() + 7);
-    return d;
-};
 
 const pad2 = (n) => String(n).padStart(2, '0');
 
