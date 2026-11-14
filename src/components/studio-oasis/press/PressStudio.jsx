@@ -85,6 +85,11 @@ const appMedia = (sl) => {
   return { mediaUrl: url, fileUrl: url, mediaType: sl.mediaType === 'video' ? 'video' : 'image' };
 };
 
+// Como la vista previa de la app: una imagen es el fondo del cartel (con velo); solo el vídeo pasa a anuncio híbrido
+const appMediaFields = (media) => (!media ? { type: 'styled', background: null, mediaUrl: null, fileUrl: null }
+  : media.mediaType === 'image' ? { type: 'styled', background: media.mediaUrl, mediaUrl: null, fileUrl: null }
+    : { ...media, type: 'hybrid_announcement', background: null });
+
 const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank, appliedOps = [], globalBackground = null) => {
   const active = allSlides[activeIndex];
   const next = allSlides[activeIndex + 1];
@@ -125,7 +130,8 @@ const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank,
       type: sl.type || 'styled',
       thumbnail: sl.thumbnailUrl || (sl.mediaType !== 'video' && sl.type !== 'video' && typeof sl.fileUrl === 'string' && (sl.fileUrl.startsWith('http') || sl.fileUrl.length < 50_000) ? sl.fileUrl : null),
       mediaType: sl.mediaType || (sl.type === 'video' ? 'video' : undefined),
-      mediaUrl: typeof sl.mediaUrl === 'string' && (sl.mediaUrl.startsWith('http') || (sl.mediaUrl.startsWith('data:image/') && sl.mediaUrl.length < 50_000)) ? sl.mediaUrl : undefined,
+      // El fondo de un cartel viaja como su imagen: así la app la muestra al editar y la conserva al guardar
+      mediaUrl: [sl.mediaUrl, sl.type === 'styled' ? sl.background : null].find((u) => typeof u === 'string' && (u.startsWith('http') || (u.startsWith('data:image/') && u.length < 50_000))),
       // Datos para editarla desde la app (solo diapositivas de texto)
       ...(EDITABLE_TYPES.has(sl.type || 'styled') ? { editable: true, eventData: sl.eventData || {}, style: { ...DEFAULT_SLIDE_STYLE, ...(sl.style || {}) } } : {}),
       hasBackground: !!sl.background,
@@ -363,7 +369,7 @@ export const PressStudio = () => {
       .on('broadcast', { event: 'ppt_add_slide' }, ({ payload }) => {
         if (typeof payload?.slide?.title !== 'string') return;
         const media = appMedia(payload.slide);
-        const slide = { id: newSlideId(), type: media ? 'hybrid_announcement' : 'styled', hidden: {}, ...appSlideFields(payload.slide), ...(media || {}) };
+        const slide = { id: newSlideId(), hidden: {}, ...appSlideFields(payload.slide), ...appMediaFields(media) };
         slide.style = { ...DEFAULT_SLIDE_STYLE, ...slide.style };
         applyOnce(payload.opId ?? newSlideId(), () => insertFromApp([slide], `Diapositiva "${slide.title}" recibida desde la app y al aire`));
         sendState();
@@ -376,7 +382,7 @@ export const PressStudio = () => {
           const media = appMedia(payload.slide);
           setSlides((prev) => prev.map((sl) => (String(sl.id) !== String(payload.id) || !EDITABLE_TYPES.has(sl.type || 'styled') ? sl : {
             ...sl,
-            ...(hasMediaKey ? (media ? { ...media, type: 'hybrid_announcement' } : { mediaUrl: null, fileUrl: null }) : {}),
+            ...(hasMediaKey ? appMediaFields(media) : {}),
             title: fields.title,
             subtitle: fields.subtitle,
             eventData: { ...(sl.eventData || {}), ...fields.eventData },

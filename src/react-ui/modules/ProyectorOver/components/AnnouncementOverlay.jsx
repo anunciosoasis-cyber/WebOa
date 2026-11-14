@@ -20,7 +20,7 @@ const AnnouncementOverlay = ({ overlayData, overlayStyle }) => {
             }}
         >
             {overlayData.imageUrl ? (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyCenter: 'center', background: '#000', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 30px 90px rgba(0,0,0,0.9)' }}>
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 30px 90px rgba(0,0,0,0.9)' }}>
                     <img 
                         src={overlayData.imageUrl} 
                         alt="Diapositiva Proyectada en Vivo" 

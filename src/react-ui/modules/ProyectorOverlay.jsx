@@ -522,7 +522,7 @@ const ProyectorOverlay = () => {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
-                                justify: 'center',
+                                justifyContent: 'center',
                                 background: 'linear-gradient(135deg, #120C1F 0%, #1b0d36 100%)',
                                 color: '#ffffff',
                                 padding: '40px',

@@ -95,6 +95,10 @@ const BibleHymnOverlay = ({ overlayData, overlayStyle }) => {
             >
                 {/* 1. ESTILO CINEMATIC (SIN CAMBIOS) */}
                 {tmpl === 'cinematic' && (
+                    // Trama oscura sobre la cámara para que el texto blanco sea legible
+                    <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(2,6,23,0.72) 0%, rgba(2,6,23,0.55) 55%, rgba(2,6,23,0.8) 100%)', pointerEvents: 'none' }} />
+                )}
+                {tmpl === 'cinematic' && (
                     <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', maxWidth: '1450px' }}>
                         <motion.div
                             variants={sunGlowVariants}
