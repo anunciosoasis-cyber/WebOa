@@ -63,13 +63,6 @@ const Backdrop = ({ background, bgColor, gradientClass }) => {
   );
 };
 
-const InfoRow = ({ icon: Icon, children, tone, style }) => (
-  <div className={`flex items-center gap-[1.2cqw] min-w-0 shrink-0 rounded-[1cqw] px-[1.6cqw] py-[1cqw] border text-[1.75cqw] font-bold leading-tight ${tone}`} style={style}>
-    <Icon className="shrink-0 w-[2.1cqw] h-[2.1cqw]" aria-hidden="true" />
-    <span className="line-clamp-2 [overflow-wrap:anywhere]">{children}</span>
-  </div>
-);
-
 const Body = ({ slide, isBlank, background }) => {
   if (!slide) {
     return (
@@ -92,41 +85,74 @@ const Body = ({ slide, isBlank, background }) => {
   const ev = slide.eventData || {};
   const show = (key, value) => !hidden[key] && !!value;
 
-  // 1. ANUNCIO HÍBRIDO: afiche/vídeo + datos del evento
+  // 1. ANUNCIO HÍBRIDO, estilo cinemático: la imagen ocupa el cuadro y se funde en un velo oscuro
+  //    donde va el texto. Sin tarjetas ni bordes de color: el acento solo marca etiqueta e iconos.
   if (isHybridSlide(slide)) {
     const subtitle = slide.subtitle && slide.subtitle !== ev.eventDate ? slide.subtitle : null;
+    const video = media && isVideoMedia(slide, media);
+    const infos = [
+      show('speaker', ev.speaker) && { icon: Mic, text: ev.speaker },
+      show('eventDate', ev.eventDate) && { icon: Calendar, text: ev.eventDate },
+      show('location', ev.location) && { icon: MapPin, text: ev.location },
+    ].filter(Boolean);
+    const fade = 'linear-gradient(to right, black 0%, black 58%, transparent 100%)';
+    // La palabra más larga debe caber entera en la columna (~38cqw): el título se achica en vez de partirla
+    const longestWord = Math.max(1, ...String(slide.title || '').split(/\s+/).map((w) => w.length));
+    const titleSize = `${Math.min(4.4, 38 / (longestWord * 0.8)).toFixed(2)}cqw`;
     return (
-      <div className="relative w-full h-full">
-        <Backdrop background={background} bgColor={slide.style?.bgColor} />
-        <div className="relative w-full h-full grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-[1.6cqw] p-[1.6cqw]">
-          <div className="rounded-[1.4cqw] overflow-hidden">
-            {media ? (
-              <MediaFit src={media} alt={slide.title || 'Anuncio'} video={isVideoMedia(slide, media)} />
+      <div className="relative w-full h-full bg-black">
+        {/* Capa 1: ambiente (la misma imagen, desenfocada y oscura) o el fondo elegido */}
+        {media && !video ? (
+          <img src={media} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover scale-110"
+            style={{ filter: 'blur(4cqw) brightness(0.35) saturate(1.2)' }} />
+        ) : (
+          <Backdrop background={background} bgColor={slide.style?.bgColor} />
+        )}
+
+        {/* Capa 2: la imagen nítida a la izquierda, fundida hacia la derecha (sin borde) */}
+        {media && (
+          <div className="absolute inset-y-0 left-0 w-[66%]" style={{ WebkitMaskImage: fade, maskImage: fade }}>
+            {video ? (
+              <video src={media} autoPlay loop muted playsInline className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full grid place-items-center bg-black/40 text-white/40 font-mono text-[1.4cqw] uppercase tracking-widest">Sin multimedia</div>
+              <img src={media} alt={slide.title || 'Anuncio'} className="w-full h-full object-contain" />
             )}
           </div>
-          <div className="relative flex flex-col min-w-0 min-h-0 rounded-[1.4cqw] p-[2.2cqw] pl-[2.8cqw] bg-black/30 backdrop-blur-sm border border-white/10 overflow-hidden" style={{ color: st.textColor }}>
-            <span className="absolute left-0 top-[2cqw] bottom-[2cqw] w-[0.5cqw] rounded-full" style={{ background: st.accentColor }} aria-hidden="true" />
-            {show('tag', ev.tag || 'Anuncio Oasis') && (
-              <span className="self-start shrink-0 max-w-full truncate text-[1.25cqw] leading-none font-black uppercase tracking-[0.2em] px-[1.6cqw] py-[0.9cqw] rounded-full border"
-                style={{ color: st.accentColor, borderColor: `color-mix(in srgb, ${st.accentColor} 40%, transparent)`, background: `color-mix(in srgb, ${st.accentColor} 12%, transparent)` }}>
+        )}
+
+        {/* Capa 3: velo cinematográfico y viñeta */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true" style={{
+          background: 'linear-gradient(to right, rgba(4,4,10,0) 30%, rgba(4,4,10,0.72) 58%, rgba(4,4,10,0.92) 100%), radial-gradient(130% 100% at 30% 50%, transparent 55%, rgba(0,0,0,0.55) 100%)',
+        }} />
+
+        {/* Capa 4: texto */}
+        <div className="absolute inset-y-0 right-0 w-[46%] flex flex-col justify-center min-w-0 py-[5cqw] pl-[1cqw] pr-[5cqw]" style={{ color: st.textColor }}>
+          {show('tag', ev.tag || 'Anuncio Oasis') && (
+            <div className="flex items-center gap-[1.2cqw] shrink-0 min-w-0">
+              <span className="w-[3.2cqw] h-[0.22cqw] rounded-full shrink-0" style={{ background: st.accentColor }} aria-hidden="true" />
+              <span className="truncate text-[1.2cqw] font-bold uppercase tracking-[0.35em]" style={{ color: st.accentColor }}>
                 {ev.tag || 'Anuncio Oasis'}
               </span>
-            )}
-            {show('title', slide.title) && (
-              <h3 className="mt-[1.4cqw] min-h-0 pb-[0.3cqw] uppercase leading-[1.05] tracking-wide text-[3.4cqw] line-clamp-3 [overflow-wrap:anywhere]" style={{ ...titleFont(st), color: st.accentColor }}>
-                {slide.title}
-              </h3>
-            )}
-            {show('subtitle', subtitle) && <p className="mt-[0.6cqw] shrink-0 text-[1.8cqw] font-semibold line-clamp-2 opacity-90">{subtitle}</p>}
-            {ev.description && <p className="mt-[1cqw] shrink-0 text-[1.5cqw] leading-snug whitespace-pre-line line-clamp-2 opacity-75">{ev.description}</p>}
-            <div className="mt-auto pt-[1.4cqw] space-y-[1cqw] shrink-0">
-              {show('speaker', ev.speaker) && <InfoRow icon={Mic} tone="bg-white/5 border-white/10">{ev.speaker}</InfoRow>}
-              {show('eventDate', ev.eventDate) && <InfoRow icon={Calendar} tone="text-amber-200 bg-amber-500/10 border-amber-500/25">{ev.eventDate}</InfoRow>}
-              {show('location', ev.location) && <InfoRow icon={MapPin} tone="text-emerald-200 bg-emerald-500/10 border-emerald-500/25">{ev.location}</InfoRow>}
             </div>
-          </div>
+          )}
+          {show('title', slide.title) && (
+            <h3 className="mt-[1.6cqw] min-h-0 uppercase leading-[1.02] tracking-wide line-clamp-3 [overflow-wrap:break-word]"
+              style={{ ...titleFont(st), fontSize: titleSize, color: st.textColor, textShadow: '0 0.5cqw 2.5cqw rgba(0,0,0,0.6)' }}>
+              {slide.title}
+            </h3>
+          )}
+          {show('subtitle', subtitle) && <p className="mt-[1cqw] shrink-0 text-[1.9cqw] font-semibold line-clamp-2 opacity-85">{subtitle}</p>}
+          {ev.description && <p className="mt-[1cqw] shrink-0 text-[1.5cqw] leading-snug whitespace-pre-line line-clamp-3 opacity-70">{ev.description}</p>}
+          {infos.length > 0 && (
+            <div className="mt-[2.6cqw] pt-[2cqw] border-t border-white/15 space-y-[1.1cqw] shrink-0">
+              {infos.map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-[1.2cqw] min-w-0 text-[1.75cqw] font-semibold leading-tight">
+                  <Icon className="shrink-0 w-[2cqw] h-[2cqw]" style={{ color: st.accentColor }} aria-hidden="true" />
+                  <span className="line-clamp-2 [overflow-wrap:anywhere] opacity-90">{text}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
