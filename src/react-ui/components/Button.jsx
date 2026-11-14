@@ -7,7 +7,7 @@ import { useTheme } from '../ThemeContext';
  * @param {string} variant - 'primary', 'secondary', 'accent', 'outline'
  * @param {function} onClick - Click handler
  */
-const Button = ({ children, variant = 'primary', onClick, style }) => {
+const Button = ({ children, variant = 'primary', onClick, style, ...rest }) => {
     const { theme } = useTheme();
     // Updated visual: white button with slight shadow, dark purple text/icon
     const btnBase = {
@@ -48,7 +48,7 @@ const Button = ({ children, variant = 'primary', onClick, style }) => {
     };
 
     return (
-        <button onClick={onClick} style={finalStyle} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+        <button {...rest} onClick={onClick} style={finalStyle} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
             {children}
         </button>
     );

@@ -17,6 +17,7 @@ import { useTheme } from '../ThemeContext';
 import apiClient from '../../api/client';
 import FormViewer from '../components/FormViewer';
 import PageHero from '../components/PageHero';
+import { safeAccent } from '../../utils/eventColors';
 import oasisCommunityImg from '../../img/comunidad-oasis.jpg';
 
 /**
@@ -43,7 +44,7 @@ const Inscripciones = () => {
         softBg: '#F8F9FC'
     };
 
-    const getEventAccent = (form) => form?.styles?.primaryColor || oasis.gold;
+    const getEventAccent = (form) => safeAccent(form?.styles?.primaryColor, oasis.gold);
     const getEventCover = (form) =>
         form?.styles?.coverImage ||
         form?.styles?.backgroundImage ||

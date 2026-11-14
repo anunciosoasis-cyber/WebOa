@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, Users, ArrowRight, Sparkles, Clock, ShieldCheck, } from 'lucide-react';
+import { safeAccent, textOn } from '../../utils/eventColors';
 import apiClient from '../../api/client';
 import { useTheme } from '../ThemeContext';
 import oasisCommunityImg from '../../img/comunidad-oasis.jpg';
@@ -23,7 +24,7 @@ const QuickEvents = ({ embedded = false }) => {
     const getEventCover = (form) =>
         form?.styles?.coverImage || form?.styles?.backgroundImage || form?.styles?.imageUrl || oasisCommunityImg;
 
-    const getEventAccent = (form) => form?.styles?.primaryColor || theme.colors.primary || '#F59E0B';
+    const getEventAccent = (form) => safeAccent(form?.styles?.primaryColor, theme.colors.primary || '#F59E0B');
 
     const getOverlayAlphas = (form) => {
         const level = form?.styles?.overlayStrength || 'medium';
@@ -262,7 +263,7 @@ const QuickEvents = ({ embedded = false }) => {
                                     padding: '7px 14px',
                                     borderRadius: '999px',
                                     backgroundColor: featuredCap.isFull ? 'rgba(220, 38, 38, 0.9)' : featuredAccent,
-                                    color: featuredCap.isFull ? '#FFFFFF' : '#120C1F',
+                                    color: featuredCap.isFull ? '#FFFFFF' : textOn(featuredAccent),
                                     fontSize: '0.72rem',
                                     fontWeight: 900,
                                     letterSpacing: '0.5px'
