@@ -59,7 +59,21 @@ const DEFAULTS = {
     twitter_url: '',
     youtube_url: '',
     email_template_solicitud: '',
+    hero_bg_about: '',
+    hero_bg_tv: '',
+    hero_bg_recursos: '',
+    hero_bg_peticiones: '',
+    hero_bg_inscripciones: '',
 };
+
+// Fondos de la cabecera cinematográfica (PageHero) de cada sección pública
+const HERO_SECTIONS = [
+    ['hero_bg_about', 'Nosotros'],
+    ['hero_bg_tv', 'Oasis TV'],
+    ['hero_bg_recursos', 'Biblioteca / Recursos'],
+    ['hero_bg_peticiones', 'Peticiones de oración'],
+    ['hero_bg_inscripciones', 'Inscripciones / Eventos'],
+];
 
 const AdminAjustes = () => {
     const { mode } = useTheme();
@@ -97,6 +111,7 @@ const AdminAjustes = () => {
         const res = await apiClient.post('/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
+        if (!res.data?.url) throw new Error(res.data?.message || 'Upload failed');
         return res.data.url;
     };
 
@@ -221,6 +236,48 @@ const AdminAjustes = () => {
                             <a href="/admin/plantilla-correo" style={{ background: OASIS_COLORS.accent, color: '#000', border: 'none', borderRadius: '50px', padding: '12px 28px', fontWeight: 900, fontSize: '0.75rem', letterSpacing: '1px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Mail size={15} /> ABRIR EDITOR DE PLANTILLA
                             </a>
+                        </div>
+                    </GlassCard>
+                </div>
+
+                {/* 5b. FONDOS DE SECCIONES */}
+                <div className="col-12">
+                    <GlassCard style={{ padding: '40px', borderRadius: '35px', border: `1px solid ${OASIS_COLORS.glassBorder}` }}>
+                        <SectionHeader
+                            icon={Layout}
+                            title="FONDOS DE SECCIONES"
+                            subtitle="Imagen de la cabecera de cada página. Recomendado: horizontal, mínimo 1920 px de ancho. Se oscurece automáticamente para que el texto se lea."
+                            isDark={isDark}
+                        />
+                        <div className="row g-3">
+                            {HERO_SECTIONS.map(([key, label]) => (
+                                <div className="col-6 col-md-4 col-xl" key={key}>
+                                    <label style={labelStyle}>{label}</label>
+                                    <div className="p-2 rounded-4 border border-dashed" style={{ borderColor: OASIS_COLORS.glassBorder, background: OASIS_COLORS.glassWhite }}>
+                                        <div className="mb-2 rounded-3 overflow-hidden position-relative" style={{ height: '90px', background: 'linear-gradient(180deg, #08050D, #120C1F)' }}>
+                                            {settings[key] && <img src={settings[key]} alt="" className="w-100 h-100 object-fit-cover" style={{ opacity: 0.55 }} />}
+                                            <span className="position-absolute top-50 start-50 translate-middle text-white text-center" style={{ fontSize: '0.6rem', letterSpacing: '0.2em', fontWeight: 600, textTransform: 'uppercase' }}>{label}</span>
+                                        </div>
+                                        <div className="d-flex gap-2">
+                                            <label className="btn btn-sm flex-grow-1 rounded-pill mb-0" style={{ background: OASIS_COLORS.glassWhite, color: isDark ? '#fff' : '#120C1F', border: `1px solid ${OASIS_COLORS.glassBorder}`, fontSize: '0.6rem' }}>
+                                                {settings[key] ? 'CAMBIAR' : 'SUBIR'}
+                                                <input type="file" accept="image/*" hidden onChange={async e => {
+                                                    const file = e.target.files[0];
+                                                    e.target.value = '';
+                                                    if (!file) return;
+                                                    try { set(key, await uploadFile(file)); showToast('Imagen cargada. Recuerda guardar.', 'success'); }
+                                                    catch { showToast('No se pudo subir la imagen', 'error'); }
+                                                }} />
+                                            </label>
+                                            {settings[key] && (
+                                                <button type="button" className="btn btn-sm rounded-pill" onClick={() => set(key, '')} style={{ border: `1px solid ${OASIS_COLORS.glassBorder}`, color: '#EF4444', fontSize: '0.6rem' }}>
+                                                    QUITAR
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </GlassCard>
                 </div>

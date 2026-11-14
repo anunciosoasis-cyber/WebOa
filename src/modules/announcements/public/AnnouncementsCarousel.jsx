@@ -509,16 +509,8 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
                 padding: '0 4px'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{
-                        background: 'rgba(245, 158, 11, 0.12)',
-                        color: '#F59E0B',
-                        padding: '4px 12px',
-                        borderRadius: '20px',
-                        fontSize: '0.75rem',
-                        fontWeight: 800,
-                        letterSpacing: '1px',
-                        textTransform: 'uppercase'
-                    }}>
+                    <span className="oasis-tag oasis-tag--light">
+                        <span className="oasis-tag__dot" />
                         {items.length} {items.length === 1 ? 'publicación' : 'publicaciones'}
                     </span>
                     <span style={{ color: '#9CA3AF', fontSize: '0.8rem', fontWeight: 500 }}>
@@ -581,35 +573,14 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
                                 pointerEvents: 'none',
                                 zIndex: 10
                             }}>
-                                <span style={{
-                                    background: 'rgba(18, 12, 31, 0.85)',
-                                    color: '#F59E0B',
-                                    border: '1px solid rgba(245, 158, 11, 0.4)',
-                                    backdropFilter: 'blur(8px)',
-                                    fontSize: '0.65rem',
-                                    fontWeight: 900,
-                                    padding: '4px 10px',
-                                    borderRadius: '12px',
-                                    letterSpacing: '1px',
-                                    textTransform: 'uppercase'
-                                }}>
+                                <span className="oasis-tag">
+                                    <span className="oasis-tag__dot" />
                                     {cardData.tag}
                                 </span>
 
                                 {!!cardData.date && (
-                                    <span style={{
-                                        background: 'rgba(0, 0, 0, 0.7)',
-                                        color: '#FFFFFF',
-                                        backdropFilter: 'blur(8px)',
-                                        fontSize: '0.65rem',
-                                        fontWeight: 700,
-                                        padding: '4px 9px',
-                                        borderRadius: '12px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
-                                    }}>
-                                        <Calendar size={12} color="#F59E0B" />
+                                    <span className="oasis-tag" style={{ letterSpacing: '0.06em' }}>
+                                        <Calendar size={11} color="#F59E0B" />
                                         {cardData.date}
                                     </span>
                                 )}
@@ -803,15 +774,8 @@ const Announcements = ({ items: propItems, loading: propLoading }) => {
                                                 flexWrap: 'wrap'
                                             }}>
                                                 {!!selectedData.tag && (
-                                                    <span style={{
-                                                        background: '#F59E0B',
-                                                        color: '#120C1F',
-                                                        padding: '5px 12px',
-                                                        borderRadius: '8px',
-                                                        fontSize: '0.7rem',
-                                                        fontWeight: 900,
-                                                        textTransform: 'uppercase'
-                                                    }}>
+                                                    <span className="oasis-tag">
+                                                        <span className="oasis-tag__dot" />
                                                         {selectedData.tag}
                                                     </span>
                                                 )}

@@ -23,7 +23,8 @@ const LayoutMaestro = ({ showFooter = true }) => {
     const { theme, mode } = useTheme();
     const location = useLocation();
     const isDark = mode === 'dark';
-    const isHome = location.pathname === '/';
+    // Estas páginas abren con un PageHero oscuro a sangre que pasa por debajo de la navbar
+    const hasFullBleedHero = ['/', '/about', '/recursos', '/tv', '/peticiones', '/inscripciones'].includes(location.pathname);
 
     return (
         <div style={{
@@ -40,7 +41,7 @@ const LayoutMaestro = ({ showFooter = true }) => {
             {/* Main content area */}
             <main style={{ 
                 minHeight: '100vh', 
-                paddingTop: isHome ? '0' : '100px', // Espacio compacto para la navbar
+                paddingTop: hasFullBleedHero ? '0' : '100px', // Espacio para la navbar
                 paddingBottom: isMobile ? '80px' : '0'
             }}>
                 <PersistentPlayer />

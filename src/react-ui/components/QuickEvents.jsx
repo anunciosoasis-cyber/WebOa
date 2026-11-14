@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Users, ArrowRight, Sparkles, Clock, ShieldCheck, Flame } from 'lucide-react';
+import { CalendarDays, Users, ArrowRight, Sparkles, Clock, ShieldCheck, } from 'lucide-react';
 import apiClient from '../../api/client';
 import { useTheme } from '../ThemeContext';
 import oasisCommunityImg from '../../img/comunidad-oasis.jpg';
@@ -145,22 +145,9 @@ const QuickEvents = ({ embedded = false }) => {
             {embedded ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 14px',
-                            borderRadius: '999px',
-                            backgroundColor: 'rgba(245, 158, 11, 0.14)',
-                            border: '1px solid rgba(245, 158, 11, 0.35)',
-                            color: '#B45309',
-                            fontWeight: 900,
-                            fontSize: '0.7rem',
-                            letterSpacing: '1.6px',
-                            textTransform: 'uppercase'
-                        }}>
-                            <Sparkles size={13} color="#F59E0B" />
-                            Inscripción Rápida
+                        <span className="oasis-tag oasis-tag--light">
+                            <span className="oasis-tag__dot" />
+                            Inscripción rápida
                         </span>
                         <span style={{ color: '#5B556B', fontSize: '0.86rem', fontWeight: 600 }}>
                             Reserva tu lugar sin salir del inicio
@@ -262,24 +249,8 @@ const QuickEvents = ({ embedded = false }) => {
 
                         {/* Badge Superior */}
                         <div style={{ position: 'absolute', top: '22px', left: '22px', right: '22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                            <span
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '7px',
-                                    padding: '7px 14px',
-                                    borderRadius: '999px',
-                                    backgroundColor: 'rgba(18, 12, 31, 0.82)',
-                                    backdropFilter: 'blur(10px)',
-                                    border: `1px solid ${featuredAccent}77`,
-                                    color: '#FFFFFF',
-                                    fontSize: '0.7rem',
-                                    fontWeight: 900,
-                                    letterSpacing: '1.6px',
-                                    textTransform: 'uppercase'
-                                }}
-                            >
-                                <Flame size={13} color={featuredAccent} />
+                            <span className="oasis-tag" style={{ '--tag-accent': featuredAccent }}>
+                                <span className="oasis-tag__dot" />
                                 {featuredBadge}
                             </span>
 

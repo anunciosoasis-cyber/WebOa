@@ -14,11 +14,11 @@ import {
     Link as LinkIcon,
     Music,
     Search,
-    Sparkles,
     X
 } from 'lucide-react';
 import apiClient from '../../api/client';
 import PdfReader from '../components/PdfReader';
+import PageHero from '../components/PageHero';
 
 const LucideIcons = {
     BookOpen,
@@ -160,83 +160,13 @@ const Recursos = () => {
     return (
         <div style={{ backgroundColor: colors.softBg, minHeight: '100vh', paddingBottom: '110px' }}>
             {/* 1. HERO CINEMATOGRÁFICO */}
-            <header
-                style={{
-                    padding: '165px 20px 105px',
-                    textAlign: 'center',
-                    background: `linear-gradient(180deg, ${colors.midnight} 0%, ${colors.deepPurple} 100%)`,
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}
-            >
-                {/* Radial warm-gold spotlight */}
-                <div
-                    aria-hidden="true"
-                    style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'radial-gradient(circle at 50% 45%, rgba(245, 158, 11, 0.16) 0%, rgba(18, 12, 31, 0.72) 55%, rgba(8, 5, 13, 0.96) 100%)',
-                        pointerEvents: 'none'
-                    }}
-                />
-
-                <motion.div
-                    initial={{ opacity: 0, y: 22 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                    style={{ maxWidth: '860px', margin: '0 auto', position: 'relative', zIndex: 2 }}
-                >
-                    <span
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '6px 16px',
-                            borderRadius: '999px',
-                            backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                            border: '1px solid rgba(245, 158, 11, 0.35)',
-                            color: colors.accent,
-                            fontWeight: 900,
-                            letterSpacing: '3.5px',
-                            fontSize: '0.7rem',
-                            textTransform: 'uppercase',
-                            marginBottom: '20px'
-                        }}
-                    >
-                        <Sparkles size={13} /> Recursos Multidepartamentales
-                    </span>
-
-                    <h1
-                        style={{
-                            fontFamily: 'Moonrising, sans-serif',
-                            color: '#FFFFFF',
-                            fontSize: 'clamp(2.3rem, 6.5vw, 4.2rem)',
-                            lineHeight: 1.05,
-                            margin: 0,
-                            letterSpacing: '1px',
-                            textShadow: '0 12px 40px rgba(0, 0, 0, 0.5)'
-                        }}
-                    >
-                        BIBLIOTECA <span style={{ color: colors.accent }}>OASIS</span>
-                    </h1>
-
-                    <motion.div
-                        initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: '64px', opacity: 1 }}
-                        transition={{ delay: 0.2, duration: 0.5 }}
-                        style={{
-                            height: '3px',
-                            background: `linear-gradient(90deg, transparent, ${colors.accent}, transparent)`,
-                            margin: '20px auto',
-                            borderRadius: '999px'
-                        }}
-                    />
-
-                    <p style={{ color: 'rgba(255, 255, 255, 0.76)', fontSize: 'clamp(0.95rem, 1.8vw, 1.08rem)', maxWidth: '580px', margin: '0 auto', lineHeight: 1.65 }}>
-                        Archivos, guías de estudio, enlaces y material oficial de los departamentos de nuestra iglesia.
-                    </p>
-                </motion.div>
-            </header>
+            <PageHero
+                id="recursos"
+                eyebrow="Recursos multidepartamentales"
+                title="BIBLIOTECA"
+                accent="OASIS"
+                subtitle="Archivos, guías de estudio, enlaces y material oficial de los departamentos de nuestra iglesia."
+            />
 
             {/* 2. BARRA FLOTANTE DE FILTROS Y BÚSQUEDA */}
             <div className="container mb-5" style={{ maxWidth: '1160px', marginTop: '-44px', position: 'relative', zIndex: 10 }}>

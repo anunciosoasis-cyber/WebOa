@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../context/PlayerContext';
 import { useTheme } from '../ThemeContext';
 import Peticiones from '../modules/Peticiones';
+import PageHero from './PageHero';
 import {
     Radio,
     HeartHandshake,
@@ -127,6 +128,18 @@ const PersistentPlayer = () => {
     };
 
     return (
+        <>
+        {isTvRoute && (
+            <PageHero
+                id="tv"
+                eyebrow={isLive ? 'En vivo ahora' : 'Mensajes y cultos'}
+                live={isLive}
+                title="OASIS"
+                accent="TV"
+                subtitle="Únete a nuestra transmisión y experimenta a Dios desde donde estés."
+                compact
+            />
+        )}
         <div
             className={isTvRoute ? 'oasis-tv-page' : ''}
             style={
@@ -202,61 +215,12 @@ const PersistentPlayer = () => {
                         display: 'flex',
                         flexWrap: 'wrap',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
+                        justifyContent: 'flex-end',
                         gap: '12px',
                         marginBottom: '18px'
                     }}
                 >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <div
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '6px 14px',
-                                borderRadius: '999px',
-                                backgroundColor: isLive ? 'rgba(220, 38, 38, 0.12)' : OASIS.goldSoft,
-                                border: `1px solid ${isLive ? 'rgba(220, 38, 38, 0.35)' : 'rgba(245, 158, 11, 0.35)'}`
-                            }}
-                        >
-                            {isLive ? (
-                                <>
-                                    <span
-                                        className="tv-live-dot"
-                                        style={{
-                                            width: '8px',
-                                            height: '8px',
-                                            borderRadius: '50%',
-                                            backgroundColor: OASIS.live,
-                                            boxShadow: '0 0 8px rgba(220, 38, 38, 0.8)'
-                                        }}
-                                    />
-                                    <span style={{ color: OASIS.live, fontWeight: 800, fontSize: '0.75rem', letterSpacing: '1.2px' }}>
-                                        EN VIVO AHORA
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    <Tv size={14} color={OASIS.gold} />
-                                    <span style={{ color: isDark ? '#FDE68A' : '#B45309', fontWeight: 800, fontSize: '0.75rem', letterSpacing: '1.2px' }}>
-                                        OASIS TV • MENSAJES
-                                    </span>
-                                </>
-                            )}
-                        </div>
-
-                        <h2
-                            style={{
-                                margin: 0,
-                                fontFamily: 'Moonrising, sans-serif',
-                                fontSize: 'clamp(1.35rem, 2.4vw, 1.85rem)',
-                                color: OASIS.text,
-                                letterSpacing: '0.5px'
-                            }}
-                        >
-                            OASIS <span style={{ color: OASIS.gold }}>TV</span>
-                        </h2>
-                    </div>
+                    
 
                     <button
                         type="button"
@@ -898,6 +862,7 @@ const PersistentPlayer = () => {
                 )}
             </div>
         </div>
+        </>
     );
 };
 

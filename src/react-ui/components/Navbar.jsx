@@ -108,6 +108,7 @@ const Navbar = () => {
     return (
         <header style={{
             position: 'fixed', top: 0, left: 0, right: 0, zIndex: 2000,
+            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
             display: 'flex', justifyContent: 'center',
             padding: '20px',
             pointerEvents: 'none'
@@ -119,10 +120,10 @@ const Navbar = () => {
                     maxWidth: '1100px',
                     borderRadius: '100px',
                     height: shouldBeDark ? '70px' : '80px',
-                    backgroundColor: shouldBeDark ? 'rgba(18, 12, 31, 0.9)' : 'rgba(18, 12, 31, 0.4)',
+                    backgroundColor: shouldBeDark ? 'rgba(12, 8, 22, 0.82)' : 'rgba(12, 8, 22, 0.28)',
                     backdropFilter: 'blur(20px) saturate(160%)',
-                    border: `1px solid ${colors.crystalBorder}`,
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    boxShadow: shouldBeDark ? '0 18px 40px rgba(0,0,0,0.35)' : '0 10px 30px rgba(0,0,0,0.15)'
                 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 style={{
@@ -161,10 +162,9 @@ const Navbar = () => {
                         const linkStyle = {
                             textDecoration: 'none',
                             color: getNavTextColor(),
-                            fontSize: '0.75rem',
-                            fontWeight: '800',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.25em',
+                            fontSize: '0.78rem',
+                            fontWeight: 500,
+                            letterSpacing: '0.04em',
                             position: 'relative',
                             transition: 'color 0.3s ease',
                             background: 'none', border: 'none', padding: 0, cursor: 'pointer',
@@ -197,10 +197,9 @@ const Navbar = () => {
                         color: shouldBeDark ? colors.accent : 'rgba(255,255,255,0.85)',
                         border: shouldBeDark ? `1px solid ${colors.accent}` : '1px solid rgba(255,255,255,0.3)',
                         borderRadius: '50px',
-                        fontSize: '0.7rem',
-                        fontWeight: '900',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.2em',
+                        fontSize: '0.74rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.03em',
                         textDecoration: 'none',
                         transition: 'all 0.3s ease'
                     }}>
@@ -281,13 +280,13 @@ const Navbar = () => {
                 }
                 .nav-dd-item:hover .nav-dd-icon { background: ${colors.accent}; color: ${colors.midnight}; }
                 .nav-dd-text { display: flex; flex-direction: column; min-width: 0; }
-                .nav-dd-title { font-size: 0.85rem; font-weight: 800; line-height: 1.25; }
+                .nav-dd-title { font-size: 0.86rem; font-weight: 600; line-height: 1.25; }
                 .nav-dd-desc { font-size: 0.72rem; color: rgba(255,255,255,0.55); line-height: 1.35; }
-                .nav-m-heading { margin: 0 0 6px 12px; color: ${colors.accent}; font-size: 0.65rem; font-weight: 900; letter-spacing: 0.3em; text-transform: uppercase; }
+                .nav-m-heading { margin: 0 0 6px 12px; color: ${colors.accent}; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; }
                 .nav-m-access {
                     margin-top: 4px; text-align: center; padding: 12px; border-radius: 999px; text-decoration: none;
-                    border: 1px solid ${colors.accent}; color: ${colors.accent}; font-size: 0.75rem; font-weight: 900;
-                    letter-spacing: 0.2em; text-transform: uppercase;
+                    border: 1px solid ${colors.accent}; color: ${colors.accent}; font-size: 0.8rem; font-weight: 600;
+                    letter-spacing: 0.03em;
                 }
                 .active-nav-line {
                     position: absolute; bottom: -8px; left: 0; right: 0;

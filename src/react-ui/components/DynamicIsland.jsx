@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import QuickFormModal from './QuickFormModal';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -408,6 +408,189 @@ const AgendaDynamicIcon = ({ hovered }) => (
 );
 
 /* -------------------------------------------------------------------------- */
+/*  Widget bodies — live content inside each card (One UI style)              */
+/* -------------------------------------------------------------------------- */
+
+const useNow = (ms) => {
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => {
+        const t = setInterval(() => setNow(new Date()), ms);
+        return () => clearInterval(t);
+    }, [ms]);
+    return now;
+};
+
+const RotatingText = ({ items, interval = 2800, style }) => {
+    const [i, setI] = useState(0);
+    useEffect(() => {
+        const t = setInterval(() => setI((v) => (v + 1) % items.length), interval);
+        return () => clearInterval(t);
+    }, [items.length, interval]);
+    return (
+        <div style={{ position: 'relative', height: '1.3em', overflow: 'hidden', ...style }}>
+            <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                    key={i}
+                    initial={{ y: '100%', opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: '-100%', opacity: 0 }}
+                    transition={{ duration: 0.38, ease: 'easeOut' }}
+                    style={{ display: 'block', whiteSpace: 'nowrap' }}
+                >
+                    {items[i]}
+                </motion.span>
+            </AnimatePresence>
+        </div>
+    );
+};
+
+const captionStyle = { fontSize: '0.72rem', fontWeight: 700, color: 'rgba(18, 12, 31, 0.62)' };
+
+// shortcut: culto fijo sábado 9:00 hora local; leer de settings cuando el admin exponga el horario.
+const nextService = (now) => {
+    const d = new Date(now);
+    d.setHours(9, 0, 0, 0);
+    d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7));
+    if (d <= now) d.setDate(d.getDate() + 7);
+    return d;
+};
+
+const pad2 = (n) => String(n).padStart(2, '0');
+
+const OfferingBody = () => (
+    <>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '5px', height: '38px' }}>
+            {[0, 1, 2, 3, 4, 5].map((k) => (
+                <motion.div
+                    key={k}
+                    animate={{ height: [8 + k * 3, 14 + k * 4.5, 8 + k * 3] }}
+                    transition={{ duration: 1.8, repeat: Infinity, delay: k * 0.14, ease: 'easeInOut' }}
+                    style={{ width: '9px', borderRadius: '4px', background: k === 5 ? '#F59E0B' : `rgba(245, 158, 11, ${0.2 + k * 0.1})` }}
+                />
+            ))}
+        </div>
+        <RotatingText items={['Dios ama al dador alegre', '2 Corintios 9:7', 'Alfolí virtual →']} style={captionStyle} />
+    </>
+);
+
+const LiveBody = ({ isLive }) => {
+    const now = useNow(1000);
+    if (isLive) {
+        return (
+            <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', height: '38px' }}>
+                    {[0, 1, 2, 3, 4, 5, 6].map((k) => (
+                        <motion.div
+                            key={k}
+                            animate={{ height: [6, 30 - (k % 3) * 6, 10, 24, 6] }}
+                            transition={{ duration: 1.1, repeat: Infinity, delay: k * 0.09, ease: 'easeInOut' }}
+                            style={{ width: '5px', borderRadius: '3px', background: '#FEF08A' }}
+                        />
+                    ))}
+                </div>
+                <span style={{ ...captionStyle, color: '#FFFFFF' }}>Transmitiendo ahora</span>
+            </>
+        );
+    }
+    const diff = Math.max(0, nextService(now) - now);
+    const days = Math.floor(diff / 864e5);
+    const h = Math.floor(diff / 36e5) % 24;
+    const m = Math.floor(diff / 6e4) % 60;
+    const s = Math.floor(diff / 1e3) % 60;
+    return (
+        <>
+            <span style={captionStyle}>Próximo culto en</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px', fontVariantNumeric: 'tabular-nums', color: '#120C1F', fontWeight: 900 }}>
+                {days > 0 && <span style={{ fontSize: '1.35rem' }}>{days}d</span>}
+                <span style={{ fontSize: '1.35rem' }}>{pad2(h)}:{pad2(m)}</span>
+                <motion.span key={s} initial={{ opacity: 0.3, y: -4 }} animate={{ opacity: 1, y: 0 }} style={{ fontSize: '0.85rem', color: '#F59E0B' }}>
+                    {pad2(s)}
+                </motion.span>
+            </div>
+        </>
+    );
+};
+
+const PrayerBody = () => (
+    <>
+        <div aria-hidden="true" style={{ position: 'absolute', right: '4px', bottom: '22px', width: '60px', height: '70px', pointerEvents: 'none' }}>
+            {[0, 1, 2].map((k) => (
+                <motion.span
+                    key={k}
+                    animate={{ y: [40, -10], opacity: [0, 1, 0], scale: [0.6, 1, 0.8], x: [0, k % 2 ? 8 : -8, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, delay: k * 1, ease: 'easeOut' }}
+                    style={{ position: 'absolute', left: `${10 + k * 16}px`, bottom: 0, color: k === 1 ? '#F59E0B' : '#E11D48', fontSize: `${12 + k * 2}px` }}
+                >
+                    ♥
+                </motion.span>
+            ))}
+        </div>
+        <RotatingText items={['Oramos contigo', 'No estás solo', 'Dios te escucha']} style={{ fontSize: '1rem', fontWeight: 900, color: '#120C1F' }} />
+        <span style={captionStyle}>Envía tu petición</span>
+    </>
+);
+
+const NEW_AVATARS = [['#F59E0B', 'A'], ['#8B5CF6', 'M'], ['#0EA5E9', 'J'], ['#10B981', '+']];
+
+const NewHereBody = () => (
+    <>
+        <div style={{ display: 'flex' }}>
+            {NEW_AVATARS.map(([bg, letter], k) => (
+                <motion.div
+                    key={letter}
+                    animate={{ scale: [0.8, 1, 1, 0.8], opacity: [0.4, 1, 1, 0.4] }}
+                    transition={{ duration: 3.2, repeat: Infinity, delay: k * 0.35, times: [0, 0.2, 0.8, 1] }}
+                    style={{
+                        width: '28px', height: '28px', borderRadius: '50%', marginLeft: k ? '-8px' : 0,
+                        background: bg, color: '#FFFFFF', fontSize: '0.72rem', fontWeight: 900,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #FFFFFF'
+                    }}
+                >
+                    {letter}
+                </motion.div>
+            ))}
+        </div>
+        <RotatingText items={['¡Bienvenido!', '¡Bienvenida!', 'Eres parte de la familia']} style={{ fontSize: '0.95rem', fontWeight: 900, color: '#120C1F' }} />
+    </>
+);
+
+const WEEK_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+const AgendaBody = () => {
+    const now = useNow(60000);
+    return (
+        <>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', color: '#120C1F' }}>
+                <span style={{ fontSize: '1.6rem', fontWeight: 900, lineHeight: 1 }}>{now.getDate()}</span>
+                <span style={{ ...captionStyle, textTransform: 'capitalize' }}>
+                    {now.toLocaleDateString('es', { weekday: 'short', month: 'short' })}
+                </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                {WEEK_LETTERS.map((l, k) => {
+                    const today = k === now.getDay();
+                    return (
+                        <motion.span
+                            key={k}
+                            animate={today ? { scale: [1, 1.18, 1] } : {}}
+                            transition={{ duration: 1.6, repeat: Infinity }}
+                            style={{
+                                width: '18px', height: '18px', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: today ? '#F59E0B' : 'transparent',
+                                color: today ? '#FFFFFF' : 'rgba(18, 12, 31, 0.45)'
+                            }}
+                        >
+                            {l}
+                        </motion.span>
+                    );
+                })}
+            </div>
+        </>
+    );
+};
+
+/* -------------------------------------------------------------------------- */
 /*  DynamicIsland Component — Unified Cinematic Church Palette                */
 /* -------------------------------------------------------------------------- */
 
@@ -459,6 +642,8 @@ const DynamicIsland = ({ settings }) => {
             title: 'Diezmos y',
             subtitle: 'Ofrendas',
             renderIcon: (hovered) => <WalletDynamicIcon hovered={hovered} />,
+            renderBody: () => <OfferingBody />,
+            bg: 'linear-gradient(160deg, #FFF4DC 0%, #FFFFFF 75%)',
             action: () => window.open('https://alfoliadventista.org/', '_blank')
         },
         {
@@ -468,6 +653,8 @@ const DynamicIsland = ({ settings }) => {
             renderIcon: (hovered, activeLive) => (
                 <BroadcastDynamicIcon isLive={activeLive} hovered={hovered} />
             ),
+            renderBody: (activeLive) => <LiveBody isLive={activeLive} />,
+            bg: 'linear-gradient(160deg, #F1F3FA 0%, #FFFFFF 75%)',
             action: () => navigate('/tv')
         },
         {
@@ -475,6 +662,8 @@ const DynamicIsland = ({ settings }) => {
             title: 'Peticiones de',
             subtitle: 'Oración',
             renderIcon: (hovered) => <PrayerDynamicIcon hovered={hovered} />,
+            renderBody: () => <PrayerBody />,
+            bg: 'linear-gradient(160deg, #FFE9EE 0%, #FFFFFF 75%)',
             action: () => handleOpenModal('prayer')
         },
         {
@@ -482,6 +671,8 @@ const DynamicIsland = ({ settings }) => {
             title: 'Soy',
             subtitle: 'Nuevo',
             renderIcon: (hovered) => <NewHereDynamicIcon hovered={hovered} />,
+            renderBody: () => <NewHereBody />,
+            bg: 'linear-gradient(160deg, #EFEAFD 0%, #FFFFFF 75%)',
             action: () => handleOpenModal('connect')
         },
         {
@@ -489,6 +680,8 @@ const DynamicIsland = ({ settings }) => {
             title: 'Nuestra',
             subtitle: 'Agenda',
             renderIcon: (hovered) => <AgendaDynamicIcon hovered={hovered} />,
+            renderBody: () => <AgendaBody />,
+            bg: 'linear-gradient(160deg, #E6F0FF 0%, #FFFFFF 75%)',
             action: handleScrollToAgenda
         }
     ];
@@ -514,6 +707,7 @@ const DynamicIsland = ({ settings }) => {
 
     return (
         <>
+            <MotionConfig reducedMotion="user">
             <motion.section
                 aria-label="Accesos rápidos"
                 initial="hidden"
@@ -582,11 +776,11 @@ const DynamicIsland = ({ settings }) => {
                             justify-content: center;
                         }
                         .dynamic-island-item {
-                            width: 180px !important;
-                            height: 144px !important;
+                            width: 200px !important;
+                            height: 172px !important;
                         }
                         .dynamic-island-text {
-                            font-size: 0.94rem !important;
+                            font-size: 0.8rem !important;
                         }
                     }
                 `}</style>
@@ -713,12 +907,12 @@ const DynamicIsland = ({ settings }) => {
                                 style={{
                                     scrollSnapAlign: 'center',
                                     flex: '0 0 auto',
-                                    width: '140px',
-                                    height: '126px',
+                                    width: '168px',
+                                    height: '156px',
                                     background: isEnVivoActive
                                         ? 'linear-gradient(145deg, #DC2626 0%, #B91C1C 55%, #7F1D1D 100%)'
-                                        : 'linear-gradient(165deg, #FFFFFF 0%, #F7F8FC 100%)',
-                                    borderRadius: '26px',
+                                        : item.bg,
+                                    borderRadius: '28px',
                                     border: isEnVivoActive
                                         ? '1.5px solid rgba(254, 240, 138, 0.65)'
                                         : isHovered
@@ -726,9 +920,10 @@ const DynamicIsland = ({ settings }) => {
                                             : '1px solid rgba(18, 12, 31, 0.07)',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    padding: '16px 12px',
+                                    alignItems: 'stretch',
+                                    justifyContent: 'space-between',
+                                    textAlign: 'left',
+                                    padding: '12px 16px 14px',
                                     cursor: 'pointer',
                                     boxShadow: isEnVivoActive
                                         ? '0 14px 34px rgba(220, 38, 38, 0.4)'
@@ -739,35 +934,6 @@ const DynamicIsland = ({ settings }) => {
                                 {/* Cinematic light sweep on hover */}
                                 <div className="di-shimmer" />
 
-                                {/* Subtle warm-gold cinematic ambient glow behind icon */}
-                                <motion.div
-                                    aria-hidden="true"
-                                    animate={{
-                                        x: [-10, 10, -10],
-                                        y: [-4, 6, -4],
-                                        scale: isHovered || isEnVivoActive ? [1.05, 1.25, 1.05] : [0.9, 1.1, 0.9],
-                                        opacity: isEnVivoActive ? 0.48 : isHovered ? 0.32 : 0.12
-                                    }}
-                                    transition={{
-                                        duration: 6 + idx * 0.5,
-                                        repeat: Infinity,
-                                        ease: 'easeInOut'
-                                    }}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '8px',
-                                        width: '74px',
-                                        height: '74px',
-                                        borderRadius: '50%',
-                                        background: isEnVivoActive
-                                            ? 'radial-gradient(circle, rgba(254, 240, 138, 0.7) 0%, transparent 72%)'
-                                            : 'radial-gradient(circle, rgba(245, 158, 11, 0.55) 0%, transparent 72%)',
-                                        filter: 'blur(16px)',
-                                        pointerEvents: 'none',
-                                        zIndex: 0
-                                    }}
-                                />
-
                                 {/* Live indicator badge when broadcast is active */}
                                 {isEnVivoActive && (
                                     <motion.div
@@ -775,15 +941,14 @@ const DynamicIsland = ({ settings }) => {
                                         animate={{ opacity: 1, y: 0 }}
                                         style={{
                                             position: 'absolute',
-                                            top: '10px',
-                                            right: '10px',
+                                            top: '12px',
+                                            right: '12px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '5px',
                                             padding: '3px 8px',
                                             borderRadius: '999px',
                                             backgroundColor: 'rgba(18, 12, 31, 0.52)',
-                                            backdropFilter: 'blur(8px)',
                                             border: '1px solid rgba(254, 240, 138, 0.55)',
                                             zIndex: 3
                                         }}
@@ -791,83 +956,43 @@ const DynamicIsland = ({ settings }) => {
                                         <motion.span
                                             animate={{ opacity: [1, 0.25, 1], scale: [1, 1.3, 1] }}
                                             transition={{ duration: 0.95, repeat: Infinity }}
-                                            style={{
-                                                width: '6px',
-                                                height: '6px',
-                                                borderRadius: '50%',
-                                                backgroundColor: '#FEF08A',
-                                                boxShadow: '0 0 8px #FEF08A'
-                                            }}
+                                            style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FEF08A' }}
                                         />
-                                        <span
-                                            style={{
-                                                color: '#FEF08A',
-                                                fontSize: '0.58rem',
-                                                fontWeight: 900,
-                                                letterSpacing: '0.08em',
-                                                lineHeight: 1
-                                            }}
-                                        >
+                                        <span style={{ color: '#FEF08A', fontSize: '0.58rem', fontWeight: 900, letterSpacing: '0.08em', lineHeight: 1 }}>
                                             EN VIVO
                                         </span>
                                     </motion.div>
                                 )}
 
-                                {/* Animated Icon */}
-                                <div
-                                    style={{
-                                        position: 'relative',
-                                        zIndex: 2,
-                                        marginBottom: '10px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                >
-                                    {item.renderIcon(isHovered, isEnVivoActive)}
+                                {/* Widget header: animated icon + label */}
+                                <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.7)', transformOrigin: 'left center' }}>
+                                        {item.renderIcon(isHovered, isEnVivoActive)}
+                                    </div>
+                                    <span
+                                        className="dynamic-island-text"
+                                        style={{
+                                            color: isEnVivoActive ? '#FFFFFF' : '#120C1F',
+                                            fontSize: '0.74rem',
+                                            fontWeight: 800,
+                                            lineHeight: 1.15,
+                                            letterSpacing: '-0.01em'
+                                        }}
+                                    >
+                                        {item.title} {item.subtitle}
+                                    </span>
                                 </div>
 
-                                {/* Label */}
-                                <div
-                                    className="dynamic-island-text"
-                                    style={{
-                                        position: 'relative',
-                                        zIndex: 2,
-                                        color: isEnVivoActive ? '#FFFFFF' : '#120C1F',
-                                        fontSize: '0.82rem',
-                                        fontWeight: 800,
-                                        textAlign: 'center',
-                                        lineHeight: '1.24',
-                                        letterSpacing: '-0.01em'
-                                    }}
-                                >
-                                    {item.title}
-                                    <br />
-                                    {item.subtitle}
+                                {/* Widget body: live content */}
+                                <div style={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '6px' }}>
+                                    {item.renderBody(isEnVivoActive)}
                                 </div>
-
-                                {/* Subtle warm-gold cinematic accent bar */}
-                                <motion.div
-                                    aria-hidden="true"
-                                    animate={{
-                                        width: isEnVivoActive ? '40px' : isHovered ? '34px' : '14px',
-                                        opacity: isEnVivoActive || isHovered ? 1 : 0.35
-                                    }}
-                                    transition={{ duration: 0.28, ease: 'easeOut' }}
-                                    style={{
-                                        position: 'absolute',
-                                        bottom: '8px',
-                                        height: '3px',
-                                        borderRadius: '999px',
-                                        backgroundColor: isEnVivoActive ? '#FEF08A' : '#F59E0B',
-                                        zIndex: 2
-                                    }}
-                                />
                             </motion.div>
                         );
                     })}
                 </div>
             </motion.section>
+            </MotionConfig>
 
             <QuickFormModal
                 isOpen={modalOpen}

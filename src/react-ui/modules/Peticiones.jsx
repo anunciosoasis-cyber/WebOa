@@ -14,11 +14,11 @@ import {
     RotateCcw,
     Send,
     ShieldCheck,
-    Sparkles,
     Truck
 } from 'lucide-react';
 import apiClient from '../../api/client';
 import { useToast } from '../components/Toast';
+import PageHero from '../components/PageHero';
 
 const REQUEST_TYPES = [
     { id: 'oracion', label: 'Oración', icon: MessageSquare },
@@ -366,15 +366,23 @@ const Peticiones = ({ inline = false }) => {
     }
 
     return (
+        <div style={{ backgroundColor: colors.softBg, minHeight: '100dvh' }}>
+        <PageHero
+            id="peticiones"
+            eyebrow="Apoyo espiritual"
+            title="PETICIONES DE"
+            accent="ORACIÓN"
+            subtitle="Cuéntanos cómo podemos orar por ti. Te acompañamos con fe y discreción."
+            compact
+        />
         <div
             style={{
-                minHeight: '100dvh',
-                backgroundColor: colors.softBg,
-                padding: '128px 20px 80px',
+                padding: '0 20px 80px',
+                marginTop: '-56px',
                 display: 'flex',
-                alignItems: 'center',
                 justifyContent: 'center',
-                position: 'relative'
+                position: 'relative',
+                zIndex: 2
             }}
         >
             <div className="pet-page-shell">
@@ -415,27 +423,11 @@ const Peticiones = ({ inline = false }) => {
                     />
 
                     <div style={{ position: 'relative', zIndex: 2 }}>
-                        <span
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '7px',
-                                padding: '6px 14px',
-                                borderRadius: '999px',
-                                backgroundColor: 'rgba(245, 158, 11, 0.14)',
-                                border: '1px solid rgba(245, 158, 11, 0.35)',
-                                color: colors.accent,
-                                fontSize: '0.68rem',
-                                fontWeight: 900,
-                                letterSpacing: '2.5px',
-                                textTransform: 'uppercase',
-                                marginBottom: '20px'
-                            }}
-                        >
-                            <Sparkles size={13} /> Apoyo Espiritual
+                        <span className="oasis-tag" style={{ marginBottom: '20px' }}>
+                            <span className="oasis-tag__dot" /> Estamos contigo
                         </span>
 
-                        <h1
+                        <h2
                             style={{
                                 fontFamily: 'Moonrising, sans-serif',
                                 fontSize: 'clamp(1.85rem, 3.5vw, 2.6rem)',
@@ -445,7 +437,7 @@ const Peticiones = ({ inline = false }) => {
                             }}
                         >
                             ESTAMOS CONTIGO EN <span style={{ color: colors.accent }}>ORACIÓN</span>
-                        </h1>
+                        </h2>
 
                         <p
                             style={{
@@ -486,6 +478,7 @@ const Peticiones = ({ inline = false }) => {
             </div>
 
             <style>{sharedCss(colors)}</style>
+        </div>
         </div>
     );
 };

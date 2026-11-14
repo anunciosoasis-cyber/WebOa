@@ -12,6 +12,7 @@ export const PlayerProvider = ({ children }) => {
     const [errorMsg, setErrorMsg] = useState(null);
     const [showPip, setShowPip] = useState(false);
     const [youtubeChannelUrl, setYoutubeChannelUrl] = useState(null);
+    const [publicSettings, setPublicSettings] = useState({});
 
     const loadData = async () => {
         setLoading(true);
@@ -23,6 +24,7 @@ export const PlayerProvider = ({ children }) => {
             ]);
             
             const s = setRes.data || {};
+            setPublicSettings(s);
             const liveData = liveRes.data || { active: false };
 
             if (s['youtube_url']) {
@@ -80,7 +82,7 @@ export const PlayerProvider = ({ children }) => {
     }, [isLive]);
 
     return (
-        <PlayerContext.Provider value={{ youtubeUrl, isLive, loading, errorMsg, showPip, setShowPip, youtubeChannelUrl, refreshPlayer: loadData }}>
+        <PlayerContext.Provider value={{ youtubeUrl, isLive, loading, errorMsg, showPip, setShowPip, youtubeChannelUrl, publicSettings, refreshPlayer: loadData }}>
             {children}
         </PlayerContext.Provider>
     );

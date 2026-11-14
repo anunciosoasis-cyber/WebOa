@@ -6,7 +6,6 @@ import {
     CalendarDays,
     CalendarX2,
     CheckCircle2,
-    Sparkles,
     Users,
     ArrowRight,
     Tv,
@@ -17,6 +16,7 @@ import {
 import { useTheme } from '../ThemeContext';
 import apiClient from '../../api/client';
 import FormViewer from '../components/FormViewer';
+import PageHero from '../components/PageHero';
 import oasisCommunityImg from '../../img/comunidad-oasis.jpg';
 
 /**
@@ -338,95 +338,14 @@ const Inscripciones = () => {
                         exit={{ opacity: 0 }}
                     >
                         {/* Hero Cinematográfico */}
-                        <header
-                            style={{
-                                padding: '165px 20px 100px',
-                                textAlign: 'center',
-                                background: `linear-gradient(180deg, ${oasis.midnight} 0%, ${oasis.deepPurple} 100%)`,
-                                position: 'relative',
-                                overflow: 'hidden'
-                            }}
-                        >
-                            <img
-                                src={oasisCommunityImg}
-                                alt=""
-                                aria-hidden="true"
-                                style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    objectPosition: 'center 42%',
-                                    opacity: 0.16,
-                                    filter: 'saturate(1.05) contrast(1.05)',
-                                    pointerEvents: 'none'
-                                }}
-                            />
-                            <div
-                                aria-hidden="true"
-                                style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    background: 'radial-gradient(circle at 50% 42%, rgba(245, 158, 11, 0.16) 0%, rgba(18, 12, 31, 0.78) 55%, rgba(8, 5, 13, 0.96) 100%)',
-                                    pointerEvents: 'none'
-                                }}
-                            />
-
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6 }}
-                                style={{ maxWidth: '820px', margin: '0 auto', position: 'relative', zIndex: 2 }}
-                            >
-                                <span
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        padding: '6px 16px',
-                                        borderRadius: '999px',
-                                        backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                                        border: '1px solid rgba(245, 158, 11, 0.35)',
-                                        color: oasis.gold,
-                                        fontWeight: 900,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '3.5px',
-                                        fontSize: '0.7rem',
-                                        marginBottom: '20px'
-                                    }}
-                                >
-                                    <Sparkles size={13} /> Oasis Community
-                                </span>
-
-                                <h1
-                                    style={{
-                                        fontFamily: 'Moonrising, sans-serif',
-                                        fontSize: 'clamp(2.2rem, 6vw, 4rem)',
-                                        color: '#FFFFFF',
-                                        lineHeight: 1.05,
-                                        margin: 0,
-                                        textShadow: '0 12px 40px rgba(0, 0, 0, 0.5)'
-                                    }}
-                                >
-                                    PRÓXIMOS <span style={{ color: oasis.gold }}>EVENTOS</span>
-                                </h1>
-
-                                <div
-                                    style={{
-                                        width: '60px',
-                                        height: '3px',
-                                        borderRadius: '999px',
-                                        background: `linear-gradient(90deg, transparent, ${oasis.gold}, transparent)`,
-                                        margin: '20px auto'
-                                    }}
-                                />
-
-                                <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'clamp(0.95rem, 1.8vw, 1.08rem)', maxWidth: '560px', margin: '0 auto', lineHeight: 1.65 }}>
-                                    Participa en nuestras actividades, retiros y encuentros especiales. Vive la experiencia Oasis.
-                                </p>
-                            </motion.div>
-                        </header>
+                        <PageHero
+                            id="inscripciones"
+                            eyebrow="Oasis Community"
+                            title="PRÓXIMOS"
+                            accent="EVENTOS"
+                            subtitle="Participa en nuestras actividades, retiros y encuentros especiales. Vive la experiencia Oasis."
+                            fallbackImage={oasisCommunityImg}
+                        />
 
                         {/* Grilla de Eventos */}
                         <div style={{ maxWidth: '1160px', margin: '-44px auto 0', padding: '0 20px', position: 'relative', zIndex: 10 }}>
