@@ -25,6 +25,13 @@ const QuickEvents = ({ embedded = false }) => {
 
     const getEventAccent = (form) => form?.styles?.primaryColor || theme.colors.primary || '#F59E0B';
 
+    const getOverlayAlphas = (form) => {
+        const level = form?.styles?.overlayStrength || 'medium';
+        if (level === 'soft') return { top: 0.12, bottom: 0.68 };
+        if (level === 'deep') return { top: 0.36, bottom: 0.94 };
+        return { top: 0.22, bottom: 0.86 };
+    };
+
     const getCapacityMeta = (form) => {
         const cap = Number(form?.capacity) || 0;
         const count = Number(form?.submissionCount) || 0;
@@ -41,6 +48,8 @@ const QuickEvents = ({ embedded = false }) => {
     const featuredAccent = getEventAccent(featured);
     const featuredCover = getEventCover(featured);
     const featuredCap = getCapacityMeta(featured);
+    const featuredOverlay = getOverlayAlphas(featured);
+    const featuredBadge = featured.styles?.badgeText || 'Evento Destacado';
 
     return (
         <section
@@ -237,7 +246,7 @@ const QuickEvents = ({ embedded = false }) => {
                             style={{
                                 position: 'absolute',
                                 inset: 0,
-                                background: `linear-gradient(180deg, rgba(8, 5, 13, 0.25) 0%, rgba(18, 12, 31, 0.88) 100%), radial-gradient(circle at 20% 20%, ${featuredAccent}45 0%, transparent 55%)`
+                                background: `linear-gradient(180deg, rgba(8, 5, 13, ${featuredOverlay.top}) 0%, rgba(18, 12, 31, ${featuredOverlay.bottom}) 100%), radial-gradient(circle at 20% 20%, ${featuredAccent}45 0%, transparent 55%)`
                             }}
                         />
                         <div
@@ -271,7 +280,7 @@ const QuickEvents = ({ embedded = false }) => {
                                 }}
                             >
                                 <Flame size={13} color={featuredAccent} />
-                                Evento Destacado
+                                {featuredBadge}
                             </span>
 
                             <span

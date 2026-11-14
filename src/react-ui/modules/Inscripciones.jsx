@@ -528,6 +528,10 @@ const Inscripciones = () => {
                                     const fFull = fCap > 0 && fCount >= fCap;
                                     const fRemaining = fCap > 0 ? Math.max(0, fCap - fCount) : null;
                                     const fPct = fCap > 0 ? Math.min(100, Math.round((fCount / fCap) * 100)) : 0;
+                                    const fOverlayLevel = featured.styles?.overlayStrength || 'medium';
+                                    const fTopAlpha = fOverlayLevel === 'soft' ? 0.12 : fOverlayLevel === 'deep' ? 0.36 : 0.22;
+                                    const fBottomAlpha = fOverlayLevel === 'soft' ? 0.68 : fOverlayLevel === 'deep' ? 0.94 : 0.88;
+                                    const fBadgeText = featured.styles?.badgeText || 'Experiencia Destacada';
 
                                     return (
                                         <div>
@@ -576,7 +580,7 @@ const Inscripciones = () => {
                                                             style={{
                                                                 position: 'absolute',
                                                                 inset: 0,
-                                                                background: `linear-gradient(180deg, rgba(8, 5, 13, 0.22) 0%, rgba(18, 12, 31, 0.88) 100%), radial-gradient(circle at 20% 20%, ${fAccent}48 0%, transparent 58%)`
+                                                                background: `linear-gradient(180deg, rgba(8, 5, 13, ${fTopAlpha}) 0%, rgba(18, 12, 31, ${fBottomAlpha}) 100%), radial-gradient(circle at 20% 20%, ${fAccent}48 0%, transparent 58%)`
                                                             }}
                                                         />
                                                         <div
@@ -609,7 +613,7 @@ const Inscripciones = () => {
                                                                 }}
                                                             >
                                                                 <Flame size={13} color={fAccent} />
-                                                                Experiencia Destacada
+                                                                {fBadgeText}
                                                             </span>
 
                                                             <span
