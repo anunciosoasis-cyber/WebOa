@@ -7,18 +7,18 @@ import LucideByName from './LucideByName';
 import { COLORS } from './AboutStyles';
 
 const DEFAULT_TIMELINE = [
-    { year: '2018', event: 'El Génesis', desc: 'Visión en Medellín: refugio de paz.', icon: 'Zap', color: '#F59E0B' },
-    { year: '2020', event: 'Salto Digital', desc: 'Conexión global en Latinoamérica.', icon: 'Globe', color: '#8B5CF6' },
-    { year: '2023', event: 'Sede Física', desc: 'Inauguración ecosistema principal.', icon: 'Home', color: '#10B981' },
-    { year: '2025', event: 'Oasis Infinite', desc: 'Plataforma modular y expansión nacional.', icon: 'Rocket', color: '#3B82F6' },
+    { year: '2018', event: 'El Génesis', desc: 'Visión en Medellín: refugio de paz.', icon: 'Zap' },
+    { year: '2020', event: 'Salto Digital', desc: 'Conexión global en Latinoamérica.', icon: 'Globe' },
+    { year: '2023', event: 'Sede Física', desc: 'Inauguración ecosistema principal.', icon: 'Home' },
+    { year: '2025', event: 'Oasis Infinite', desc: 'Plataforma modular y expansión nacional.', icon: 'Rocket' },
 ];
 
-const AboutTimeline = ({ historyBrief, timeline = DEFAULT_TIMELINE, isMobile }) => {
+const AboutTimeline = ({ historyBrief, timeline = DEFAULT_TIMELINE }) => {
     const containerRef = useRef(null);
-    
+
     const { scrollYProgress } = useScroll({
         target: containerRef,
-        offset: ["start center", "end center"]
+        offset: ['start center', 'end center']
     });
 
     const scaleY = useSpring(scrollYProgress, {
@@ -27,124 +27,199 @@ const AboutTimeline = ({ historyBrief, timeline = DEFAULT_TIMELINE, isMobile }) 
         restDelta: 0.001
     });
 
-    const IconRenderer = ({ name, color }) => {
-        return <LucideByName name={name} fallback={Circle} size={18} color={color} strokeWidth={2.5} />;
-    };
+    const IconRenderer = ({ name, color }) => (
+        <LucideByName name={name} fallback={Circle} size={17} color={color} strokeWidth={2.3} />
+    );
+
+    const items = Array.isArray(timeline) && timeline.length > 0 ? timeline : DEFAULT_TIMELINE;
 
     return (
-        <section ref={containerRef} style={{ 
-            padding: '60px 20px', // Reducido de 120px
-            maxWidth: '1000px', // Más angosto para mayor control
-            margin: '0 auto',
-            position: 'relative'
-        }}>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '0.8fr 1.2fr', gap: isMobile ? 40 : 80 }}>
-                
+        <section
+            ref={containerRef}
+            style={{
+                padding: '70px 20px 90px',
+                maxWidth: '1080px',
+                margin: '0 auto',
+                position: 'relative'
+            }}
+        >
+            <style>{`
+                .about-timeline-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 36px;
+                }
+                .about-timeline-sticky {
+                    position: relative;
+                }
+                @media (min-width: 768px) {
+                    .about-timeline-grid {
+                        grid-template-columns: 0.85fr 1.15fr;
+                        gap: 72px;
+                    }
+                    .about-timeline-sticky {
+                        position: sticky;
+                        top: 140px;
+                        height: fit-content;
+                    }
+                }
+            `}</style>
+
+            <div className="about-timeline-grid">
                 {/* CABECERA IZQUIERDA */}
-                <div style={{ position: isMobile ? 'relative' : 'sticky', top: '150px', height: 'fit-content' }}>
-                    <span style={{ 
-                        color: COLORS.accent, 
-                        fontWeight: 900, 
-                        fontSize: '0.65rem', 
-                        textTransform: 'uppercase', 
-                        letterSpacing: '4px',
-                        display: 'block',
-                        marginBottom: '10px'
-                    }}>
+                <div className="about-timeline-sticky">
+                    <span
+                        style={{
+                            color: COLORS.accent,
+                            fontWeight: 900,
+                            fontSize: '0.72rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '4px',
+                            display: 'block',
+                            marginBottom: '12px'
+                        }}
+                    >
                         Trayectoria
                     </span>
-                    <p style={{ color: '#777', lineHeight: 1.6, fontSize: '0.95rem', fontWeight: 500 }}>
-                        {historyBrief || "Pasos guiados hacia el Ecosistema Oasis."}
+                    <h2
+                        style={{
+                            fontFamily: 'Moonrising, sans-serif',
+                            color: COLORS.deepPurple,
+                            fontSize: 'clamp(1.85rem, 4vw, 2.6rem)',
+                            lineHeight: 1.1,
+                            margin: '0 0 16px 0'
+                        }}
+                    >
+                        Nuestra <span style={{ color: COLORS.accent }}>Historia</span>
+                    </h2>
+                    <div
+                        style={{
+                            width: '44px',
+                            height: '3px',
+                            borderRadius: '999px',
+                            backgroundColor: COLORS.accent,
+                            opacity: 0.45,
+                            marginBottom: '18px'
+                        }}
+                    />
+                    <p style={{ color: 'rgba(18, 12, 31, 0.72)', lineHeight: 1.7, fontSize: '0.96rem', fontWeight: 500, margin: 0 }}>
+                        {historyBrief || 'Pasos guiados por la fe hacia el Ecosistema Oasis.'}
                     </p>
                 </div>
 
-                {/* TIMELINE COMPACTA */}
-                <div style={{ position: 'relative', paddingLeft: isMobile ? '20px' : '40px' }}>
-                    
+                {/* TIMELINE */}
+                <div style={{ position: 'relative', paddingLeft: '44px' }}>
                     {/* Track Background */}
-                    <div style={{ 
-                        position: 'absolute', 
-                        left: '0', 
-                        top: '5px', 
-                        bottom: '5px', 
-                        width: '2px', 
-                        background: 'rgba(0,0,0,0.05)',
-                        borderRadius: '10px'
-                    }} />
-
-                    {/* Línea Activa */}
-                    <motion.div 
-                        style={{ 
-                            position: 'absolute', 
-                            left: '0', 
-                            top: '5px', 
-                            bottom: '5px', 
-                            width: '2px', 
-                            background: COLORS.accent,
-                            scaleY,
-                            originY: 0,
-                            zIndex: 2
-                        }} 
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: '16px',
+                            top: '8px',
+                            bottom: '8px',
+                            width: '2px',
+                            background: 'rgba(18, 12, 31, 0.08)',
+                            borderRadius: '10px'
+                        }}
                     />
 
-                    {timeline.map((item, idx) => (
-                        <motion.div 
+                    {/* Línea Activa */}
+                    <motion.div
+                        style={{
+                            position: 'absolute',
+                            left: '16px',
+                            top: '8px',
+                            bottom: '8px',
+                            width: '2px',
+                            background: `linear-gradient(180deg, ${COLORS.accent} 0%, #D97706 100%)`,
+                            scaleY,
+                            originY: 0,
+                            zIndex: 2,
+                            borderRadius: '10px'
+                        }}
+                    />
+
+                    {items.map((item, idx) => (
+                        <motion.div
                             key={idx}
-                            initial={{ opacity: 0.4, x: 10 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: false, margin: "-10%" }}
-                            style={{ position: 'relative', marginBottom: '35px' }} // Reducido de 80px
+                            initial={{ opacity: 0.35, y: 16 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: '-8%' }}
+                            transition={{ duration: 0.45, delay: idx * 0.06 }}
+                            whileHover={{ x: 4 }}
+                            style={{
+                                position: 'relative',
+                                marginBottom: idx === items.length - 1 ? 0 : '26px',
+                                padding: '20px 22px',
+                                borderRadius: '22px',
+                                backgroundColor: '#FFFFFF',
+                                border: '1px solid rgba(18, 12, 31, 0.06)',
+                                boxShadow: '0 12px 28px -12px rgba(18, 12, 31, 0.1)'
+                            }}
                         >
-                            {/* El Nodo más pequeño */}
-                            <div style={{ 
-                                position: 'absolute', 
-                                left: '-50px', 
-                                top: '0',
-                                zIndex: 10
-                            }}>
-                                <div style={{
-                                    width: '32px', height: '32px',
-                                    borderRadius: '10px',
-                                    background: COLORS.midnight,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                                    border: `2px solid #fff`
-                                }}>
+                            {/* Nodo */}
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: '-45px',
+                                    top: '20px',
+                                    zIndex: 10
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: '34px',
+                                        height: '34px',
+                                        borderRadius: '12px',
+                                        background: COLORS.deepPurple,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 8px 18px rgba(18, 12, 31, 0.22)',
+                                        border: '2px solid #FFFFFF'
+                                    }}
+                                >
                                     <IconRenderer name={item.icon} color={COLORS.accent} />
                                 </div>
                             </div>
 
-                            {/* Contenido Minimalista */}
-                            <div style={{ paddingLeft: '5px' }}>
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                                    <span style={{ fontFamily: 'Moonrising', fontSize: '1.1rem', color: COLORS.accent }}>
-                                        {item.year}
-                                    </span>
-                                    <h3 style={{ fontWeight: 800, fontSize: '1rem', color: COLORS.deepPurple, margin: 0 }}>
-                                        {item.event}
-                                    </h3>
-                                </div>
-                                <p style={{ 
-                                    color: '#666', 
-                                    fontSize: '0.85rem', 
-                                    lineHeight: 1.5,
-                                    marginTop: '4px',
-                                    fontWeight: 500
-                                }}>
-                                    {item.desc}
-                                </p>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
+                                <span
+                                    style={{
+                                        fontFamily: 'Moonrising, sans-serif',
+                                        fontSize: '1.1rem',
+                                        color: COLORS.accent,
+                                        letterSpacing: '0.5px'
+                                    }}
+                                >
+                                    {item.year}
+                                </span>
+                                <h3
+                                    style={{
+                                        fontWeight: 800,
+                                        fontSize: '1.02rem',
+                                        color: COLORS.deepPurple,
+                                        margin: 0
+                                    }}
+                                >
+                                    {item.event}
+                                </h3>
                             </div>
+                            <p
+                                style={{
+                                    color: 'rgba(18, 12, 31, 0.68)',
+                                    fontSize: '0.88rem',
+                                    lineHeight: 1.55,
+                                    marginTop: '6px',
+                                    marginBottom: 0,
+                                    fontWeight: 500
+                                }}
+                            >
+                                {item.desc}
+                            </p>
                         </motion.div>
                     ))}
                 </div>
             </div>
-
-            <style>{`
-                @font-face {
-                    font-family: 'Moonrising';
-                    src: url('/fonts/Moonrising.ttf');
-                }
-            `}</style>
         </section>
     );
 };

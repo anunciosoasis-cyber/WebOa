@@ -11,44 +11,52 @@ export const PlayerProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState(null);
     const [showPip, setShowPip] = useState(false);
+    const [youtubeChannelUrl, setYoutubeChannelUrl] = useState(null);
+
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [setRes, ytRes, liveRes] = await Promise.all([
+                apiClient.get('/public/settings').catch(() => ({ data: {} })),
+                apiClient.get('/youtube/public/uploads').catch(() => ({ data: {} })),
+                apiClient.get('/youtube/public/live-status').catch(() => ({ data: {} }))
+            ]);
+            
+            const s = setRes.data || {};
+            const liveData = liveRes.data || { active: false };
+
+            if (s['youtube_url']) {
+                setYoutubeChannelUrl(s['youtube_url']);
+            }
+
+            const streamIsLive = liveData.active;
+            const liveVideoId = liveData.broadcastId;
+            const playlistId = s['youtube_playlist_id'] || ytRes.data?.playlistId;
+            const latestVideoId = ytRes.data?.latestVideoId;
+
+            setIsLive(streamIsLive);
+
+            if (streamIsLive && liveVideoId) {
+                setYoutubeUrl(`https://www.youtube.com/embed/${liveVideoId}?autoplay=1`);
+            } else if (latestVideoId) {
+                setYoutubeUrl(`https://www.youtube.com/embed/${latestVideoId}`);
+            } else if (playlistId) {
+                setYoutubeUrl(`https://www.youtube.com/embed/videoseries?list=${playlistId}`);
+            }
+
+            if (ytRes.data?.error && !playlistId) {
+                setErrorMsg(ytRes.data.error === 'NO_CHANNEL' ? 'La cuenta vinculada no tiene canal de YouTube.' : 'Error al conectar con YouTube.');
+            } else {
+                setErrorMsg(null);
+            }
+        } catch (error) {
+            console.error("Error loading Player data", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                const [setRes, ytRes, liveRes] = await Promise.all([
-                    apiClient.get('/public/settings').catch(() => ({ data: {} })),
-                    apiClient.get('/youtube/public/uploads').catch(() => ({ data: {} })),
-                    apiClient.get('/youtube/public/live-status').catch(() => ({ data: {} }))
-                ]);
-                
-                const s = setRes.data || {};
-                const liveData = liveRes.data || { active: false };
-
-                const streamIsLive = liveData.active;
-                const liveVideoId = liveData.broadcastId;
-                const playlistId = s['youtube_playlist_id'] || ytRes.data?.playlistId;
-                const latestVideoId = ytRes.data?.latestVideoId;
-
-                setIsLive(streamIsLive);
-
-                if (streamIsLive && liveVideoId) {
-                    setYoutubeUrl(`https://www.youtube.com/embed/${liveVideoId}?autoplay=1`);
-                } else if (latestVideoId) {
-                    setYoutubeUrl(`https://www.youtube.com/embed/${latestVideoId}`);
-                } else if (playlistId) {
-                    setYoutubeUrl(`https://www.youtube.com/embed/videoseries?list=${playlistId}`);
-                }
-
-                if (ytRes.data?.error && !playlistId) {
-                    setErrorMsg(ytRes.data.error === 'NO_CHANNEL' ? 'La cuenta vinculada no tiene canal de YouTube.' : 'Error al conectar con YouTube.');
-                }
-            } catch (error) {
-                console.error("Error loading Player data", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
         loadData();
 
         // Verificar automáticamente cada 2 minutos sin recargar la página (Ahorra recursos y detecta en tiempo real)
@@ -72,7 +80,7 @@ export const PlayerProvider = ({ children }) => {
     }, [isLive]);
 
     return (
-        <PlayerContext.Provider value={{ youtubeUrl, isLive, loading, errorMsg, showPip, setShowPip }}>
+        <PlayerContext.Provider value={{ youtubeUrl, isLive, loading, errorMsg, showPip, setShowPip, youtubeChannelUrl, refreshPlayer: loadData }}>
             {children}
         </PlayerContext.Provider>
     );

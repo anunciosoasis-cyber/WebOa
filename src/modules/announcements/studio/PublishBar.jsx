@@ -8,6 +8,7 @@ export default function PublishBar({
     pendingAssumptions,
     hasPreview,
     published,
+    editing,
     caption,
     sendOpen,
     onRefresh,
@@ -80,7 +81,7 @@ export default function PublishBar({
                     disabled={!ready || pendingAssumptions > 0 || Boolean(busy)}
                 >
                     {busy === 'publish' ? <Loader2 size={14} className="ann-spin" /> : <Send size={14} />}
-                    {busy === 'publish' ? 'Publicando…' : published ? 'Publicar de nuevo' : 'Publicar'}
+                    {busy === 'publish' ? (editing ? 'Guardando…' : 'Publicando…') : editing ? 'Guardar cambios' : published ? 'Publicar de nuevo' : 'Publicar'}
                 </button>
             </div>
 

@@ -48,6 +48,9 @@ function reducer(state, action) {
         }
         case 'publishDate':
             return { ...state, publishDate: action.value };
+        case 'load':
+            // Abrir un anuncio publicado: sus datos pasan a ser el borrador (sin historial previo)
+            return { ...INITIAL, fields: clean({ ...INITIAL.fields, ...action.fields }), publishDate: action.publishDate ?? '' };
         case 'reset':
             return { ...INITIAL, fields: { ...INITIAL.fields, ...action.keep } };
         default:

@@ -22,7 +22,7 @@ const AboutGallery = ({ galleryItems = [], getImageUrl }) => {
     const [activeHeart, setActiveHeart] = useState(null);
     const [selectedReel, setSelectedReel] = useState(null);
 
-    const items = galleryItems || [];
+    const items = Array.isArray(galleryItems) && galleryItems.length > 0 ? galleryItems : OASIS_MOMENTS;
 
     const handleLike = (id, e) => {
         if (e) e.stopPropagation();

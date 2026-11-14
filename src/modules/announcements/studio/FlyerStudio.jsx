@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, ListChecks, MessageSquareText } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, LayoutList, ListChecks, MessageSquareText, Pencil, X } from 'lucide-react';
 import { useToast } from '../../../react-ui/components/Toast';
 import SendWhatsapp from '../../../components/whatsapp/SendWhatsapp';
 import { announcementsApi, errorText } from '../api/announcementsApi';
@@ -9,6 +9,7 @@ import FieldsPanel from './FieldsPanel';
 import KindPicker from './KindPicker';
 import PreviewCanvas from './PreviewCanvas';
 import PublishBar from './PublishBar';
+import PublishedPanel from './PublishedPanel';
 
 const LABELS = { sermonTitleMain: 'el título', dateText: 'la fecha', timeText: 'la hora' };
 const PREVIEW_DEBOUNCE_MS = 800;
@@ -33,6 +34,30 @@ export default function FlyerStudio({ isDark, onOpenInCanvas }) {
     const [error, setError] = useState('');
     const [mobileTab, setMobileTab] = useState('assistant');
     const requestId = useRef(0);
+    const [editing, setEditing] = useState(null); // { id, title } del anuncio publicado que se está cambiando
+    const [listOpen, setListOpen] = useState(false);
+    const [list, setList] = useState({ items: [], loading: false });
+
+    const loadList = useCallback(() => {
+        setList((l) => ({ ...l, loading: true }));
+        announcementsApi
+            .list()
+            .then((items) => setList({ items, loading: false }))
+            .catch((e) => {
+                setList((l) => ({ ...l, loading: false }));
+                showToast(`No se pudo cargar la lista: ${errorText(e)}`, 'error');
+            });
+    }, [showToast]);
+
+    // Las páginas públicas escuchan esta marca para recargar los anuncios
+    const notifyWeb = () => {
+        try {
+            localStorage.setItem('oasis_announcements_updated_at', String(Date.now()));
+        } catch {
+            /* sin almacenamiento */
+        }
+        window.dispatchEvent(new Event('oasis:announcements-updated'));
+    };
 
     useEffect(() => {
         announcementsApi
@@ -98,10 +123,12 @@ export default function FlyerStudio({ isDark, onOpenInCanvas }) {
         setBusy('publish');
         setError('');
         try {
-            const data = await announcementsApi.publish(payload, publishDate);
+            const data = editing ? await announcementsApi.update(editing.id, payload, publishDate) : await announcementsApi.publish(payload, publishDate);
             setPublished(data.announcement.id);
             setPreview((p) => ({ src: p?.src ?? data.announcement.imageUrl, caption: data.caption }));
-            showToast('Anuncio publicado en la web', 'success');
+            showToast(editing ? 'Cambios guardados en la web' : 'Anuncio publicado en la web', 'success');
+            setEditing(null);
+            notifyWeb();
         } catch (e) {
             setError(errorText(e));
         } finally {
@@ -212,6 +239,36 @@ export default function FlyerStudio({ isDark, onOpenInCanvas }) {
         setPreview(null);
         setPublished(null);
         setSendOpen(false);
+        setEditing(null);
+    };
+
+    const openList = () => {
+        setListOpen(true);
+        loadList();
+    };
+
+    const editAnnouncement = (ann, form) => {
+        dispatch({ type: 'load', fields: form.flyer, publishDate: ann.date ?? '' });
+        setEditing({ id: ann.id, title: ann.title });
+        setPreview(ann.imageUrl ? { src: ann.imageUrl, caption: ann.description } : null);
+        setPublished(null);
+        setSendOpen(false);
+        setListOpen(false);
+        // Las fotos no se guardan con el anuncio (solo el PNG final): hay que volver a subirlas
+        if (form.hasPhoto || form.hasEventLogo) showToast('Este anuncio tenía foto o logo: vuelve a subirlos en «Datos» antes de guardar', 'info');
+    };
+
+    const deleteAnnouncement = async (ann) => {
+        try {
+            await announcementsApi.remove(ann.id);
+            setList((l) => ({ ...l, items: l.items.filter((a) => a.id !== ann.id) }));
+            if (editing?.id === ann.id) setEditing(null);
+            if (published === ann.id) setPublished(null);
+            notifyWeb();
+            showToast('Anuncio eliminado de la web', 'success');
+        } catch (e) {
+            showToast(`No se pudo eliminar: ${errorText(e)}`, 'error');
+        }
     };
 
     if (!options) {
@@ -232,6 +289,34 @@ export default function FlyerStudio({ isDark, onOpenInCanvas }) {
                 <div className="ann-alert" role="alert">
                     <AlertCircle size={16} /> {error}
                 </div>
+            )}
+            <div className="ann-studio-bar">
+                {editing ? (
+                    <div className="ann-editing-banner" role="status">
+                        <Pencil size={14} />
+                        <span>
+                            Editando <strong>{editing.title}</strong> · al guardar se reemplaza en la web
+                        </span>
+                        <button type="button" className="ann-btn ann-btn-sm ann-btn-ghost" onClick={reset}>
+                            <X size={12} /> Cancelar edición
+                        </button>
+                    </div>
+                ) : (
+                    <span />
+                )}
+                <button type="button" className="ann-btn ann-btn-sm" onClick={openList}>
+                    <LayoutList size={14} /> Publicados
+                </button>
+            </div>
+            {listOpen && (
+                <PublishedPanel
+                    items={list.items}
+                    loading={list.loading}
+                    editingId={editing?.id}
+                    onEdit={editAnnouncement}
+                    onDelete={deleteAnnouncement}
+                    onClose={() => setListOpen(false)}
+                />
             )}
             <div style={{ padding: '0 12px 12px' }} className="ann-mobile-tabs">
                 <div className="ann-segmented" role="tablist" aria-label="Paneles">
@@ -299,6 +384,7 @@ export default function FlyerStudio({ isDark, onOpenInCanvas }) {
                         pendingAssumptions={assumptions.length}
                         hasPreview={Boolean(preview?.src)}
                         published={published}
+                        editing={Boolean(editing)}
                         caption={preview?.caption}
                         sendOpen={sendOpen}
                         onRefresh={renderPreview}
