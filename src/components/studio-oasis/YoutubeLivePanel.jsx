@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/client';
+import { Youtube, Plug, Unplug, Eye, ThumbsUp } from 'lucide-react';
 
 const YoutubeLivePanel = () => {
     const [status, setStatus] = useState({ connected: false });
@@ -79,14 +80,11 @@ const YoutubeLivePanel = () => {
 
     return (
         <div
-            className="bg-ui-bg shadow-neumorph rounded-3xl p-5 flex flex-col items-center justify-center w-[165px] h-full min-h-[110px] select-none border border-white/50 relative overflow-hidden"
+            className="bg-ui-bg shadow-neumorph rounded-3xl px-3 py-2 flex flex-col items-center justify-center gap-1.5 w-full h-full select-none border border-white/50 relative overflow-hidden"
             data-purpose="yt-status"
         >
             {/* Título unificado en una sola línea (mismo flex) con la palabra STUDIO en bold y rojo */}
-            <div className="font-moonrising text-[11px] uppercase tracking-wider text-gray-900 mb-2.5 whitespace-nowrap flex flex-row gap-1 justify-center items-center">
-                <span>YOUTUBE</span>
-                <span className="text-oasis-red font-bold">STUDIO</span>
-            </div>
+            <Youtube size={26} strokeWidth={2} className="text-oasis-red shrink-0" aria-label="YouTube Studio" />
 
             {/* OVERLAY DE CONFIRMACIÓN CUSTOM */}
             {showConfirm && (
@@ -132,9 +130,10 @@ const YoutubeLivePanel = () => {
             {!status.connected && !loading && (
                 <button
                     onClick={loginDirectly}
-                    className="bg-oasis-red text-white text-[11px] font-bold tracking-widest uppercase py-2.5 px-6 rounded-xl shadow-[0_4px_12px_rgba(255,0,0,0.25)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
+                    title="Conectar YouTube Studio" aria-label="Conectar YouTube Studio"
+                    className="bg-oasis-red text-white w-9 h-9 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(255,0,0,0.25)] hover:scale-[1.05] active:scale-[0.95] transition-all duration-200"
                 >
-                    CONECTAR
+                    <Plug size={16} strokeWidth={2.5} />
                 </button>
             )}
 
@@ -142,9 +141,10 @@ const YoutubeLivePanel = () => {
             {status.connected && !broadcast.active && !loading && (
                 <button
                     onClick={() => setShowConfirm(true)}
-                    className="bg-gray-800 text-white text-[10px] font-bold tracking-widest uppercase py-2.5 px-4 rounded-xl shadow-md hover:bg-gray-950 hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
+                    title="Desconectar YouTube Studio" aria-label="Desconectar YouTube Studio"
+                    className="bg-gray-800 text-white w-9 h-9 rounded-full flex items-center justify-center shadow-md hover:bg-gray-950 hover:scale-[1.05] active:scale-[0.95] transition-all duration-200"
                 >
-                    DESCONECTAR
+                    <Unplug size={16} strokeWidth={2.5} />
                 </button>
             )}
 
@@ -155,8 +155,8 @@ const YoutubeLivePanel = () => {
                         EN VIVO
                     </span>
                     <div className="flex justify-between w-full text-[9px] font-bold text-gray-600 px-1 mt-0.5">
-                        <span>Min: {broadcast.stats?.viewers || 0}</span>
-                        <span>Likes: {broadcast.stats?.likes || 0}</span>
+                        <span className="inline-flex items-center gap-0.5" title="Espectadores"><Eye size={10} />{broadcast.stats?.viewers || 0}</span>
+                        <span className="inline-flex items-center gap-0.5" title="Me gusta"><ThumbsUp size={10} />{broadcast.stats?.likes || 0}</span>
                     </div>
                 </div>
             )}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, animate, useReducedMotion } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import { useTheme } from '../../react-ui/ThemeContext';
 import GlassCard from '../../react-ui/components/GlassCard';
@@ -17,7 +17,7 @@ import {
     FileSpreadsheet, UserPlus, X, Check,
     ChevronUp, ChevronDown, LayoutDashboard, Share2,
     FileText, Zap, Monitor, Save, ListChecks,
-    History, CirclePlay, CircleStop, AlertTriangle, Timer, MonitorPlay
+    History, CirclePlay, CircleStop, AlertTriangle, Timer, MonitorPlay, Radio, Presentation
 } from 'lucide-react';
 import CountdownLiveModal from './CountdownLiveModal';
 import PanelOBS from './panel_OBS/PanelOBS';
@@ -132,6 +132,19 @@ const AdminCulto = () => {
     const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA'));
 
     const [showCountdown, setShowCountdown] = useState(false);
+    // Zona de trabajo visible (En vivo / Presentación). Las otras se ocultan sin desmontarse:
+    // siguen escuchando el canal en vivo (comandos de la app, sincronía del proyector).
+    const [workspace, setWorkspaceState] = useState(() => {
+        try { return WORKSPACES.some((w) => w.id === localStorage.getItem(WORKSPACE_KEY)) ? localStorage.getItem(WORKSPACE_KEY) : 'vivo'; } catch { return 'vivo'; }
+    });
+    const workspaceNavRef = useRef(null);
+    const reduceMotion = useReducedMotion();
+    const setWorkspace = (id) => {
+        setWorkspaceState(id);
+        try { localStorage.setItem(WORKSPACE_KEY, id); } catch { /* solo en memoria */ }
+        // Presentación cabe en una pantalla bajo las pestañas: se lleva ahí la vista
+        if (id === 'pres') requestAnimationFrame(() => workspaceNavRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    };
     const [showProjection, setShowProjection] = useState(false);
     const [showPlantilla, setShowPlantilla] = useState(false);
     const [plantillaEdits, setPlantillaEdits] = useState(null);
@@ -335,28 +348,28 @@ const AdminCulto = () => {
     }, [filteredOrden, currentActivityIndex, elapsedSeconds]);
 
     return (
-        <main className="max-w-[1400px] mx-auto space-y-6 p-6 studio-oasis-theme">
+        <main className="oasis-cq max-w-[1400px] mx-auto space-y-6 p-4 sm:p-6 studio-oasis-theme">
             {showCountdown && <CountdownLiveModal onClose={() => setShowCountdown(false)} />}
 
             {/* BARRA SUPERIOR REORGANIZADA DE MANERA HERMÉTICA (Responsive) */}
-            <header className="flex flex-col lg:flex-row items-center justify-between gap-6 w-full h-auto lg:h-[105px] select-none text-gray-900 mb-6 lg:mb-0">
+            <header className="oasis-header w-full select-none text-gray-900">
 
                 {/* Brand Logo Section */}
-                <div className="flex flex-col select-none justify-center h-auto lg:h-full text-center lg:text-left">
-                    <span className="font-moonrising text-[10px] font-normal uppercase tracking-[0.22em] text-gray-800">
+                <div className="oasis-header__brand flex flex-col justify-center">
+                    <span className="font-moonrising text-[clamp(7px,0.9cqi,10px)] font-normal uppercase tracking-[0.22em] text-gray-800 whitespace-nowrap">
                         Producción en tiempo real
                     </span>
-                    <h1 className="font-moonrising text-5xl uppercase tracking-wide leading-[0.85] text-gray-950 mt-1">
+                    <h1 className="font-moonrising text-[clamp(1.75rem,3.6cqi,3rem)] uppercase tracking-wide leading-[0.85] text-gray-950 mt-1 whitespace-nowrap">
                         Estudio <br />
                         <span className="text-oasis-orange">Oasis</span>
                     </h1>
                 </div>
 
                 {/* CONTENEDOR DE PANELES OPERATIVOS */}
-                <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-end gap-4 flex-1 h-auto lg:h-full bg-ui-bg p-2 rounded-[2rem] shadow-neumorph-inset border border-white/40 min-w-0 w-full">
+                <div className="oasis-header__tools bg-ui-bg p-1.5 rounded-[2rem] shadow-neumorph-inset border border-white/40">
 
                     {/* YouTube Studio Status Component */}
-                    <div className="h-auto lg:h-full flex items-center shrink-0">
+                    <div className="flex">
                         <YoutubeLivePanel isDark={false} />
                     </div>
 
@@ -364,7 +377,7 @@ const AdminCulto = () => {
                     <PairAppButton />
 
                     {/* MÓDULO FECHA Y CONTROLES CRONÓMETRO */}
-                    <div className="flex flex-col gap-2 w-[165px] h-auto lg:h-full shrink-0">
+                    <div className="oasis-header__fecha flex flex-col justify-center gap-1.5">
                         {/* Caja del Indicador Hoy / Fecha (Componente Modular) */}
                         <DateDisplay selectedDate={selectedDate} />
 
@@ -395,20 +408,39 @@ const AdminCulto = () => {
                 </div>
             </header>
 
-            {/* ZONA CENTRAL DE CONTROL DE PRODUCCIÓN */}
-            <div className="bg-ui-bg p-6 rounded-[2rem] shadow-neumorph-inset border border-white/40">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <PanelOBS
-                        timeMetrics={{ elapsedSeconds, isPaused, serviceStartTime }}
-                        currentActivity={filteredOrden[currentActivityIndex]}
-                        startService={startService}
-                        endService={endService}
-                    />
+            {/* PESTAÑAS DE TRABAJO: fijas arriba al hacer scroll (en celular la barra inferior ya es la del panel de administración) */}
+            <nav ref={workspaceNavRef} aria-label="Zonas de trabajo" className="sticky top-2 z-30 scroll-mt-2">
+                <div role="tablist" className="grid grid-cols-2 gap-1 w-full max-w-md mx-auto bg-ui-bg p-1.5 rounded-full shadow-[0_6px_16px_rgba(0,0,0,0.12)] border border-gray-200/70">
+                    {WORKSPACES.map(({ id, label, Icon }) => (
+                        <button key={id} type="button" role="tab" id={`tab-${id}`} aria-controls={`zona-${id}`} aria-selected={workspace === id} onClick={() => setWorkspace(id)}
+                            className={`relative min-h-[44px] px-3 rounded-full flex items-center justify-center gap-2 font-moonrising text-[11px] sm:text-xs uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-oasis-orange ${workspace === id ? 'text-gray-950' : 'text-gray-500 hover:text-oasis-orange'}`}>
+                            {/* La píldora amarilla se desliza a la pestaña elegida */}
+                            {workspace === id && (
+                                <motion.span layoutId="oasis-workspace-pill" aria-hidden="true"
+                                    className="absolute inset-0 rounded-full bg-oasis-yellow shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
+                                    transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34 }} />
+                            )}
+                            <Icon size={18} aria-hidden="true" className="relative" />
+                            <span className="relative">{label}</span>
+                        </button>
+                    ))}
                 </div>
-            </div>
+            </nav>
+
+            {/* EN VIVO: monitores + Contenido, Banners y Contador (oculto en Presentación, sin desmontarse) */}
+            <WorkspaceSection id="vivo" active={workspace === 'vivo'} className="oasis-cq bg-ui-bg p-4 sm:p-6 rounded-[2rem] shadow-neumorph-inset border border-white/40">
+                <PanelOBS
+                    timeMetrics={{ elapsedSeconds, isPaused, serviceStartTime }}
+                    currentActivity={filteredOrden[currentActivityIndex]}
+                    startService={startService}
+                    endService={endService}
+                />
+            </WorkspaceSection>
 
             {/* MÓDULO DE PRESENTACIONES POWERPOINT Y CONTROL REMOTO QR */}
-            <PressStudio />
+            <WorkspaceSection id="pres" active={workspace === 'pres'}>
+                <PressStudio />
+            </WorkspaceSection>
 
             {/* MODAL DE SELECCIÓN DE PLANTILLAS */}
             <PlantillaOrden 
@@ -473,6 +505,32 @@ const AdminCulto = () => {
         </main>
     );
 };
+const WORKSPACE_KEY = 'oasis_studio_workspace';
+
+/**
+ * Zona de trabajo: la inactiva se oculta sin desmontarse (sigue escuchando el canal en vivo).
+ * Al activarse entra con un fundido y un leve desplazamiento; sin animación si el sistema pide menos movimiento.
+ */
+const WorkspaceSection = ({ id, active, className = '', children }) => {
+    const ref = useRef(null);
+    const reduceMotion = useReducedMotion();
+    const mounted = useRef(false);
+    useEffect(() => {
+        if (!mounted.current) { mounted.current = true; return; }
+        if (active && !reduceMotion && ref.current) {
+            animate(ref.current, { opacity: [0, 1], y: [14, 0] }, { duration: 0.34, ease: [0.22, 1, 0.36, 1] });
+        }
+    }, [active, reduceMotion]);
+    return (
+        <section ref={ref} id={`zona-${id}`} role="tabpanel" aria-labelledby={`tab-${id}`} className={active ? className : 'hidden'}>
+            {children}
+        </section>
+    );
+};
+const WORKSPACES = [
+    { id: 'vivo', label: 'En vivo', Icon: Radio },
+    { id: 'pres', label: 'Presentación', Icon: Presentation },
+];
 const labelStyle = { fontSize: '0.65rem', fontWeight: 900, color: '#F59E0B', textTransform: 'uppercase', marginBottom: '8px', display: 'block', letterSpacing: '1px' };
 
 export default AdminCulto;

@@ -1,6 +1,6 @@
-// PressUploader.jsx
+// PressUploader.jsx — botón de icono para cargar PDF / PPTX / imágenes
 import React, { useRef } from 'react';
-import OasisButton from './OasisButton';
+import { Upload } from 'lucide-react';
 
 export const PressUploader = ({ isLoading = false, onFileUpload }) => {
   const fileInputRef = useRef(null);
@@ -14,7 +14,7 @@ export const PressUploader = ({ isLoading = false, onFileUpload }) => {
   };
 
   return (
-    <div className="inline-flex items-center">
+    <>
       <input
         ref={fileInputRef}
         type="file"
@@ -24,21 +24,20 @@ export const PressUploader = ({ isLoading = false, onFileUpload }) => {
         className="hidden"
         disabled={isLoading}
       />
-      <OasisButton
-        size="md"
-        isLoading={isLoading}
+      <button
+        type="button"
         onClick={handleClick}
-        leftIcon={
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" x2="12" y1="3" y2="15" />
-          </svg>
-        }
+        disabled={isLoading}
+        title={isLoading ? 'Procesando archivo…' : 'Cargar archivo (PDF, PPTX o imágenes)'}
+        aria-label="Cargar archivo"
+        aria-busy={isLoading}
+        className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 bg-white text-slate-700 shadow-sm border border-gray-100 hover:shadow-md hover:text-oasis-orange disabled:opacity-60"
       >
-        {isLoading ? 'PROCESANDO...' : 'CARGAR ARCHIVO'}
-      </OasisButton>
-    </div>
+        {isLoading
+          ? <span className="w-4 h-4 border-2 border-oasis-yellow border-t-transparent rounded-full animate-spin" />
+          : <Upload size={16} strokeWidth={2.5} />}
+      </button>
+    </>
   );
 };
 

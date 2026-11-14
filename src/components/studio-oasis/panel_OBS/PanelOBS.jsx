@@ -199,8 +199,8 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
 
     return (
         <>
-            {/* Left Screen & Center Controls Area (3 cols wide) */}
-            <div className="lg:col-span-3 space-y-6">
+            {/* Monitores arriba; debajo Contenido, Banners y Contador */}
+            <div className="space-y-6">
                 
                 <PreviewMonitors 
                     liveOverlay={liveOverlay}
@@ -215,8 +215,8 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
                     handleTemplateChange={handleTemplateChange}
                 />
 
-                {/* Bottom Panels Grid */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 min-h-[310px] h-auto xl:h-[310px]">
+                <div className="oasis-live-grid">
+                    <div className="oasis-live-grid__contenido flex">
                     <ContenidoPanel 
                         activeTab={activeTab} setActiveTab={setActiveTab} setActivePreviewSource={setActivePreviewSource}
                         selectedBook={selectedBook} setSelectedBook={setSelectedBook} BIBLE_BOOKS={BIBLE_BOOKS}
@@ -230,6 +230,7 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
                         handlePrevStanza={handlePrevStanza} handleNextStanza={handleNextStanza}
                         globalTemplate={globalTemplate}
                     />
+                    </div>
 
                     <BannersPanel 
                         preacher={preacher} setPreacher={setPreacher} setActivePreviewSource={setActivePreviewSource}
@@ -244,10 +245,9 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
                         preacherStyle={preacherStyle}
                         announcementStyle={announcementStyle}
                     />
-                </div>
-            </div>
 
-            {/* Right Sidebar Contador */}
+            {/* Contador: columna propia si hay espacio; si no, junto a Banners */}
+            <div className="oasis-live-grid__contador flex justify-center">
             <ContadorPanel 
                 timeMetrics={timeMetrics} 
                 studioMode={studioMode} 
@@ -260,6 +260,9 @@ const PanelOBS = forwardRef(({ currentActivity, timeMetrics, serviceStartTime, i
                 countdownTemplate={countdownTemplate}
                 setCountdownTemplate={setCountdownTemplate}
             />
+            </div>
+                </div>
+            </div>
         </>
     );
 });

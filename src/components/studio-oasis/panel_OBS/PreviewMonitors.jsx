@@ -1,9 +1,52 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLiveKey, liveUrl } from '../../../api/liveChannel';
 import { motion } from 'framer-motion';
 import { MonitorPlay, Tv, Copy, ExternalLink } from 'lucide-react';
 import { useToast } from '../../../react-ui/components/Toast';
 import CtrlCentralOpciones from './CenterControls';
+
+/** Lienzo de 1920x1080 escalado al ancho real del monitor (con escala fija sobraba negro en monitores grandes). */
+const ScaledCanvas = ({ style, children }) => {
+    const ref = useRef(null);
+    const [scale, setScale] = useState(0.125);
+    useEffect(() => {
+        const el = ref.current;
+        if (!el || typeof ResizeObserver === 'undefined') return;
+        const ro = new ResizeObserver(([entry]) => { if (entry.contentRect.width) setScale(entry.contentRect.width / 1920); });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+    return (
+        <div ref={ref} className="absolute inset-0 overflow-hidden bg-black">
+            <div className="absolute top-0 left-0 origin-top-left w-[1920px] h-[1080px]" style={{ ...style, transform: `scale(${scale})` }}>
+                {children}
+            </div>
+        </div>
+    );
+};
+
+/** Monitor: tarjeta neumórfica con la pantalla; etiqueta y acciones flotan dentro, sobre la imagen. */
+const MonitorFrame = ({ label, dotClass, actions, children }) => (
+    <div className="min-w-0 bg-ui-bg shadow-neumorph rounded-3xl p-1.5 border border-white/60">
+        <div className="relative w-full aspect-video rounded-[1.25rem] overflow-hidden bg-black">
+            {children}
+            <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-2 pointer-events-none">
+                <span className="pointer-events-auto inline-flex items-center gap-1.5 bg-black/55 backdrop-blur-md text-white font-moonrising text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full border border-white/10">
+                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${dotClass}`} />
+                    {label}
+                </span>
+                <div className="pointer-events-auto flex items-center gap-1">{actions}</div>
+            </div>
+        </div>
+    </div>
+);
+
+const GlassIcon = ({ title, onClick, children }) => (
+    <button type="button" onClick={onClick} title={title} aria-label={title}
+        className="w-7 h-7 rounded-full bg-black/55 backdrop-blur-md border border-white/10 text-white/85 hover:text-oasis-yellow hover:bg-black/70 flex items-center justify-center transition-colors active:scale-95">
+        {children}
+    </button>
+);
 
 const PreviewMonitors = ({
     liveOverlay,
@@ -112,40 +155,19 @@ const PreviewMonitors = ({
     };
 
     return (
-        <div className="w-full flex flex-col lg:flex-row gap-4 items-center justify-between min-h-[145px] select-none text-gray-900">
+        <div className="oasis-monitors w-full select-none text-gray-900">
 
-            {/* MONITOR 1: Pantalla OBS (Izquierda) */}
-            <div className="flex-1 w-full lg:max-w-[38%] flex flex-col gap-2">
-                <div className="flex flex-row items-center justify-between px-1">
-                    <span className="font-moonrising text-[9.5px] uppercase tracking-widest text-slate-700 bg-white shadow-sm border border-gray-100 px-3 py-1.5 rounded-full flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${isChroma ? 'bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]'}`} />
-                        PANTALLA OBS
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={copyObsUrl}
-                            className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors flex items-center gap-1"
-                            title="Copiar URL transparente para la fuente de Navegador en OBS Studio"
-                        >
-                            <Copy size={9} /> Copiar URL
-                        </button>
-                        <button
-                            onClick={() => window.open(liveUrl('/transmision/overlay', liveKey), 'OBS_WINDOW', 'width=1920,height=1080')}
-                            className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors flex items-center gap-1"
-                        >
-                            <ExternalLink size={9} /> Full
-                        </button>
-                    </div>
-                </div>
-
-                {/* Contenedor de la miniatura a escala */}
-                <div className="w-full aspect-video bg-ui-bg shadow-neumorph rounded-3xl overflow-hidden border border-white/60 relative p-1">
-                    <div className="w-full h-full rounded-2xl overflow-hidden relative bg-black">
-                        {/* Lienzo virtual de 1920x1080 encogido proporcionalmente mediante CSS transform */}
-                        <div
-                            className="absolute origin-top-left w-[1920px] h-[1080px]"
+            {/* MONITOR 1: Pantalla OBS */}
+            <MonitorFrame
+                label={isChroma ? 'OBS · Chroma' : 'OBS'}
+                dotClass={isChroma ? 'bg-blue-400' : 'bg-emerald-400'}
+                actions={<>
+                    <GlassIcon title="Copiar URL para la fuente de navegador de OBS" onClick={copyObsUrl}><Copy size={12} /></GlassIcon>
+                    <GlassIcon title="Abrir OBS a pantalla completa" onClick={() => window.open(liveUrl('/transmision/overlay', liveKey), 'OBS_WINDOW', 'width=1920,height=1080')}><ExternalLink size={12} /></GlassIcon>
+                </>}
+            >
+                        <ScaledCanvas
                             style={{
-                                transform: 'scale(0.125)', // Escala fija para encajar 1920px en el ancho relativo del flexbox
                                 background: isChroma ? '#0000FF' : 'linear-gradient(to bottom, rgba(30,27,75,0.4), rgba(15,23,42,0.7)), url("https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=1920") center/cover'
                             }}
                         >
@@ -157,13 +179,11 @@ const PreviewMonitors = ({
                             ) : (
                                 renderExactOverlayContent(liveOverlay)
                             )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        </ScaledCanvas>
+            </MonitorFrame>
 
-            {/* CONTROL CENTRAL: Botonera Modular Estirada (Centro) */}
-            <div className="w-full lg:w-[24%] shrink-0 flex items-center justify-center py-2 lg:py-0">
+            {/* CONTROL CENTRAL */}
+            <div className="oasis-monitors__ctrl flex items-center justify-center">
                 <CtrlCentralOpciones
                     studioMode={studioMode}
                     setStudioMode={setStudioMode}
@@ -174,29 +194,14 @@ const PreviewMonitors = ({
                 />
             </div>
 
-            {/* MONITOR 2: Pantalla Proyector (Derecha) */}
-            <div className="flex-1 w-full lg:max-w-[38%] flex flex-col gap-2">
-                <div className="flex flex-row items-center justify-between px-1">
-                    <span className="font-moonrising text-[9.5px] uppercase tracking-widest text-slate-700 bg-white shadow-sm border border-gray-100 px-3 py-1.5 rounded-full flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-oasis-yellow animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
-                        PANTALLA PROYECTOR
-                    </span>
-                    <button
-                        onClick={() => window.open(liveUrl('/transmision/proyector', liveKey), 'PROYECTOR_WINDOW', 'width=1920,height=1080')}
-                        className="text-[8px] font-bold bg-white shadow-sm border border-gray-100 px-2 py-0.5 rounded-md hover:text-oasis-orange transition-colors"
-                    >
-                        ↗ Full
-                    </button>
-                </div>
-
-                {/* Contenedor de la miniatura a escala */}
-                <div className="w-full aspect-video bg-ui-bg shadow-neumorph rounded-3xl overflow-hidden border border-white/60 relative p-1">
-                    <div className="w-full h-full rounded-2xl overflow-hidden relative bg-black">
-                        {/* Lienzo virtual de 1920x1080 encogido proporcionalmente */}
-                        <div
-                            className="absolute origin-top-left w-[1920px] h-[1080px]"
+            {/* MONITOR 2: Pantalla Proyector */}
+            <MonitorFrame
+                label="Proyector"
+                dotClass="bg-oasis-yellow"
+                actions={<GlassIcon title="Abrir el proyector a pantalla completa" onClick={() => window.open(liveUrl('/transmision/proyector', liveKey), 'PROYECTOR_WINDOW', 'width=1920,height=1080')}><ExternalLink size={12} /></GlassIcon>}
+            >
+                        <ScaledCanvas
                             style={{
-                                transform: 'scale(0.125)',
                                 background: 'radial-gradient(circle at 50% 20%, rgba(30, 27, 75, 0.6) 0%, rgba(9, 14, 23, 0.95) 100%), url("https://images.unsplash.com/photo-1510784722466-f2aa9c52fff6?q=80&w=1920") center/cover'
                             }}
                         >
@@ -211,10 +216,8 @@ const PreviewMonitors = ({
                                     renderExactOverlayContent(liveOverlay)
                                 )}
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        </ScaledCanvas>
+            </MonitorFrame>
 
         </div>
     );

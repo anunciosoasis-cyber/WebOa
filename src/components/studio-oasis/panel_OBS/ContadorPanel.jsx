@@ -134,25 +134,29 @@ const ContadorPanel = ({
     };
 
     return (
-        <div className="w-full max-w-[320px] select-none text-gray-900 relative h-full" data-purpose="independent-countdown-panel">
+        <div className="oasis-cq w-full select-none text-gray-900 relative h-full" data-purpose="independent-countdown-panel">
             {/* CUADRO PRINCIPAL DEL CONTADOR */}
-            <div className="bg-ui-bg shadow-neumorph rounded-[2.5rem] p-5 border border-white/60 flex flex-col items-center justify-between h-full relative z-10 overflow-hidden">
+            <div className="bg-ui-bg shadow-neumorph rounded-[2.5rem] p-4 sm:p-5 border border-white/60 flex flex-col items-center gap-3 h-full relative z-10 overflow-hidden">
 
                 {/* FONDO PERSONALIZADO DEL CONTADOR (Pattern o Imagen) */}
                 <div className={`absolute inset-0 z-0 ${uploadedImage ? '' : `bg-ui-pattern-${selectedPattern} opacity-[0.03]`}`} style={uploadedImage ? { backgroundImage: `url(${uploadedImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.05 } : {}}></div>
 
                 {/* CABECERA SIMPLIFICADA: TÍTULO TOTALMENTE CENTRADO */}
-                <div className="w-full text-center mt-2 mb-2 shrink-0 z-10">
-                    <h2 className="font-moonrising text-[18px] font-bold tracking-wider text-gray-950 uppercase">
+                <div className="w-full flex items-center justify-between gap-2 shrink-0 z-10">
+                    <h2 className="font-moonrising text-[13px] font-bold tracking-wider text-gray-950 uppercase m-0">
                         CONTADOR
                     </h2>
+                    <button type="button" onClick={() => setIsConfigMode(true)} title="Personalizar contador" aria-label="Personalizar contador"
+                        className="w-8 h-8 bg-ui-bg shadow-neumorph rounded-full border border-white/50 flex items-center justify-center text-gray-500 hover:text-oasis-orange active:scale-95 transition-all">
+                        <Sliders size={13} strokeWidth={2.5} />
+                    </button>
                 </div>
 
                 {/* ZONA CENTRAL: CÍRCULO PERFECTO REDONDO */}
-                <div className="w-full flex-1 flex items-center justify-center my-1 z-10 relative">
-                    <div className="relative w-full max-w-[185px] aspect-square flex flex-col items-center justify-center bg-oasis-yellow rounded-full shadow-[inset_0_4px_10px_rgba(0,0,0,0.15),0_12px_30px_rgba(245,158,11,0.35)] border border-white/20">
+                <div className="w-full flex-1 flex items-center justify-center z-10 relative">
+                    <div className="relative w-full max-w-[9.5rem] aspect-square flex flex-col items-center justify-center bg-oasis-yellow rounded-full shadow-[inset_0_4px_10px_rgba(0,0,0,0.15),0_12px_30px_rgba(245,158,11,0.35)] border border-white/20">
                         {/* Números del contador renderizados estrictamente con tipografía Moonrising */}
-                        <span className="font-moonrising font-bold text-[42px] tracking-tight text-black leading-none mt-1">
+                        <span className="font-moonrising font-bold text-[clamp(1.75rem,22cqi,2.5rem)] tracking-tight text-black leading-none mt-1">
                             {formatTimer()}
                         </span>
                         {timeMetrics?.title && (
@@ -164,7 +168,7 @@ const ContadorPanel = ({
                 </div>
 
                 {/* BLOQUE MULTIMEDIA 1: CONTROLES DE REPRODUCCIÓN */}
-                <div className="bg-ui-bg shadow-neumorph rounded-2xl flex items-center justify-center p-1.5 h-[46px] w-full max-w-[240px] border border-white/50 shrink-0 mb-2 z-10 relative">
+                <div className="bg-ui-bg shadow-neumorph rounded-2xl flex items-center justify-center p-1.5 h-[42px] w-full max-w-[240px] border border-white/50 shrink-0 z-10 relative">
                     <div className="bg-ui-bg shadow-neumorph-inset rounded-xl flex-1 h-[30px] flex items-center justify-between px-4 relative border border-white/20">
                         <button onClick={handleStop} className="w-7 h-7 flex items-center justify-center z-10 group" title="Detener cronómetro"><div className="w-3.5 h-3.5 bg-black rounded-[4px] group-hover:bg-oasis-red active:scale-95 transition-all"></div></button>
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
@@ -180,20 +184,15 @@ const ContadorPanel = ({
                     </div>
                 </div>
 
-                {/* BLOQUE INTERMEDIO: BOTÓN AJUSTES DE CONSOLA */}
-                <div className="w-full max-w-[240px] shrink-0 mb-3 z-10 relative">
-                    <button type="button" onClick={() => setIsConfigMode(true)} className="w-full h-[36px] bg-white shadow-sm hover:shadow-md rounded-xl border border-gray-100/70 text-gray-500 hover:text-oasis-orange text-[9.5px] font-moonrising font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.99]"><Sliders size={12} strokeWidth={2.5} />Personalizar Parámetros</button>
-                </div>
-
                 {/* SELECTORES DE SALIDA AL AIRE (ENVÍO INDIVIDUAL) */}
-                <div className="grid grid-cols-2 gap-3 w-full mt-auto mb-1 shrink-0 z-10 relative">
-                    <button onClick={() => handlePlay('obs')} className={`font-moonrising text-[10px] font-bold py-3.5 rounded-xl uppercase tracking-wider transition-all border flex items-center justify-center gap-1.5 ${isRunning ? 'bg-ui-bg text-gray-400 border-gray-200 opacity-70' : 'bg-white text-gray-700 shadow-sm border-gray-100 hover:scale-[1.02] hover:border-oasis-green hover:text-oasis-green'}`} disabled={isRunning}>
-                        <Monitor size={12} />
+                <div className="grid grid-cols-2 gap-2 w-full max-w-[240px] shrink-0 z-10 relative">
+                    <button onClick={() => handlePlay('obs')} className={`font-moonrising text-[8px] font-bold py-2 rounded-xl uppercase tracking-wider transition-all border flex flex-col items-center justify-center gap-1 min-w-0 ${isRunning ? 'bg-ui-bg text-gray-400 border-gray-200 opacity-70' : 'bg-white text-gray-700 shadow-sm border-gray-100 hover:scale-[1.02] hover:border-oasis-green hover:text-oasis-green'}`} disabled={isRunning} title="Contador solo en OBS">
+                        <Monitor size={13} className="shrink-0" />
                         OBS
                     </button>
-                    <button onClick={() => handlePlay('proyector')} className={`font-moonrising text-[10px] font-bold py-3.5 rounded-xl uppercase tracking-wider transition-all border flex items-center justify-center gap-1.5 ${isRunning ? 'bg-ui-bg text-gray-400 border-gray-200 opacity-70' : 'bg-white text-gray-700 shadow-sm border-gray-100 hover:scale-[1.02] hover:border-oasis-yellow hover:text-oasis-yellow'}`} disabled={isRunning}>
-                        <Tv size={12} />
-                        PROYECTOR
+                    <button onClick={() => handlePlay('proyector')} className={`font-moonrising text-[8px] font-bold py-2 rounded-xl uppercase tracking-wider transition-all border flex flex-col items-center justify-center gap-1 min-w-0 ${isRunning ? 'bg-ui-bg text-gray-400 border-gray-200 opacity-70' : 'bg-white text-gray-700 shadow-sm border-gray-100 hover:scale-[1.02] hover:border-oasis-yellow hover:text-oasis-yellow'}`} disabled={isRunning} title="Contador solo en el proyector">
+                        <Tv size={12} className="shrink-0" />
+                        <span>PROYECTOR</span>
                     </button>
                 </div>
             </div>
@@ -201,7 +200,7 @@ const ContadorPanel = ({
             {/* PANTALLA EMERGENTE (MODAL): EXPANDIDA, SIN BORDE BRILLANTE, CON AJUSTES DE FONDO */}
             <div className={`absolute inset-0 bg-slate-900/30 backdrop-blur-md rounded-[2.5rem] z-50 flex items-center justify-center transition-all duration-300 overflow-hidden ${isConfigMode ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                 {/* Contenedor Modal Plano (Sin border ni shadow extra) */}
-                <div className="w-full h-full bg-ui-bg flex flex-col gap-3 relative p-6 pt-10">
+                <div className="w-full h-full bg-ui-bg flex flex-col gap-3 relative p-5 pt-10 overflow-y-auto custom-scrollbar">
 
                     {/* Botón Cerrar Modal */}
                     <button type="button" onClick={() => setIsConfigMode(false)} className="absolute top-4 right-5 text-gray-400 hover:text-gray-600 transition-colors z-20"><X size={16} strokeWidth={2.5} /></button>
@@ -224,7 +223,7 @@ const ContadorPanel = ({
                                     <LayoutTemplate size={10} /> Estilo Visual (Contador)
                                 </h4>
                             </div>
-                            <div className="grid grid-cols-4 gap-1.5">
+                            <div className="grid grid-cols-2 gap-1.5">
                                 {estilosGraficos.map((estilo) => (
                                     <button
                                         key={estilo}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import apiClient from '../../api/client';
 import { loadCurrentRoom } from '../../api/liveChannel';
+import { Smartphone } from 'lucide-react';
 
 /**
  * "Emparejar app": genera un código de 6 caracteres (válido 10 min) para que OASIS Studio app
@@ -37,10 +38,12 @@ export default function PairAppButton() {
         <>
             <button
                 onClick={open}
-                title={error || 'Conectar OASIS Studio app como control remoto'}
-                className="shrink-0 font-moonrising text-[10px] uppercase tracking-widest bg-white shadow-sm border border-gray-100 px-4 py-3 rounded-2xl hover:text-oasis-orange transition-colors"
+                title={error || 'Emparejar OASIS Studio app (control remoto)'}
+                aria-label="Emparejar app"
+                className="shrink-0 flex flex-col items-center justify-center gap-1 font-moonrising text-[9px] uppercase tracking-widest text-gray-700 bg-white shadow-sm border border-gray-100 px-3 py-2 rounded-2xl hover:text-oasis-orange transition-colors"
             >
-                📱 Emparejar app
+                <Smartphone size={22} strokeWidth={2} />
+                App
             </button>
 
             {pairing && (

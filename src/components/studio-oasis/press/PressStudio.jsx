@@ -1,6 +1,7 @@
 // PressStudio.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Cast, Square, Check, Image as ImageIcon, Plus, X, Presentation } from 'lucide-react';
 import { useToast } from '../../../react-ui/components/Toast';
 import { PresentationManager } from './presentations';
 import PressFileManager, { imageFileToDataUrl } from './PressFileManager';
@@ -247,6 +248,15 @@ export const PressStudio = () => {
     setJustSent(true);
     setTimeout(() => setJustSent(false), 1600);
     showToast(isBlank ? 'Pantalla negra enviada al proyector' : `Diapositiva ${currentSlideIndex + 1} enviada al proyector`, 'success', 2500);
+  };
+
+  // Detener: saca la presentación del aire y deja el proyector limpio (también lo que mandó la app).
+  const handleStopAll = () => {
+    onAirRef.current = false;
+    const payload = { mode: 'hidden', target: 'proyector', timestamp: Date.now() };
+    try { localStorage.setItem('obs_overlay_data', JSON.stringify(payload)); } catch { /* sin espacio: el canal basta */ }
+    pressChannelRef.current?.send({ type: 'broadcast', event: 'ppt_slide', payload });
+    showToast('Presentación detenida: proyector limpio', 'info', 2500);
   };
 
   // Solo cuando el operador cambia de diapositiva o activa la pantalla negra: abrir Studio o añadir
@@ -623,91 +633,60 @@ export const PressStudio = () => {
   }, [slides]);
 
   return (
-    <div className="bg-ui-bg p-6 rounded-[2rem] shadow-neumorph-inset border border-white/40 space-y-6">
+    <div className="oasis-cq oasis-press bg-ui-bg p-4 sm:p-5 rounded-[2rem] shadow-neumorph-inset border border-white/40 space-y-4">
 
-      {/* CABECERA OASIS PRESS COMPACTA Y MODERNA */}
-      <div className="flex items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
-        {/* Identificador de Módulo OASIS PRESS */}
-        <div className="flex items-center gap-2.5">
-          <h3 className="font-moonrising text-base font-black text-gray-950 uppercase tracking-widest">
-            OASIS <span className="text-[#F5A623]">PRESS</span>
-          </h3>
-        </div>
+      {/* CABECERA: título + botonera de iconos (mismo lenguaje que En vivo; el texto va en title/aria-label) */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-moonrising text-[13px] font-bold text-gray-950 uppercase tracking-wider flex items-center gap-2 m-0">
+          <Presentation size={15} className="text-oasis-yellow" />
+          OASIS <span className="text-oasis-yellow">PRESS</span>
+        </h3>
 
-        {/* Botonera: Cargar Archivo como Principal + IconButtons para Proyector y Crear Diapositiva */}
-        <div className="flex items-center gap-3">
+        <div className="bg-ui-bg shadow-neumorph-inset rounded-full p-1.5 flex flex-wrap items-center gap-2 border border-white/30">
+          {/* Al aire */}
           <motion.button
             type="button"
             onClick={handleProjectSlide}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            title="Enviar la diapositiva actual al proyector"
-            className="relative h-12 px-5 rounded-full inline-flex items-center gap-2.5 text-white text-sm font-black uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-500 shadow-[0_8px_20px_-6px_rgba(16,185,129,0.65)] hover:shadow-[0_12px_26px_-6px_rgba(16,185,129,0.8)] transition-shadow"
+            whileTap={{ scale: 0.94 }}
+            title="Proyectar la diapositiva actual"
+            aria-label="Proyectar"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 bg-oasis-yellow text-white shadow-[0_4px_10px_rgba(245,158,11,0.4)] border border-white/40 hover:scale-105"
           >
-            <span className="relative flex w-2.5 h-2.5">
-              <span className="absolute inset-0 rounded-full bg-white/80 animate-ping" />
-              <span className="relative w-2.5 h-2.5 rounded-full bg-white" />
-            </span>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span key={justSent ? 'sent' : 'idle'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
-                {justSent ? 'Enviado ✓' : 'Proyectar'}
-              </motion.span>
-            </AnimatePresence>
+            {justSent ? <Check size={17} strokeWidth={3} /> : <Cast size={17} strokeWidth={2.5} />}
           </motion.button>
+          <button type="button" onClick={handleStopAll} title="Detener la presentación y limpiar el proyector" aria-label="Detener presentación"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 bg-white text-oasis-red shadow-sm border border-gray-100 hover:shadow-md">
+            <Square size={14} strokeWidth={3} fill="currentColor" />
+          </button>
 
+          <span className="w-px h-6 bg-slate-300/70" aria-hidden="true" />
+
+          {/* Contenido */}
           <input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={handleBackgroundFile} />
-          <div className="inline-flex items-center h-12 rounded-full bg-white border border-slate-200 shadow-sm overflow-hidden">
-            <motion.button
-              type="button"
-              onClick={() => bgInputRef.current?.click()}
-              whileTap={{ scale: 0.96 }}
-              title="Imagen de fondo para las diapositivas de texto"
-              className="h-full pl-1.5 pr-4 inline-flex items-center gap-2.5 text-xs font-black uppercase tracking-wider text-slate-700 hover:text-[#5b2ea6]"
-            >
-              <span className="w-9 h-9 rounded-full overflow-hidden grid place-items-center bg-slate-100 border border-slate-200">
-                {pressBackground ? (
-                  <img src={pressBackground} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
-                  </svg>
-                )}
-              </span>
-              Fondo
-            </motion.button>
+          <div className="relative">
+            <button type="button" onClick={() => bgInputRef.current?.click()} title="Imagen de fondo para las diapositivas de texto" aria-label="Fondo"
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 bg-white text-slate-700 shadow-sm border border-gray-100 hover:shadow-md hover:text-oasis-orange overflow-hidden">
+              {pressBackground ? <img src={pressBackground} alt="" className="w-full h-full object-cover" /> : <ImageIcon size={16} strokeWidth={2.2} />}
+            </button>
             {pressBackground && (
               <button type="button" onClick={clearBackground} aria-label="Quitar imagen de fondo" title="Quitar imagen de fondo"
-                className="h-full px-3 border-l border-slate-200 text-slate-400 hover:text-red-500 text-sm font-black">✕</button>
+                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-200 text-slate-500 hover:text-oasis-red flex items-center justify-center shadow-sm">
+                <X size={10} strokeWidth={3} />
+              </button>
             )}
           </div>
-
-          <motion.button
-            type="button"
-            onClick={() => setShowAddSlideModal(true)}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            title="Crear una diapositiva o un anuncio"
-            className="h-12 pl-3 pr-5 rounded-full inline-flex items-center gap-2.5 text-white text-sm font-black uppercase tracking-wider bg-gradient-to-r from-[#5b2ea6] to-[#7c3aed] shadow-[0_8px_20px_-6px_rgba(91,46,166,0.7)] hover:shadow-[0_12px_26px_-6px_rgba(124,58,237,0.8)] transition-shadow"
-          >
-            <span className="w-7 h-7 rounded-full bg-white/20 grid place-items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </span>
-            Nueva diapositiva
-          </motion.button>
-
-          <PressUploader
-            isLoading={isLoading}
-            onFileUpload={handleFileUpload}
-          />
+          <button type="button" onClick={() => setShowAddSlideModal(true)} title="Nueva diapositiva o anuncio" aria-label="Nueva diapositiva"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 bg-white text-slate-700 shadow-sm border border-gray-100 hover:shadow-md hover:text-oasis-orange">
+            <Plus size={17} strokeWidth={2.5} />
+          </button>
+          <PressUploader isLoading={isLoading} onFileUpload={handleFileUpload} />
         </div>
       </div>
 
-      {/* ÁREA PRINCIPAL (8 COLS PREVIEW + 4 COLS QR REMOTE CON EQUILIBRIO VISUAL) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        <div className="lg:col-span-8 flex flex-col justify-between h-full">
+      {/* ÁREA PRINCIPAL: vista previa a la izquierda; tira de diapositivas y QR en una columna a la derecha
+          (en escritorio todo cabe en una pantalla; la columna toma el alto de la vista previa y la tira se desplaza) */}
+      <div className="oasis-press-grid">
+        <div className="flex flex-col justify-between min-w-0">
           <PressPreview
             background={pressBackground}
             slides={slides}
@@ -719,26 +698,28 @@ export const PressStudio = () => {
           />
         </div>
 
-        <div className="lg:col-span-4 flex flex-col h-full">
-          <PressRemote
-            remoteUrl={remoteUrl}
-            qrApiUrl={qrApiUrl}
-          />
+        <div className="oasis-press-side min-w-0">
+          <div className="oasis-press-side__inner">
+            <div className="oasis-press-side__thumbs">
+              <PressThumbnails
+                background={pressBackground}
+                onEdit={setEditingIndex}
+                onDuplicate={duplicateSlide}
+                onMove={moveSlide}
+                onDelete={deleteSlide}
+                slides={slides}
+                currentSlideIndex={currentSlideIndex}
+                setCurrentSlideIndex={setCurrentSlideIndex}
+                setIsBlank={setIsBlank}
+              />
+            </div>
+            <PressRemote
+              remoteUrl={remoteUrl}
+              qrApiUrl={qrApiUrl}
+            />
+          </div>
         </div>
       </div>
-
-      {/* CARRUSEL DE MINIATURAS EN PARTE INFERIOR */}
-      <PressThumbnails
-        background={pressBackground}
-        onEdit={setEditingIndex}
-        onDuplicate={duplicateSlide}
-        onMove={moveSlide}
-        onDelete={deleteSlide}
-        slides={slides}
-        currentSlideIndex={currentSlideIndex}
-        setCurrentSlideIndex={setCurrentSlideIndex}
-        setIsBlank={setIsBlank}
-      />
 
       {editingIndex !== null && slides[editingIndex] && (
         <PressEditModal

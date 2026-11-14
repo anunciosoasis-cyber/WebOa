@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Play } from 'lucide-react';
+import { Play, EyeOff, Megaphone, LayoutTemplate, Sparkles, PanelRight, Film } from 'lucide-react';
+
+// Mismos iconos que el selector central de estilos
+const ESTILO_ICONOS = { CLASSIC: [LayoutTemplate, 'Clásico'], MINIMAL: [Sparkles, 'Minimalista'], SIDEBAR: [PanelRight, 'Sidebar'], CINEMATIC: [Film, 'Cinemático'] };
 
 const BannersPanel = ({
     preacher,
@@ -61,33 +64,39 @@ const BannersPanel = ({
 
     return (
         <div
-            className="bg-ui-bg shadow-neumorph rounded-[2.5rem] p-4 border border-white/60 w-full h-auto xl:h-full flex flex-col justify-between select-none text-gray-900 min-h-0"
+            className="bg-ui-bg shadow-neumorph rounded-[2.5rem] p-4 sm:p-5 border border-white/60 w-full flex flex-col gap-3 select-none text-gray-900 min-h-0"
             data-purpose="banners-hardware-panel"
         >
             {/* CABECERA: TÍTULO Y SELECTOR DE ESTILO MAESTRO UNIFICADO */}
-            <div className="flex flex-col items-center shrink-0 w-full mb-3 gap-2">
-                <h3 className="font-moonrising font-bold text-gray-950 tracking-wider text-[12px] uppercase">
-                    ESTILOS GLOBALES & BANNERS
+            <div className="flex flex-col items-center shrink-0 w-full gap-2">
+                <h3 className="font-moonrising font-bold text-gray-950 tracking-wider text-[13px] uppercase flex items-center gap-2 m-0" title="Estilos globales y banners">
+                    <Megaphone size={14} className="text-oasis-yellow" /> BANNERS
                 </h3>
 
-                <div className="bg-white shadow-sm rounded-full p-0.5 h-[26px] w-full border border-gray-100/70 relative flex items-center">
+                <div className="bg-white shadow-sm rounded-full p-0.5 h-[30px] w-full border border-gray-100/70 relative flex items-center">
                     <div className={`absolute top-0.5 bottom-0.5 bg-oasis-yellow/90 rounded-full shadow-sm transition-all duration-300 ease-out z-10 ${getLeftPosition(currentDisplayTemplate)}`} />
-                    {estilos.map((estilo) => (
-                        <button
-                            key={estilo}
-                            type="button"
-                            onClick={() => handleTemplateChangeImmediate(estilo)}
-                            className={`flex-1 h-full font-moonrising text-[7.5px] font-bold uppercase tracking-wider z-20 flex items-center justify-center transition-colors ${currentDisplayTemplate === estilo ? 'text-gray-950 font-black' : 'text-gray-400 hover:text-slate-600'
-                                }`}
-                        >
-                            {estilo}
-                        </button>
-                    ))}
+                    {estilos.map((estilo) => {
+                        const [Icon, nombre] = ESTILO_ICONOS[estilo];
+                        const activo = currentDisplayTemplate === estilo;
+                        return (
+                            <button
+                                key={estilo}
+                                type="button"
+                                title={`Estilo ${nombre}`}
+                                aria-label={`Estilo ${nombre}`}
+                                aria-pressed={activo}
+                                onClick={() => handleTemplateChangeImmediate(estilo)}
+                                className={`flex-1 h-full z-20 flex items-center justify-center transition-colors ${activo ? 'text-gray-950' : 'text-gray-400 hover:text-slate-600'}`}
+                            >
+                                <Icon size={15} strokeWidth={activo ? 2.5 : 2} />
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
             {/* SEGMENTADOR DE CONTENIDO (Pestañas Unificadas) */}
-            <div className="bg-ui-bg shadow-neumorph-inset rounded-full p-1 h-[34px] w-full relative flex flex-row items-center border border-white/30 mb-2 shrink-0">
+            <div className="bg-ui-bg shadow-neumorph-inset rounded-full p-1 h-[34px] w-full relative flex flex-row items-center border border-white/30 shrink-0">
                 <div
                     className={`absolute top-0.5 bottom-0.5 w-[47%] bg-white rounded-full shadow-sm border border-gray-100 transition-all duration-300 ease-out z-10 ${activeTab === 'preacher' ? 'left-1' : 'left-[51%]'
                         }`}
@@ -109,7 +118,7 @@ const BannersPanel = ({
             </div>
 
             {/* ÁREA DE CONTENIDO: REJILLA DE DOS COLUMNAS */}
-            <div className="flex-1 flex flex-col justify-center min-h-0 w-full mb-0">
+            <div className="flex-1 flex flex-col justify-center min-h-0 w-full">
 
                 {/* VISTA 1: FORMULARIO PREDICADOR */}
                 {activeTab === 'preacher' && (
@@ -183,13 +192,14 @@ const BannersPanel = ({
             </div>
 
             {/* BOTONERA MULTIMEDIA FLUIDA: Orgánica en el flujo y del ancho de la barra de estilos */}
-            <div className="bg-ui-bg shadow-neumorph rounded-2xl flex items-center justify-center p-1 h-[42px] w-full border border-white/50 shrink-0 mt-3">
+            <div className="bg-ui-bg shadow-neumorph rounded-2xl flex items-center justify-center p-1 h-[42px] w-full border border-white/50 shrink-0">
                 <div className="bg-ui-bg shadow-neumorph-inset rounded-full flex-1 h-[28px] flex items-center justify-between px-6 relative border border-white/20">
                     <button
                         onClick={() => pushToOBS('hidden')}
-                        className="text-[9px] font-moonrising font-bold text-oasis-red hover:text-red-600 active:scale-95 transition-all z-10 tracking-wider"
+                        title="Ocultar banner" aria-label="Ocultar banner"
+                        className="w-6 h-6 flex items-center justify-center text-oasis-red hover:text-red-600 active:scale-95 transition-all z-10"
                     >
-                        OCULTAR
+                        <EyeOff size={14} strokeWidth={2.5} />
                     </button>
 
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
@@ -198,6 +208,7 @@ const BannersPanel = ({
                                 ? () => pushToOBS('preacher', preacher.name, preacher.title, { template: globalTemplate })
                                 : () => { saveToAnnouncementsMemory(announcement); pushToOBS('anuncio', announcement.title, announcement.content, { template: globalTemplate }); }
                             }
+                            title="Enviar banner al aire" aria-label="Enviar banner al aire"
                             className="w-7 h-7 bg-oasis-yellow rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(245,158,11,0.4)] text-white hover:scale-105 active:scale-95 transition-all border border-white/40"
                         >
                             <Play size={10} fill="currentColor" className="ml-0.5" />

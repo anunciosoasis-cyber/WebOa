@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, EyeOff, Eye } from 'lucide-react';
 import SlideCanvasView from './SlideCanvasView';
 
 export const PressPreview = ({
@@ -38,22 +39,21 @@ export const PressPreview = ({
   };
 
   return (
-    <div className="bg-[#EEF1F6] p-5 sm:p-6 rounded-[32px] border border-white/80 shadow-[10px_10px_25px_rgba(166,180,200,0.35),-10px,-10px_25px_rgba(255,255,255,0.9)] flex flex-col justify-between space-y-5 h-full w-full text-slate-800 font-sans">
+    <div className="bg-ui-bg shadow-neumorph p-4 rounded-[2rem] border border-white/60 flex flex-col justify-between space-y-3 h-full w-full text-slate-800 font-sans">
 
       {/* HEADER: BADGES DE ESTADO ESTILO PÍLDORA */}
       <div className="flex flex-wrap items-center justify-between gap-3">
 
         {/* Badge Izquierdo: Estado de Pantalla */}
-        <div className="inline-flex items-center gap-2 bg-white px-4 py-1.5 rounded-full shadow-[2px_3px_8px_rgba(0,0,0,0.04)] border border-slate-200/80">
-          <span className={`w-2.5 h-2.5 rounded-full ${isBlank ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
-          <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest">
+        <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100">
+          <span className={`w-2 h-2 rounded-full ${isBlank ? 'bg-oasis-red animate-pulse' : 'bg-oasis-yellow'}`} />
+          <span className="font-moonrising text-[9.5px] text-slate-700 uppercase tracking-widest">
             {isBlank ? 'PANTALLA EN NEGRO' : 'PANTALLA PROYECTOR'}
           </span>
         </div>
 
         {/* Badge Derecho: Contador de Diapositiva */}
-        <div className="inline-flex items-center gap-2 bg-white px-4 py-1.5 rounded-full shadow-[2px_3px_8px_rgba(0,0,0,0.04)] border border-slate-200/80">
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">SLIDE</span>
+        <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100" title="Diapositiva actual">
           <span className="text-xs font-black text-slate-900 font-mono">
             {totalSlides > 0 ? currentSlideIndex + 1 : 0} / {totalSlides}
           </span>
@@ -62,7 +62,7 @@ export const PressPreview = ({
       </div>
 
       {/* MARCO DE PANTALLA PRINCIPAL */}
-      <div className="relative w-full aspect-video max-h-[380px] bg-black rounded-[24px] p-2.5 shadow-[inset_0_4px_12px_rgba(0,0,0,0.6)] border border-slate-800/80 overflow-hidden flex items-center justify-center">
+      <div className="relative w-full max-w-[max(420px,calc((100vh-500px)*16/9))] mx-auto aspect-video bg-black rounded-[24px] p-2.5 shadow-[inset_0_4px_12px_rgba(0,0,0,0.6)] border border-slate-800/80 overflow-hidden flex items-center justify-center">
         {isLoading ? (
           <div className="text-center py-10 space-y-3">
             <div className="w-9 h-9 border-3 border-[#FFB800] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -94,62 +94,44 @@ export const PressPreview = ({
         )}
       </div>
 
-      {/* CONTROLES ESTILO PANEL MODERNO */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
-
-        {/* Barra de Controles de Navegación */}
-        <div className="inline-flex items-center gap-2 bg-white/90 p-1.5 rounded-full shadow-[4px_6px_16px_rgba(166,180,200,0.25)] border border-slate-200/80 w-full sm:w-auto justify-center">
-
-          {/* Botón Anterior */}
-          <button
-            onClick={handlePrev}
-            disabled={currentSlideIndex === 0}
-            className="w-10 h-10 rounded-full bg-[#EEF1F6] hover:bg-slate-200 active:scale-95 disabled:opacity-30 disabled:hover:bg-[#EEF1F6] text-slate-800 font-extrabold flex items-center justify-center transition-all shadow-sm text-sm"
-            title="Diapositiva Anterior"
-          >
-            ◀
-          </button>
-
-          {/* Botón Acción Principal: Alternar Pantalla Negra */}
-          <button
-            onClick={handleToggleBlank}
-            className={`px-5 py-2.5 rounded-full text-xs font-black tracking-wider uppercase transition-all duration-200 flex items-center gap-2 shadow-md active:scale-95 ${isBlank
-                ? 'bg-red-500 text-white shadow-red-500/30'
-                : 'bg-[#FFB800] hover:bg-[#F3AD00] text-slate-950 shadow-[0_4px_14px_rgba(255,184,0,0.4)]'
-              }`}
-          >
-            {isBlank ? 'RESTAURAR' : 'PANTALLA NEGRA'}
-          </button>
-
-          {/* Botón Siguiente */}
-          <button
-            onClick={handleNext}
-            disabled={currentSlideIndex === totalSlides - 1}
-            className="w-10 h-10 rounded-full bg-[#EEF1F6] hover:bg-slate-200 active:scale-95 disabled:opacity-30 disabled:hover:bg-[#EEF1F6] text-slate-800 font-extrabold flex items-center justify-center transition-all shadow-sm text-sm"
-            title="Siguiente Diapositiva"
-          >
-            ▶
-          </button>
+      {/* CONTROLES: cápsula hundida con flechas + pantalla negra (como En vivo) y barra de progreso */}
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="bg-ui-bg shadow-neumorph rounded-2xl flex items-center justify-center p-1.5 h-[46px] border border-white/50">
+          <div className="bg-ui-bg shadow-neumorph-inset rounded-full w-[150px] h-[32px] flex items-center justify-between px-2 relative border border-white/20">
+            <button onClick={handlePrev} disabled={currentSlideIndex === 0} title="Diapositiva anterior" aria-label="Diapositiva anterior"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-gray-600 hover:text-oasis-orange active:scale-90 disabled:opacity-30 transition-all z-10">
+              <ChevronLeft size={16} strokeWidth={3} />
+            </button>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+              <button onClick={handleToggleBlank} aria-pressed={isBlank}
+                title={isBlank ? 'Restaurar la diapositiva' : 'Pantalla negra'} aria-label={isBlank ? 'Restaurar la diapositiva' : 'Pantalla negra'}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white border border-white/40 hover:scale-105 active:scale-95 transition-all ${isBlank
+                  ? 'bg-oasis-red shadow-[0_3px_8px_rgba(239,68,68,0.4)] animate-pulse'
+                  : 'bg-gray-900 shadow-[0_3px_8px_rgba(0,0,0,0.3)]'}`}>
+                {isBlank ? <Eye size={16} strokeWidth={2.5} /> : <EyeOff size={16} strokeWidth={2.5} />}
+              </button>
+            </div>
+            <button onClick={handleNext} disabled={currentSlideIndex >= totalSlides - 1} title="Diapositiva siguiente" aria-label="Diapositiva siguiente"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-gray-600 hover:text-oasis-orange active:scale-90 disabled:opacity-30 transition-all z-10">
+              <ChevronRight size={16} strokeWidth={3} />
+            </button>
+          </div>
         </div>
 
-        {/* Deslizador de Navegación Neumórfico */}
-        <div className="flex items-center gap-3 bg-white/80 px-4 py-2.5 rounded-full border border-slate-200/80 shadow-[2px_3px_8px_rgba(0,0,0,0.03)] w-full sm:max-w-xs">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider shrink-0">
-            PROGRESO
-          </span>
+        <div className="flex flex-1 min-w-[10rem] max-w-xs items-center gap-3 bg-ui-bg shadow-neumorph-inset px-4 h-[38px] rounded-full border border-white/30" title="Ir a una diapositiva">
           <input
             type="range"
             min="0"
             max={Math.max(0, totalSlides - 1)}
             value={currentSlideIndex}
             onChange={handleSliderChange}
-            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#FFB800]"
+            aria-label="Progreso de la presentación"
+            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#FFB800]"
           />
-          <span className="text-xs font-bold text-slate-800 font-mono shrink-0">
+          <span className="text-[11px] font-bold text-slate-800 font-mono shrink-0">
             {totalSlides > 0 ? currentSlideIndex + 1 : 0}/{totalSlides}
           </span>
         </div>
-
       </div>
 
     </div>

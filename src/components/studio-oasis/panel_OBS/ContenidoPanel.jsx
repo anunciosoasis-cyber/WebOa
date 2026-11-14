@@ -40,21 +40,18 @@ const ContenidoPanel = ({
 
     return (
         <div
-            className="bg-ui-bg shadow-neumorph rounded-[2.5rem] p-6 border border-white/60 h-auto xl:h-full flex flex-col justify-between w-full select-none text-gray-900 min-h-0"
+            className="oasis-cq bg-ui-bg shadow-neumorph rounded-[2.5rem] p-4 sm:p-5 border border-white/60 flex flex-col gap-4 w-full select-none text-gray-900 min-h-0"
             data-purpose="production-content-switcher"
         >
             {/* ENCABEZADO CON PESTAÑAS (TABS) */}
-            <div className="flex items-center justify-between mb-3">
-                <h3 className="text-center font-moonrising font-bold text-gray-950 tracking-wider text-[13px] uppercase flex-1">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-moonrising font-bold text-gray-950 tracking-wider text-[13px] uppercase flex items-center gap-2 m-0">
+                    {activeTab === 'biblia' ? <Book size={14} className="text-oasis-yellow" /> : <Music size={14} className="text-oasis-yellow" />}
                     CONTENIDO
                 </h3>
-                <div className="text-gray-400 text-[9px]">
-                    {activeTab === 'biblia' ? <Book size={12} /> : <Music size={12} />}
-                </div>
-            </div>
 
-            {/* SEGMENTADOR SUPERIOR (Cápsula Horizontal Neumórfica de Alta Gama) */}
-            <div className="bg-ui-bg shadow-neumorph-inset rounded-full p-1 h-[44px] w-full max-w-[260px] mx-auto relative flex flex-row items-center border border-white/30 mb-4">
+            {/* SEGMENTADOR (misma fila que el título para ahorrar alto) */}
+            <div className="bg-ui-bg shadow-neumorph-inset rounded-full p-1 h-[38px] flex-1 min-w-[11rem] max-w-[260px] relative flex flex-row items-center border border-white/30">
                 {/* Píldora Desplazable Amarilla de Selección Activa */}
                 <div
                     className={`absolute top-1 bottom-1 w-[47%] bg-oasis-yellow rounded-full shadow-sm transition-all duration-300 ease-out z-10 ${activeTab === 'biblia' ? 'left-1' : 'left-[51%]'
@@ -75,12 +72,13 @@ const ContenidoPanel = ({
                     HIMNARIO
                 </button>
             </div>
+            </div>
 
             {/* LAYOUT DE TRABAJO EN DOS COLUMNAS REJILLA COMPACTA */}
-            <div className="flex flex-col md:flex-row items-stretch gap-4 flex-grow min-h-0">
+            <div className="oasis-split">
 
                 {/* COLUMNA IZQUIERDA: Selectores de Datos Mecánicos */}
-                <div className="flex flex-col gap-3 w-full md:w-[55%] h-max min-h-0 shrink-0">
+                <div className="flex flex-col justify-center gap-3 min-w-0">
 
                     {/* BÚSQUEDA INTELIGENTE */}
                     <div className="bg-ui-bg shadow-neumorph-inset rounded-xl h-[38px] flex items-center border border-white/20 px-3 gap-2">
@@ -266,11 +264,11 @@ const ContenidoPanel = ({
                 </div>
 
                 {/* COLUMNA DERECHA: Monitor Escroleable en Negro / PREVIEW (Maqueta Fiel) */}
-                <div className="relative w-full md:w-[45%] min-h-[160px] md:min-h-0 mt-4 md:mt-0 shrink-0">
+                <div className="relative min-w-0 min-h-[180px]">
                     <div className="absolute inset-0 bg-black rounded-3xl p-3 border border-slate-900 overflow-hidden flex flex-col items-center justify-center shadow-xl">
 
                         {/* Contenido Dinámico de Texto de la Biblia o Himnario (Vista Previa de 1 elemento) */}
-                        <div className="w-full max-h-full overflow-y-auto custom-scrollbar px-3 py-2 text-center select-text relative z-10">
+                        <div className="w-full max-h-full overflow-y-auto custom-scrollbar px-3 pt-2 pb-7 text-center select-text relative z-10">
                         {activeTab === 'biblia' ? (
                             selectedVerseObj ? (
                                 <div className="animate-in fade-in zoom-in duration-300 w-full">

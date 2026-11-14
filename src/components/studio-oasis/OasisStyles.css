@@ -58,3 +58,79 @@
     font-style: normal;
     font-display: swap;
 }
+/* =====================================================================
+   Layout adaptable del Estudio: cada zona se acomoda según el espacio que
+   TIENE (container queries), no según la ventana: el menú lateral abierto o
+   cerrado cambia ese espacio. Sin anchos fijos: mínimos con min()/minmax().
+   ===================================================================== */
+.oasis-cq { container-type: inline-size; }
+
+/* Encabezado: marca + herramientas. Las herramientas crecen para llenar cada fila (sin huecos) */
+.oasis-header { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+/* Título al lado de la barra; si no cabe, baja sola y queda centrada (margin auto). */
+.oasis-header__brand { flex: 0 0 auto; margin-inline: auto; }
+.oasis-header__tools { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.75rem; flex: 1 1 24rem; min-width: 0; }
+.oasis-header__tools > * { flex: 1 1 4.5rem; min-width: 0; }
+.oasis-header__tools > .oasis-header__fecha { flex: 2 1 8rem; }
+.oasis-header__tools > .oasis-header__orden { flex: 999 1 min(100%, 18rem); }
+
+/* Monitores: uno sobre otro → los dos lado a lado con los controles debajo → OBS | controles | Proyector */
+.oasis-monitors { display: grid; gap: 1rem; align-items: center; grid-template-columns: minmax(0, 1fr); }
+.oasis-monitors__ctrl { order: 3; }
+/* Estilos: en fila bajo los monitores; 2×2 en la columna central estrecha */
+.oasis-ctrl-estilos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@container (min-width: 34rem) {
+    .oasis-monitors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .oasis-monitors__ctrl { grid-column: 1 / -1; }
+}
+@container (min-width: 36rem) {
+    .oasis-monitors { grid-template-columns: minmax(0, 1fr) minmax(5.75rem, 6rem) minmax(0, 1fr); }
+    .oasis-monitors__ctrl { order: 0; grid-column: auto; }
+    .oasis-ctrl-estilos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* En vivo: Contenido | Banners | Contador. En medio: Contenido arriba, Banners y Contador lado a lado */
+.oasis-live-grid { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 30rem) {
+    .oasis-live-grid { grid-template-columns: minmax(0, 1.4fr) minmax(12rem, 1fr); }
+    .oasis-live-grid__contenido { grid-column: 1 / -1; }
+}
+@container (min-width: 56rem) {
+    .oasis-live-grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(13rem, 0.7fr); }
+    .oasis-live-grid__contenido { grid-column: auto; }
+}
+
+/* Contenido: buscador y selectores | vista previa (lado a lado cuando el panel tiene sitio) */
+.oasis-split { display: flex; flex-direction: column; align-items: stretch; gap: 1rem; flex-grow: 1; min-height: 0; }
+.oasis-split > * { width: 100%; }
+@container (min-width: 19rem) {
+    .oasis-split { flex-direction: row; }
+    .oasis-split > :first-child { flex: 1.2 1 0; }
+    .oasis-split > :last-child { flex: 1 1 0; }
+}
+
+/* Oasis Press: vista previa | columna con la tira (vertical, con su propio scroll) y el QR */
+.oasis-press-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+.oasis-press-side__inner { display: flex; flex-direction: column; gap: 1rem; }
+.oasis-press { container-name: press; }
+@container press (min-width: 33rem) {
+    .oasis-press-grid { grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.42fr); }
+    .oasis-press-side { position: relative; min-height: 20rem; }
+    .oasis-press-side__inner { position: absolute; inset: 0; }
+    .oasis-press-side__thumbs { flex: 1 1 0; min-height: 0; }
+    .oasis-press-grid .oasis-thumbs { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+    .oasis-press-grid .oasis-thumbs__list { flex-direction: column; overflow-x: hidden; overflow-y: auto; flex: 1 1 0; min-height: 0; }
+    .oasis-press-grid .oasis-thumbs__item { width: 100%; }
+}
+
+/* Tarjeta del control remoto: se compacta cuando la columna lateral es estrecha (sin tamaños fijos de página). */
+.oasis-press-side__inner { container-type: inline-size; }
+@container (max-width: 19rem) {
+    .oasis-remote { gap: 0.75rem; padding: 0.75rem; }
+    .oasis-remote__desc { display: none; }
+    .oasis-remote__qr { width: 4.5rem; height: 4.5rem; }
+}
+@container (max-width: 19rem) { .oasis-thumbs__hint { display: none !important; } }
+
+/* responsive.css fuerza h2/h3 grandes en móvil con !important; los títulos de panel del estudio conservan su tamaño */
+.oasis-live-grid :is(h2, h3) { font-size: 13px !important; }

@@ -34,14 +34,17 @@ export const PressThumbnails = ({
   // Borrar pide un segundo clic (2 s) para evitar borrados accidentales en pleno culto
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-  // Solo desplaza la tira horizontalmente: scrollIntoView arrastraba toda la página hasta aquí al abrir Studio
+  // Solo desplaza la tira (horizontal en pantallas chicas, vertical en la columna de escritorio):
+  // scrollIntoView arrastraba toda la página hasta aquí al abrir Studio
   useEffect(() => {
     const container = containerRef.current;
     const active = activeSlideRef.current;
     if (!container || !active) return;
-    const offset = active.getBoundingClientRect().left - container.getBoundingClientRect().left;
+    const c = container.getBoundingClientRect();
+    const a = active.getBoundingClientRect();
     container.scrollTo({
-      left: container.scrollLeft + offset - (container.clientWidth - active.clientWidth) / 2,
+      left: container.scrollLeft + (a.left - c.left) - (container.clientWidth - active.clientWidth) / 2,
+      top: container.scrollTop + (a.top - c.top) - (container.clientHeight - active.clientHeight) / 2,
       behavior: 'smooth',
     });
   }, [currentSlideIndex]);
@@ -55,21 +58,21 @@ export const PressThumbnails = ({
   if (!slides.length) return null;
 
   return (
-    <div className="bg-[#EEF1F6] p-4 rounded-[28px] border border-white/80 shadow-[10px_10px_25px_rgba(166,180,200,0.35),-10px_-10px_25px_rgba(255,255,255,0.9)] font-sans">
-      <div className="flex items-center justify-between px-2 mb-3">
+    <div className="bg-ui-bg shadow-neumorph p-4 rounded-[2rem] border border-white/60 font-sans oasis-thumbs">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 mb-3 shrink-0">
         <div className="inline-flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#FFB800]" />
-          <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider">
+          <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider whitespace-nowrap">
             Tira de Diapositivas
           </span>
-          <span className="text-[10px] font-semibold text-slate-400 normal-case hidden sm:inline">· pasa el cursor para editar</span>
+          <span className="text-[10px] font-semibold text-slate-400 normal-case oasis-thumbs__hint hidden sm:inline">· pasa el cursor para editar</span>
         </div>
         <span className="text-[10px] font-extrabold text-slate-400 font-mono">
           {slides.length} SLIDES
         </span>
       </div>
 
-      <div ref={containerRef} className="flex gap-3.5 overflow-x-auto p-2 pb-3 scroll-smooth custom-scrollbar">
+      <div ref={containerRef} className="flex gap-3.5 overflow-x-auto p-2 pb-3 scroll-smooth custom-scrollbar oasis-thumbs__list">
         {slides.map((s, idx) => {
           const isActive = currentSlideIndex === idx;
           const isVideo = s.mediaType === 'video' || s.type === 'video';
@@ -77,7 +80,7 @@ export const PressThumbnails = ({
           const askingDelete = confirmDeleteId === key;
 
           return (
-            <div key={key} ref={isActive ? activeSlideRef : null} className="group relative shrink-0 w-48">
+            <div key={key} ref={isActive ? activeSlideRef : null} className="oasis-thumbs__item group relative shrink-0 w-48">
               <button
                 type="button"
                 onClick={() => { setCurrentSlideIndex(idx); setIsBlank?.(false); }}
