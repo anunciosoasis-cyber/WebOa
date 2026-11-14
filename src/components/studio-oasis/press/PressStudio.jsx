@@ -277,13 +277,12 @@ export const PressStudio = () => {
     return true;
   };
 
-  // Lo que llega de la app se inserta después de la actual y pasa al aire: quien lo envió espera verlo.
+  // Lo que llega de la app se inserta después de la actual, sin cambiar lo que está al aire.
   const insertFromApp = (incoming, message) => {
     if (!incoming.length) return;
     const at = Math.min(remoteStateRef.current?.currentSlide ?? 0, slideCountRef.current);
+    // Se añade después de la actual sin salir al aire: solo se proyecta cuando el operador la elige o la envía
     setSlides((prev) => [...prev.slice(0, at), ...incoming, ...prev.slice(at)]);
-    setCurrentSlideIndex(at);
-    setIsBlank(false);
     showToast(message, 'success', 4000);
   };
 
@@ -308,7 +307,7 @@ export const PressStudio = () => {
       return;
     }
     const incoming = fresh.flatMap(deckSlides);
-    insertFromApp(incoming, `${incoming.length} diapositiva(s) de "${fresh.map((d) => d.title).join('", "')}" recibidas desde la app y al aire`);
+    insertFromApp(incoming, `${incoming.length} diapositiva(s) de "${fresh.map((d) => d.title).join('", "')}" recibidas desde la app (en la lista, sin proyectar)`);
   };
 
   // Subidas de la app que terminaron con el Estudio cerrado (el aviso en vivo se perdió): se recuperan al abrir.
@@ -371,7 +370,7 @@ export const PressStudio = () => {
         const media = appMedia(payload.slide);
         const slide = { id: newSlideId(), hidden: {}, ...appSlideFields(payload.slide), ...appMediaFields(media) };
         slide.style = { ...DEFAULT_SLIDE_STYLE, ...slide.style };
-        applyOnce(payload.opId ?? newSlideId(), () => insertFromApp([slide], `Diapositiva "${slide.title}" recibida desde la app y al aire`));
+        applyOnce(payload.opId ?? newSlideId(), () => insertFromApp([slide], `Diapositiva "${slide.title}" recibida desde la app (en la lista, sin proyectar)`));
         sendState();
       })
       .on('broadcast', { event: 'ppt_update_slide' }, ({ payload }) => {
