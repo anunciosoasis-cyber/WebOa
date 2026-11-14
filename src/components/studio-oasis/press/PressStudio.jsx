@@ -91,6 +91,30 @@ const appMediaFields = (media) => (!media ? { type: 'styled', background: null, 
   : media.mediaType === 'image' ? { type: 'styled', background: media.mediaUrl, mediaUrl: null, fileUrl: null }
     : { ...media, type: 'hybrid_announcement', background: null });
 
+// Lo que el control web necesita para pintar la diapositiva igual que aquí (SlideCanvasView).
+// maxData: tope de imágenes data: (las https pasan siempre); con 0 no viaja ningún medio (la tira ya lleva mediaUrl/thumbnail).
+const remoteMedia = (u, maxData) => (typeof u === 'string' && (/^https?:\/\//.test(u) || (maxData > 0 && u.startsWith('data:image/') && u.length <= maxData)) ? u : null);
+const remoteView = (sl, maxData) => {
+  if (!sl) return null;
+  const ev = sl.eventData || {};
+  const txt = (v) => (typeof v === 'string' ? v.slice(0, 500) : undefined);
+  return {
+    title: sl.title || '',
+    subtitle: sl.subtitle || '',
+    type: sl.type || 'styled',
+    mediaType: sl.mediaType,
+    style: sl.style,
+    hidden: sl.hidden,
+    bg: typeof sl.bg === 'string' ? sl.bg : undefined,
+    eventData: { tag: txt(ev.tag), speaker: txt(ev.speaker), eventDate: txt(ev.eventDate), location: txt(ev.location), description: txt(ev.description) },
+    elements: Array.isArray(sl.elements)
+      ? sl.elements.slice(0, 20).map((el) => ({ type: el.type, content: el.type === 'image' ? remoteMedia(el.content, maxData) : txt(el.content) })).filter((el) => el.content)
+      : undefined,
+    mediaUrl: remoteMedia(sl.mediaUrl || sl.fileUrl, maxData) || remoteMedia(sl.thumbnailUrl, maxData),
+    background: remoteMedia(sl.background, maxData),
+  };
+};
+
 const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank, appliedOps = [], globalBackground = null) => {
   const active = allSlides[activeIndex];
   const next = allSlides[activeIndex + 1];
@@ -123,8 +147,13 @@ const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank,
       thumbnailUrl: next?.thumbnailUrl || nextImg,
       background: shareableUrl(next.background) || null,
     } : null,
+    // Para el control web: diapositivas completas (estilo, textos, fondos) como las pinta el Estudio
+    activeView: remoteView(active, 350_000),
+    nextView: remoteView(next, 350_000),
+    background: remoteMedia(globalBackground, 350_000),
     slidesSummary: allSlides.map((sl, i) => ({
       index: i + 1,
+      view: remoteView(sl, 0),
       id: String(sl.id ?? i),
       title: sl.title || `Diapositiva ${i + 1}`,
       subtitle: sl.subtitle || '',

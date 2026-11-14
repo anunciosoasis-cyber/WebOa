@@ -5,61 +5,24 @@ import { realtime } from '../../../api/realtime';
 import { liveKeyFromUrl, pressChannel } from '../../../api/liveChannel';
 import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MonitorOff, Monitor, Radio, WifiOff,
-  LoaderCircle, Presentation, ArrowRight, Images,
+  LoaderCircle, Presentation, Images, Film, Flag,
 } from 'lucide-react';
+import SlideCanvasView from './SlideCanvasView';
 
 const GOLD = '#F59E0B';
 
-/** Vista de una diapositiva (al aire, siguiente o miniatura). El contenido conserva sus colores; el marco es claro. */
-const SlideMiniPreview = ({ slide, title, url, isBlank, isSmall = false }) => {
-  if (isBlank) {
-    return (
-      <div className="w-full h-full bg-black flex items-center justify-center" aria-label="Pantalla negra">
-        <MonitorOff className="text-white/70" size={isSmall ? 16 : 34} aria-hidden="true" />
-      </div>
-    );
-  }
-
-  // 1. Imagen pura o preview visual (subida directa, PDF o miniatura)
-  const imageSrc = url || slide?.fileUrl || slide?.thumbnailUrl || slide?.thumbnail;
-  if (imageSrc) {
-    return (
-      <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
-        <img src={imageSrc} alt={title || 'Diapositiva'} className="w-full h-full object-contain" />
-      </div>
-    );
-  }
-
-  // 2. Diapositiva de texto con fondo personalizado o del sistema
-  const bg = slide?.background;
-  const slideTitle = slide?.title || title || 'Diapositiva';
-  const slideSubtitle = slide?.subtitle || '';
-
-  return (
-    <div className="relative w-full h-full overflow-hidden flex flex-col items-center justify-center text-center p-2.5">
-      {bg ? (
-        <>
-          <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-black/70" />
-        </>
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#2a1650] via-[#160d29] to-[#0b0714]" />
-      )}
-      <div className="relative z-10 w-full px-1.5">
-        <h4
-          className={`font-black leading-tight line-clamp-2 uppercase tracking-wide ${isSmall ? 'text-[8px]' : 'text-sm'}`}
-          style={{ color: '#FBBF24', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
-        >
-          {slideTitle}
-        </h4>
-        {slideSubtitle && !isSmall && (
-          <p className="text-[11px] text-white/85 font-semibold line-clamp-1 mt-1" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
-            {slideSubtitle}
-          </p>
-        )}
-      </div>
-    </div>
-  );
+/** Diapositiva de la tira tal como la pinta el Estudio. Sin `view` (Estudio antiguo) usa los campos sueltos. */
+const summarySlide = (sl) => {
+  const styled = (sl.type || 'styled') === 'styled';
+  const video = sl.mediaType === 'video' || sl.type === 'video';
+  return {
+    ...sl,
+    ...(sl.view || {}),
+    // En la tira el fondo de un cartel viaja como mediaUrl (contrato de la app); los vídeos no se reproducen en miniatura
+    mediaUrl: styled || video ? null : sl.thumbnail || sl.mediaUrl || null,
+    fileUrl: null,
+    background: styled ? sl.mediaUrl || null : null,
+  };
 };
 
 /** Botón redondo de la barra de control: solo ícono, con nombre accesible. */
@@ -77,8 +40,9 @@ const ControlButton = ({ label, onClick, disabled, children, variant = 'soft', s
       disabled={disabled}
       aria-label={label}
       title={label}
-      className={`${sizes[size]} ${variants[variant]} rounded-full grid place-items-center transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:pointer-events-none focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-300`}
-      style={variant === 'primary' ? { background: `linear-gradient(145deg, #FBBF24, ${GOLD})` } : undefined}
+      // !duration: la CSS global pone transition 0.4s !important a todos los botones y el toque se sentía lento
+      className={`${sizes[size]} ${variants[variant]} shrink-0 rounded-full grid place-items-center !transition-[transform,background-color,color,box-shadow] !duration-150 active:scale-90 disabled:!bg-slate-100 disabled:!text-slate-300 disabled:!shadow-none disabled:pointer-events-none [touch-action:manipulation] focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-300`}
+      style={variant === 'primary' && !disabled ? { background: `linear-gradient(145deg, #FBBF24, ${GOLD})` } : undefined}
     >
       {children}
     </button>
@@ -116,6 +80,7 @@ export const RemoteView = () => {
           setSessionData((prev) => ({
             ...prev,
             ...payload,
+            serverSlide: payload.currentSlide,
             slidesSummary: Array.isArray(payload.slidesSummary) && payload.slidesSummary.length > 0
               ? payload.slidesSummary
               : prev.slidesSummary,
@@ -137,6 +102,35 @@ export const RemoteView = () => {
       channelRef.current = null;
       realtime.removeChannel(channel);
     };
+  }, []);
+
+  // Solo en esta vista: viewport-fit=cover para que env(safe-area-inset-*) funcione (notch / barra inferior)
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    const prev = meta.content;
+    meta.content = `${prev}, viewport-fit=cover`;
+    return () => { meta.content = prev; };
+  }, []);
+
+  // Teclado / clicker Bluetooth: flechas, AvPág/RePág, espacio, Inicio/Fin, B o punto para pantalla negra
+  const sendRef = useRef(null);
+  useEffect(() => {
+    const keys = {
+      ArrowRight: 'NEXT', ArrowDown: 'NEXT', PageDown: 'NEXT', ' ': 'NEXT', Enter: 'NEXT',
+      ArrowLeft: 'PREV', ArrowUp: 'PREV', PageUp: 'PREV', Backspace: 'PREV',
+      Home: 'FIRST', End: 'LAST', b: 'TOGGLE_BLANK', B: 'TOGGLE_BLANK', '.': 'TOGGLE_BLANK',
+    };
+    const onKey = (e) => {
+      const action = keys[e.key];
+      if (!action || e.altKey || e.ctrlKey || e.metaKey) return;
+      // Enter/espacio sobre un botón ya lo activan; no duplicar
+      if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('button')) return;
+      e.preventDefault();
+      sendRef.current?.(action);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   // Vibración háptica en smartphones
@@ -171,12 +165,36 @@ export const RemoteView = () => {
     });
   };
 
+  // Respeta los límites para no enviar comandos inútiles (teclado o gesto en la primera/última)
+  const go = (action) => {
+    const { currentSlide: c, totalSlides: t } = sessionData;
+    if ((action === 'NEXT' || action === 'LAST') && c >= t) return;
+    if ((action === 'PREV' || action === 'FIRST') && c <= 1) return;
+    sendCommand(action);
+  };
+  sendRef.current = go;
+
+  // Deslizar sobre la diapositiva al aire: izquierda = siguiente, derecha = anterior
+  const swipeRef = useRef(null);
+  const onPointerDown = (e) => { swipeRef.current = { x: e.clientX, y: e.clientY }; };
+  const onPointerUp = (e) => {
+    const start = swipeRef.current;
+    swipeRef.current = null;
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    go(dx < 0 ? 'NEXT' : 'PREV');
+  };
+
   // Desplazar tira de miniaturas al cambiar de diapositiva
   useEffect(() => {
-    if (!thumbnailsScrollRef.current) return;
-    const activeEl = thumbnailsScrollRef.current.querySelector('[data-active="true"]');
+    const strip = thumbnailsScrollRef.current;
+    const activeEl = strip?.querySelector('[data-active="true"]');
+    // Solo la tira (scrollIntoView también movía la página y sacaba de vista la diapositiva al aire)
     if (activeEl) {
-      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      const offset = activeEl.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft;
+      strip.scrollTo({ left: offset - (strip.clientWidth - activeEl.offsetWidth) / 2, behavior: 'smooth' });
     }
   }, [sessionData.currentSlide]);
 
@@ -192,37 +210,47 @@ export const RemoteView = () => {
   const progress = totalSlides > 0 ? Math.min(100, (currentSlide / totalSlides) * 100) : 0;
   const atStart = currentSlide <= 1;
   const atEnd = currentSlide >= totalSlides;
+  const summary = sessionData.slidesSummary || [];
+  const fromSummary = (n) => summary.find((sl) => sl.index === n);
+  // La vista completa del Estudio si ya corresponde a la diapositiva actual; si no (toque optimista), la de la tira
+  const synced = sessionData.serverSlide === currentSlide;
+  const liveSlide = (synced && sessionData.activeView) || (fromSummary(currentSlide) && summarySlide(fromSummary(currentSlide)))
+    || sessionData.activeView || { title: sessionData.activeSlideTitle, fileUrl: sessionData.activeSlideUrl };
+  const nextSlide = atEnd ? null : (synced && sessionData.nextView) || (fromSummary(currentSlide + 1) && summarySlide(fromSummary(currentSlide + 1)))
+    || { title: sessionData.nextSlideTitle, fileUrl: sessionData.nextSlideUrl };
+  const background = sessionData.background || null;
 
   return (
-    <div className="min-h-[100dvh] bg-[#F5F6FA] text-slate-900 font-sans select-none">
-      <div className="max-w-md mx-auto px-4 pb-[calc(150px+env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))]">
+    // [&_img]: la animación global de <img> (oasisFadeIn, forwards) anularía los filtros de desenfoque de SlideCanvasView
+    <div className="min-h-[100dvh] bg-[#F5F6FA] text-slate-900 font-sans select-none overflow-x-hidden [touch-action:manipulation] [-webkit-tap-highlight-color:transparent] [&_img]:[animation:none]">
+      <div className="max-w-md md:max-w-xl mx-auto pl-[max(16px,env(safe-area-inset-left))] pr-[max(16px,env(safe-area-inset-right))] pb-[calc(150px+env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))]">
         {/* Barra superior: marca + estado */}
-        <header className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-2.5">
+        <header className="flex items-center justify-between gap-3 py-2">
+          <div className="flex items-center gap-2.5 min-w-0">
             <span
-              className="w-10 h-10 rounded-2xl grid place-items-center text-white shadow-[0_6px_16px_rgba(245,158,11,0.35)]"
+              className="w-10 h-10 shrink-0 rounded-2xl grid place-items-center text-white shadow-[0_6px_16px_rgba(245,158,11,0.35)]"
               style={{ background: `linear-gradient(145deg, #FBBF24, ${GOLD})` }}
               aria-hidden="true"
             >
               <Presentation size={20} />
             </span>
-            <div className="leading-none">
-              <h1 className="font-moonrising text-[17px] font-black tracking-wide">
+            <div className="leading-none min-w-0">
+              <h1 className="font-moonrising !text-[17px] font-black tracking-wide">
                 Oasis<span style={{ color: GOLD }}>Press</span>
               </h1>
-              <p className="font-moonrising text-[11px] tracking-wide text-slate-400 mt-1 truncate max-w-[170px]">{sessionData.title}</p>
+              <p className="text-[12px] font-semibold text-slate-500 mt-1 truncate">{sessionData.title}</p>
             </div>
           </div>
 
           <span
             role="status"
             aria-label={live ? 'Conectado en vivo' : 'Sin conexión con el Estudio'}
-            className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-[12px] font-bold ${
+            className={`shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-[12px] font-bold ${
               live ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
             }`}
           >
             {live ? <Radio size={15} className="animate-pulse" aria-hidden="true" /> : <LoaderCircle size={15} className="animate-spin" aria-hidden="true" />}
-            {live ? 'En vivo' : '…'}
+            {live ? 'En vivo' : 'Conectando'}
           </span>
         </header>
 
@@ -233,15 +261,25 @@ export const RemoteView = () => {
           </div>
         )}
 
-        {/* Al aire */}
+        {/* Al aire: se ve igual que en el Estudio; deslizar cambia de diapositiva */}
         <section aria-label="Diapositiva al aire" className="mt-4">
-          <div className="relative w-full aspect-video rounded-[22px] overflow-hidden bg-black shadow-[0_14px_40px_rgba(15,23,42,0.18)]">
-            <SlideMiniPreview
-              slide={sessionData.activeSlide}
-              title={sessionData.activeSlideTitle}
-              url={sessionData.activeSlideUrl}
-              isBlank={isBlank}
-            />
+          <div
+            className="relative mx-auto aspect-video rounded-[22px] overflow-hidden bg-black shadow-[0_14px_40px_rgba(15,23,42,0.18)] [touch-action:pan-y]"
+            // En horizontal (pantalla baja) la diapositiva se achica para no quedar tapada por la barra de control
+            style={{ width: 'min(100%, calc((100dvh - 260px - env(safe-area-inset-bottom)) * 16 / 9))', minWidth: '200px' }}
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
+            onPointerCancel={() => { swipeRef.current = null; }}
+            onDragStart={(e) => e.preventDefault()}
+          >
+            <SlideCanvasView slide={liveSlide} background={background} rounded={false} />
+            {isBlank && (
+              <div className="absolute inset-0 bg-black/85 grid place-items-center" aria-label="Pantalla negra">
+                <span className="inline-flex items-center gap-2 h-9 px-4 rounded-full bg-white/10 text-white/90 text-[12px] font-bold">
+                  <MonitorOff size={16} aria-hidden="true" /> Pantalla negra
+                </span>
+              </div>
+            )}
             <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 h-6 px-2 rounded-full bg-black/55 backdrop-blur text-white text-[10px] font-black tracking-wider">
               <span className={`w-1.5 h-1.5 rounded-full ${isBlank ? 'bg-slate-400' : 'bg-red-500 animate-pulse'}`} aria-hidden="true" />
               {isBlank ? 'OFF' : 'LIVE'}
@@ -250,35 +288,50 @@ export const RemoteView = () => {
               {currentSlide}/{totalSlides}
             </span>
           </div>
+          <p className="m-0 mt-2 px-1 text-[14px] font-bold text-slate-800 truncate text-center">{liveSlide?.title || `Diapositiva ${currentSlide}`}</p>
         </section>
 
-        {/* Siguiente */}
-        <section aria-label="Siguiente diapositiva" className="mt-3 flex items-center gap-3 rounded-[20px] bg-white p-2.5 shadow-[0_4px_18px_rgba(15,23,42,0.06)]">
-          <div className="w-24 aspect-video rounded-xl overflow-hidden bg-black shrink-0">
+        {/* Siguiente: tocarla la proyecta */}
+        <button
+          type="button"
+          onClick={() => go('NEXT')}
+          disabled={atEnd}
+          aria-label={atEnd ? 'Fin de la presentación' : `Proyectar la siguiente: ${nextSlide?.title || ''}`}
+          className="mt-3 w-full flex items-center gap-3 rounded-[20px] bg-white p-2.5 text-left shadow-[0_4px_18px_rgba(15,23,42,0.06)] !transition-transform !duration-150 active:scale-[0.98] disabled:active:scale-100 [touch-action:manipulation]"
+        >
+          <span className="block w-28 aspect-video rounded-xl overflow-hidden bg-slate-100 shrink-0">
             {atEnd ? (
-              <div className="w-full h-full bg-slate-100 grid place-items-center">
-                <Monitor size={18} className="text-slate-300" aria-hidden="true" />
-              </div>
+              <span className="w-full h-full grid place-items-center">
+                <Flag size={18} className="text-slate-300" aria-hidden="true" />
+              </span>
             ) : (
-              <SlideMiniPreview slide={sessionData.nextSlide} title={sessionData.nextSlideTitle} url={sessionData.nextSlideUrl} isSmall />
+              <SlideCanvasView slide={nextSlide} background={background} rounded={false} />
             )}
-          </div>
-          <ArrowRight size={16} className="text-amber-500 shrink-0" aria-hidden="true" />
-          <p className="m-0 min-w-0 flex-1 text-[13px] font-bold text-slate-700 truncate">
-            {atEnd ? 'Fin' : sessionData.nextSlideTitle}
-          </p>
-        </section>
+          </span>
+          <span className="block min-w-0 flex-1">
+            <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-amber-500">
+              {atEnd ? 'Última diapositiva' : `Siguiente · ${currentSlide + 1}`}
+            </span>
+            <span className="block mt-1 text-[14px] font-bold text-slate-800 line-clamp-2">
+              {atEnd ? 'Fin de la presentación' : nextSlide?.title || `Diapositiva ${currentSlide + 1}`}
+            </span>
+          </span>
+          {!atEnd && <ChevronRight size={20} className="text-slate-300 shrink-0" aria-hidden="true" />}
+        </button>
 
         {/* Todas las diapositivas: tocar una la pone al aire */}
-        {sessionData.slidesSummary?.length > 0 && (
-          <section aria-label="Diapositivas" className="mt-4">
-            <div className="flex items-center gap-1.5 px-1 mb-2 text-slate-400">
-              <Images size={14} aria-hidden="true" />
-              <span className="text-[12px] font-bold tabular-nums">{sessionData.slidesSummary.length}</span>
+        {summary.length > 0 && (
+          <section aria-label="Diapositivas" className="mt-5">
+            <div className="flex items-center justify-between px-1 mb-2 text-slate-500">
+              <span className="inline-flex items-center gap-1.5 text-[12px] font-bold">
+                <Images size={14} aria-hidden="true" /> Diapositivas
+              </span>
+              <span className="text-[12px] font-bold tabular-nums">{summary.length}</span>
             </div>
-            <div ref={thumbnailsScrollRef} className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scroll-smooth [scrollbar-width:none]" style={{ scrollSnapType: 'x mandatory' }}>
-              {sessionData.slidesSummary.map((sl, i) => {
+            <div ref={thumbnailsScrollRef} className="flex gap-2.5 overflow-x-auto pt-1.5 pb-3 -mx-4 px-4 scroll-smooth [scrollbar-width:none] [touch-action:pan-x]" style={{ scrollSnapType: 'x proximity' }}>
+              {summary.map((sl, i) => {
                 const isActive = currentSlide === sl.index;
+                const video = sl.mediaType === 'video' || sl.type === 'video';
                 return (
                   <button
                     key={sl.id || sl.index || i}
@@ -287,20 +340,26 @@ export const RemoteView = () => {
                     aria-label={`Proyectar diapositiva ${sl.index}: ${sl.title}`}
                     aria-current={isActive ? 'true' : undefined}
                     onClick={() => sendCommand('GOTO', { index: i })}
-                    className={`relative shrink-0 w-28 aspect-video rounded-2xl overflow-hidden bg-black transition-all duration-150 active:scale-95 ${
-                      isActive ? 'ring-[3px] ring-amber-400 ring-offset-2 ring-offset-[#F5F6FA] shadow-[0_8px_20px_rgba(245,158,11,0.35)]' : 'shadow-[0_4px_12px_rgba(15,23,42,0.12)]'
-                    }`}
+                    className="shrink-0 w-32 sm:w-36 text-left !transition-transform !duration-150 active:scale-95 [touch-action:manipulation]"
                     style={{ scrollSnapAlign: 'center' }}
                   >
-                    {sl.thumbnail ? (
-                      <img src={sl.thumbnail} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <SlideMiniPreview slide={sl} title={sl.title} isSmall />
-                    )}
-                    <span className={`absolute top-1 left-1 min-w-[20px] h-5 px-1 rounded-full grid place-items-center text-[10px] font-black tabular-nums ${
-                      isActive ? 'bg-amber-400 text-slate-900' : 'bg-black/60 text-white'
+                    <span className={`relative block aspect-video rounded-2xl overflow-hidden bg-black ${
+                      isActive ? 'ring-[3px] ring-amber-400 ring-offset-2 ring-offset-[#F5F6FA] shadow-[0_8px_20px_rgba(245,158,11,0.35)]' : 'shadow-[0_4px_12px_rgba(15,23,42,0.12)]'
                     }`}>
-                      {sl.index}
+                      <SlideCanvasView slide={summarySlide(sl)} background={background} rounded={false} />
+                      <span className={`absolute top-1 left-1 min-w-[20px] h-5 px-1 rounded-full grid place-items-center text-[10px] font-black tabular-nums ${
+                        isActive ? 'bg-amber-400 text-slate-900' : 'bg-black/60 text-white'
+                      }`}>
+                        {sl.index}
+                      </span>
+                      {video && (
+                        <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white grid place-items-center" aria-hidden="true">
+                          <Film size={11} />
+                        </span>
+                      )}
+                    </span>
+                    <span className={`block mt-1.5 px-0.5 text-[11px] font-semibold truncate ${isActive ? 'text-slate-900' : 'text-slate-500'}`}>
+                      {sl.title}
                     </span>
                   </button>
                 );
@@ -315,7 +374,7 @@ export const RemoteView = () => {
         aria-label="Controles de la presentación"
         className="fixed inset-x-0 bottom-0 z-20 bg-white/95 backdrop-blur-xl rounded-t-[30px] shadow-[0_-10px_40px_rgba(15,23,42,0.10)]"
       >
-        <div className="max-w-md mx-auto px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
+        <div className="max-w-md md:max-w-xl mx-auto pl-[max(20px,env(safe-area-inset-left))] pr-[max(20px,env(safe-area-inset-right))] pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
             <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: GOLD }} />
           </div>

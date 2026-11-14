@@ -136,8 +136,8 @@ const Body = ({ slide, isBlank, background }) => {
             </div>
           )}
           {show('title', slide.title) && (
-            <h3 className="mt-[1.6cqw] min-h-0 uppercase leading-[1.02] tracking-wide line-clamp-3 [overflow-wrap:break-word]"
-              style={{ ...titleFont(st), fontSize: titleSize, color: st.textColor, textShadow: '0 0.5cqw 2.5cqw rgba(0,0,0,0.6)' }}>
+            <h3 className="mt-[1.6cqw] min-h-0 ![font-size:var(--title-size)] uppercase leading-[1.02] tracking-wide line-clamp-3 [overflow-wrap:break-word]"
+              style={{ ...titleFont(st), '--title-size': titleSize, color: st.textColor, textShadow: '0 0.5cqw 2.5cqw rgba(0,0,0,0.6)' }}>
               {slide.title}
             </h3>
           )}
@@ -168,7 +168,7 @@ const Body = ({ slide, isBlank, background }) => {
           {slide.elements.map((el, idx) => {
             if (el.type === 'heading') {
               return (
-                <h2 key={el.id || idx} className="text-[4.6cqw] mb-[2cqw] tracking-wider leading-tight max-w-[85%] [overflow-wrap:anywhere]" style={{ ...titleFont(st), color: st.accentColor }}>
+                <h2 key={el.id || idx} className="!text-[4.6cqw] mb-[2cqw] tracking-wider leading-tight max-w-[85%] [overflow-wrap:anywhere]" style={{ ...titleFont(st), color: st.accentColor }}>
                   {el.content}
                 </h2>
               );
@@ -208,7 +208,7 @@ const Body = ({ slide, isBlank, background }) => {
           </span>
         )}
         {show('title', slide.title) && (
-          <h2 className="text-[5cqw] tracking-wider leading-tight max-w-[90%] [overflow-wrap:anywhere]" style={{ ...titleFont(st), textShadow: '0 0.4cqw 2cqw rgba(0,0,0,0.45)' }}>
+          <h2 className="!text-[5cqw] tracking-wider leading-tight max-w-[90%] [overflow-wrap:anywhere]" style={{ ...titleFont(st), textShadow: '0 0.4cqw 2cqw rgba(0,0,0,0.45)' }}>
             {slide.title}
           </h2>
         )}
@@ -231,6 +231,7 @@ const Body = ({ slide, isBlank, background }) => {
   );
 };
 
+// Títulos con !important: responsive.css fuerza h2/h3 a tamaño fijo en móvil (!important) y los desbordaba
 export const SlideCanvasView = ({ slide, isBlank, background = null, rounded = true }) => (
   <div className={`relative w-full h-full overflow-hidden bg-black [container-type:size] ${rounded ? 'rounded-2xl' : ''}`}>
     <Body slide={slide} isBlank={isBlank} background={slide?.background || background} />
