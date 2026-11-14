@@ -48,15 +48,19 @@ const AdminLayout = () => {
         textMain: mode === 'dark' ? '#FFFFFF' : '#2a144a'
     };
 
-    // Tema Morado Oscuro para el Menú Lateral
+    // Tema Morado Oscuro con gradiente profundo y sobrio para el Menú Lateral
     const sidebarColors = {
-        bg: mode === 'dark' ? '#160a26' : '#2a144a', // Morado oscuro profundo y elegante
-        text: 'rgba(255, 255, 255, 0.65)',
+        bg: mode === 'dark'
+            ? 'linear-gradient(180deg, #1E0E38 0%, #140926 55%, #0B0516 100%)'
+            : 'linear-gradient(180deg, #2A144A 0%, #1C0D34 55%, #110722 100%)',
+        dockBg: mode === 'dark' ? '#0B0515' : '#0F071C',
+        dockCardBg: mode === 'dark' ? '#130923' : '#180D2B',
+        text: 'rgba(255, 255, 255, 0.68)',
         textActive: '#F59E0B',
         accent: '#F59E0B',
-        hoverBg: 'rgba(255, 255, 255, 0.04)',
-        activeBg: 'rgba(255, 255, 255, 0.08)',
-        border: 'rgba(255, 255, 255, 0.05)'
+        hoverBg: 'rgba(255, 255, 255, 0.05)',
+        activeBg: 'rgba(255, 255, 255, 0.09)',
+        border: 'rgba(255, 255, 255, 0.08)'
     };
 
     const allLinks = [
@@ -101,76 +105,99 @@ const AdminLayout = () => {
                     <div style={{
                         background: sidebarColors.bg,
                         border: `1px solid ${sidebarColors.border}`,
-                        borderRadius: '24px',
+                        borderRadius: '26px',
                         overflow: 'hidden',
                         height: '100%',
                         display: 'flex', flexDirection: 'column',
-                        boxShadow: '4px 4px 24px rgba(0,0,0,0.15)'
+                        boxShadow: '0 22px 48px -14px rgba(18, 12, 31, 0.42)'
                     }}>
                         {/* Header Marca */}
-                        <div style={{ 
-                            padding: '40px 20px 30px', 
-                            display: 'flex', 
+                        <div style={{
+                            padding: '32px 20px 22px',
+                            display: 'flex',
                             flexDirection: 'column',
-                            alignItems: 'center', 
+                            alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '10px',
-                            minHeight: '100px'
+                            gap: '6px',
+                            minHeight: '96px'
                         }}>
                             <AnimatePresence mode="wait">
                                 {!isCollapsed ? (
-                                    <motion.span 
+                                    <motion.div
                                         key="full"
-                                        initial={{ opacity: 0, scale: 0.8 }} 
+                                        initial={{ opacity: 0, scale: 0.92 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.8 }}
+                                        exit={{ opacity: 0, scale: 0.92 }}
                                         transition={{ duration: 0.2 }}
-                                        style={{ fontFamily: 'Moonrising', fontSize: '1.8rem', letterSpacing: '2px', color: '#FFFFFF', textAlign: 'center' }}
+                                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
                                     >
-                                        OASIS
-                                    </motion.span>
+                                        <span style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '3.2px', color: 'rgba(245, 158, 11, 0.85)', textTransform: 'uppercase' }}>
+                                            Panel Oasis
+                                        </span>
+                                        <span style={{ fontFamily: 'Moonrising', fontSize: '1.85rem', letterSpacing: '2.5px', color: '#FFFFFF', textAlign: 'center', lineHeight: 1.05 }}>
+                                            OASIS
+                                        </span>
+                                    </motion.div>
                                 ) : (
-                                    <motion.span 
+                                    <motion.span
                                         key="short"
-                                        initial={{ opacity: 0, scale: 1.2 }}
+                                        initial={{ opacity: 0, scale: 1.1 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 1.2 }}
+                                        exit={{ opacity: 0, scale: 1.1 }}
                                         transition={{ duration: 0.2 }}
-                                        style={{ fontFamily: 'Moonrising', fontSize: '0.7rem', letterSpacing: '1px', color: '#FFFFFF', textAlign: 'center' }}
+                                        style={{ fontFamily: 'Moonrising', fontSize: '0.72rem', letterSpacing: '1px', color: '#FFFFFF', textAlign: 'center' }}
                                     >
                                         OASIS
                                     </motion.span>
                                 )}
                             </AnimatePresence>
+                            <div style={{
+                                width: isCollapsed ? '28px' : '72%',
+                                height: '1px',
+                                marginTop: '12px',
+                                background: 'linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.35), transparent)'
+                            }} />
                         </div>
 
                         {/* Navegación Orgánica */}
-                        <nav style={{ flex: 1, padding: '0 10px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
+                        <nav style={{ flex: 1, padding: '4px 12px 12px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
                             {links.map(({ to, label, Icon }) => {
                                 const active = to === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(to);
                                 return (
                                     <Link key={to} to={to} style={{
-                                        display: 'flex', alignItems: 'center', gap: '15px',
-                                        padding: '12px', borderRadius: '10px',
+                                        display: 'flex', alignItems: 'center', gap: '14px',
+                                        padding: '11px 14px', borderRadius: '12px',
                                         textDecoration: 'none',
                                         background: active ? sidebarColors.activeBg : 'transparent',
+                                        border: active ? '1px solid rgba(245, 158, 11, 0.16)' : '1px solid transparent',
                                         color: active ? sidebarColors.textActive : sidebarColors.text,
                                         transition: 'all 0.2s ease',
                                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                                         position: 'relative'
                                     }}
-                                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = sidebarColors.hoverBg; e.currentTarget.style.color = '#FFF'; }}
+                                    onMouseEnter={e => { if (!active) { e.currentTarget.style.background = sidebarColors.hoverBg; e.currentTarget.style.color = '#FFF'; } }}
                                     onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = sidebarColors.text; } else { e.currentTarget.style.color = sidebarColors.textActive; } }}
                                     >
-                                        <Icon size={20} strokeWidth={active ? 2.5 : 2} style={{ flexShrink: 0 }} />
+                                        {active && !isCollapsed && (
+                                            <span style={{
+                                                position: 'absolute',
+                                                left: '0px',
+                                                top: '22%',
+                                                bottom: '22%',
+                                                width: '3px',
+                                                borderRadius: '0 4px 4px 0',
+                                                backgroundColor: sidebarColors.accent
+                                            }} />
+                                        )}
+                                        <Icon size={19} strokeWidth={active ? 2.4 : 1.9} style={{ flexShrink: 0 }} />
                                         <AnimatePresence>
                                             {!isCollapsed && (
-                                                <motion.span 
+                                                <motion.span
                                                     initial={{ opacity: 0, width: 0 }}
                                                     animate={{ opacity: 1, width: 'auto' }}
                                                     exit={{ opacity: 0, width: 0 }}
                                                     transition={{ duration: 0.2 }}
-                                                    style={{ fontWeight: active ? 600 : 400, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden' }}
+                                                    style={{ fontWeight: active ? 700 : 500, fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', letterSpacing: '0.1px' }}
                                                 >
                                                     {label}
                                                 </motion.span>
@@ -181,59 +208,112 @@ const AdminLayout = () => {
                             })}
                         </nav>
 
-                        {/* Footer / Utilities con Perfil */}
-                        <div style={{ padding: '20px 10px', borderTop: `1px solid ${sidebarColors.border}`, display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            
+                        {/* Footer / Utilities con Perfil (Sólido, sobrio y sin transparencias excesivas) */}
+                        <div style={{
+                            padding: '16px 12px 18px',
+                            background: sidebarColors.dockBg,
+                            borderTop: `1px solid ${sidebarColors.border}`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px'
+                        }}>
                             {/* Opciones (Theme, Logout, Landing) */}
-                            <div style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'space-around', alignItems: 'center', gap: isCollapsed ? '15px' : '0', flexDirection: isCollapsed ? 'column' : 'row' }}>
-                                <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: sidebarColors.accent, cursor: 'pointer', padding: '5px' }} title="Cambiar Tema">
-                                    {mode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                            <div style={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'space-between', alignItems: 'center', gap: isCollapsed ? '10px' : '8px', flexDirection: isCollapsed ? 'column' : 'row' }}>
+                                <button
+                                    onClick={toggleMode}
+                                    style={{
+                                        flex: isCollapsed ? 'none' : 1,
+                                        background: sidebarColors.dockCardBg,
+                                        border: `1px solid ${sidebarColors.border}`,
+                                        borderRadius: '10px',
+                                        color: sidebarColors.accent,
+                                        cursor: 'pointer',
+                                        padding: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    title="Cambiar Tema"
+                                >
+                                    {mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                                 </button>
-                                <button onClick={signOut} style={{ background: 'none', border: 'none', color: '#FF3B30', cursor: 'pointer', padding: '5px' }} title="Cerrar Sesión">
-                                    <LogOut size={18} />
+                                <button
+                                    onClick={signOut}
+                                    style={{
+                                        flex: isCollapsed ? 'none' : 1,
+                                        background: sidebarColors.dockCardBg,
+                                        border: `1px solid ${sidebarColors.border}`,
+                                        borderRadius: '10px',
+                                        color: '#F87171',
+                                        cursor: 'pointer',
+                                        padding: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    title="Cerrar Sesión"
+                                >
+                                    <LogOut size={16} />
                                 </button>
-                                <button onClick={() => window.open('/', '_blank')} style={{ background: 'none', border: 'none', color: sidebarColors.text, cursor: 'pointer', padding: '5px' }} title="Ir a la Landing Page">
-                                    <ExternalLink size={18} />
+                                <button
+                                    onClick={() => window.open('/', '_blank')}
+                                    style={{
+                                        flex: isCollapsed ? 'none' : 1,
+                                        background: sidebarColors.dockCardBg,
+                                        border: `1px solid ${sidebarColors.border}`,
+                                        borderRadius: '10px',
+                                        color: 'rgba(255,255,255,0.75)',
+                                        cursor: 'pointer',
+                                        padding: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    title="Ir a la Landing Page"
+                                >
+                                    <ExternalLink size={16} />
                                 </button>
                             </div>
 
                             {/* Perfil de Usuario */}
                             <AnimatePresence mode="wait">
                                 {!isCollapsed ? (
-                                    <motion.div 
+                                    <motion.div
                                         key="expanded-profile"
                                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-                                        style={{ 
-                                            display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', 
-                                            background: 'rgba(0,0,0,0.2)', borderRadius: '16px' 
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px',
+                                            background: sidebarColors.dockCardBg,
+                                            border: `1px solid ${sidebarColors.border}`,
+                                            borderRadius: '14px'
                                         }}
                                     >
-                                        <div style={{ 
-                                            width: '36px', height: '36px', borderRadius: '50%', 
-                                            background: '#10B981', color: '#FFF', display: 'flex', 
-                                            alignItems: 'center', justifyContent: 'center', 
-                                            fontWeight: 'bold', fontSize: '1.1rem',
+                                        <div style={{
+                                            width: '36px', height: '36px', borderRadius: '50%',
+                                            background: '#10B981', color: '#FFF', display: 'flex',
+                                            alignItems: 'center', justifyContent: 'center',
+                                            fontWeight: 'bold', fontSize: '1.05rem',
                                             flexShrink: 0
                                         }}>
                                             {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                                            <span style={{ fontWeight: '600', fontSize: '0.9rem', color: '#FFF', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                                            <span style={{ fontWeight: '700', fontSize: '0.88rem', color: '#FFF', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                                                 {user?.name || 'Administrador'}
                                             </span>
-                                            <span style={{ fontSize: '0.7rem', color: '#10B981', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#10B981', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
                                                 {role || 'ADMIN'}
                                             </span>
                                         </div>
                                     </motion.div>
                                 ) : (
-                                    <motion.div 
+                                    <motion.div
                                         key="collapsed-profile"
                                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-                                        style={{ 
-                                            width: '32px', height: '32px', borderRadius: '50%', margin: '0 auto',
-                                            background: '#10B981', color: '#FFF', display: 'flex', 
-                                            alignItems: 'center', justifyContent: 'center', 
+                                        style={{
+                                            width: '34px', height: '34px', borderRadius: '50%', margin: '0 auto',
+                                            background: '#10B981', color: '#FFF', display: 'flex',
+                                            alignItems: 'center', justifyContent: 'center',
                                             fontWeight: 'bold', fontSize: '1rem',
                                             flexShrink: 0
                                         }}
@@ -245,25 +325,26 @@ const AdminLayout = () => {
                         </div>
                     </div>
 
-                    {/* Botón de Colapso (Externo) */}
-                    <button 
+                    {/* Botón de Colapso (Integrado y sobrio) */}
+                    <button
                         onClick={() => setIsCollapsed(!isCollapsed)}
                         style={{
                             position: 'absolute',
-                            right: '-12px',
+                            right: '-14px',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            width: '24px', height: '60px',
-                            borderRadius: '12px',
-                            background: '#FFFFFF',
-                            border: `1px solid rgba(0,0,0,0.1)`,
-                            color: '#120C1F', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            width: '28px', height: '28px',
+                            borderRadius: '50%',
+                            background: '#1E0E38',
+                            border: '1px solid rgba(245, 158, 11, 0.45)',
+                            color: '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 6px 16px rgba(8, 5, 13, 0.35)',
                             zIndex: 10,
                             padding: 0
                         }}
+                        title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
                     >
-                        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                        {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
                     </button>
                 </motion.aside>
             )}
