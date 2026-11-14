@@ -42,7 +42,9 @@ const LocalSearchOverlay = ({
         setCurrentHymn(h);
         setCurrentStanzaIdx(0);
         const firstStanza = h.stanzas && h.stanzas[0] ? h.stanzas[0] : { text: '', number: 1 };
-        const tmpl = (overlayData.template || localStorage.getItem('oasis_presentation_template') || 'classic').toLowerCase();
+        let saved = null;
+        try { saved = localStorage.getItem('oasis_presentation_template'); } catch { /* sin almacenamiento */ }
+        const tmpl = (saved || overlayData.template || 'classic').toLowerCase();
         projectToAll('himno', `Himno ${h.number} - ${h.title}`, firstStanza.text, { 
             template: tmpl, 
             subText: firstStanza.subText || (firstStanza.number ? `Estrofa ${firstStanza.number}` : 'Coro') 
@@ -68,7 +70,7 @@ const LocalSearchOverlay = ({
         }
         
         setCurrentVerseIdx(idx);
-        projectToAll('bible', `${selectedBibleBook.name} ${selectedBibleChapter}:${targetVerse.verse}`, targetVerse.text, { template: overlayData.template || 'classic' });
+        projectToAll('bible', `${selectedBibleBook.name} ${selectedBibleChapter}:${targetVerse.verse}`, targetVerse.text);
         channelRef.current?.send({ type: 'broadcast', event: 'remote_select_bible', payload: { book: selectedBibleBook, chapter: selectedBibleChapter, verse: targetVerse } });
         setInlineVerseStr('');
     };

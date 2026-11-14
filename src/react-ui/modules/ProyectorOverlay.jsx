@@ -55,6 +55,9 @@ const BIBLE_BOOKS = [
 ];
 
 
+// Estilo de presentación elegido por el operador: manda sobre lo que haya quedado en pantalla (diapositivas, 'hidden'...)
+const savedTemplate = () => { try { return localStorage.getItem('oasis_presentation_template'); } catch { return null; } };
+
 const ProyectorOverlay = () => {
     const [overlayData, setOverlayData] = useState({
         mode: 'hidden',
@@ -130,7 +133,7 @@ const ProyectorOverlay = () => {
     }, [overlayData.mode, overlayData.targetTime]);
 
     const projectToAll = (mode, title, content, extra = {}) => {
-        const template = (extra.template || overlayData.template || localStorage.getItem('oasis_presentation_template') || 'classic').toLowerCase();
+        const template = (extra.template || savedTemplate() || overlayData.template || 'classic').toLowerCase();
         const payload = {
             mode,
             title,
@@ -161,7 +164,6 @@ const ProyectorOverlay = () => {
             setCurrentStanzaIdx(0);
             const s = prevHymn.stanzas && prevHymn.stanzas[0] ? prevHymn.stanzas[0] : { text: '', number: 1 };
             projectToAll('himno', `Himno ${prevHymn.number} - ${prevHymn.title}`, s.text, {
-                template: overlayData.template || 'classic',
                 subText: s.number ? `Estrofa ${s.number}` : 'Coro'
             });
             channelRef.current?.send({ type: 'broadcast', event: 'remote_select_hymn', payload: { hymn: prevHymn } });
@@ -178,7 +180,6 @@ const ProyectorOverlay = () => {
             setCurrentStanzaIdx(0);
             const s = nextHymn.stanzas && nextHymn.stanzas[0] ? nextHymn.stanzas[0] : { text: '', number: 1 };
             projectToAll('himno', `Himno ${nextHymn.number} - ${nextHymn.title}`, s.text, {
-                template: overlayData.template || 'classic',
                 subText: s.number ? `Estrofa ${s.number}` : 'Coro'
             });
             channelRef.current?.send({ type: 'broadcast', event: 'remote_select_hymn', payload: { hymn: nextHymn } });
@@ -192,7 +193,7 @@ const ProyectorOverlay = () => {
                 const prevIdx = currentVerseIdx - 1;
                 const v = bibleVerses[prevIdx];
                 setCurrentVerseIdx(prevIdx);
-                projectToAll('bible', `${selectedBibleBook.name} ${selectedBibleChapter}:${v.verse}`, v.text, { template: overlayData.template || 'classic' });
+                projectToAll('bible', `${selectedBibleBook.name} ${selectedBibleChapter}:${v.verse}`, v.text);
             }
         } else if (overlayData.mode === 'himno' && currentHymn && currentHymn.stanzas) {
             if (currentStanzaIdx > 0) {
@@ -200,7 +201,6 @@ const ProyectorOverlay = () => {
                 const s = currentHymn.stanzas[prevIdx];
                 setCurrentStanzaIdx(prevIdx);
                 projectToAll('himno', `Himno ${currentHymn.number} - ${currentHymn.title}`, s.text, {
-                    template: overlayData.template || 'classic',
                     subText: s.number ? `Estrofa ${s.number}` : 'Coro'
                 });
             }
@@ -214,7 +214,7 @@ const ProyectorOverlay = () => {
                 const nextIdx = currentVerseIdx + 1;
                 const v = bibleVerses[nextIdx];
                 setCurrentVerseIdx(nextIdx);
-                projectToAll('bible', `${selectedBibleBook.name} ${selectedBibleChapter}:${v.verse}`, v.text, { template: overlayData.template || 'classic' });
+                projectToAll('bible', `${selectedBibleBook.name} ${selectedBibleChapter}:${v.verse}`, v.text);
             }
         } else if (overlayData.mode === 'himno' && currentHymn && currentHymn.stanzas) {
             if (currentStanzaIdx < currentHymn.stanzas.length - 1) {
@@ -222,7 +222,6 @@ const ProyectorOverlay = () => {
                 const s = currentHymn.stanzas[nextIdx];
                 setCurrentStanzaIdx(nextIdx);
                 projectToAll('himno', `Himno ${currentHymn.number} - ${currentHymn.title}`, s.text, {
-                    template: overlayData.template || 'classic',
                     subText: s.number ? `Estrofa ${s.number}` : 'Coro'
                 });
             }
@@ -315,7 +314,11 @@ const ProyectorOverlay = () => {
                     return;
                 }
                 setOverlayData(data);
-                try { localStorage.setItem('obs_overlay_data', JSON.stringify(data)); } catch(e){}
+                try {
+                    localStorage.setItem('obs_overlay_data', JSON.stringify(data));
+                    // Biblia/himno enviados desde el Estudio traen el estilo elegido: recordarlo para la búsqueda local
+                    if ((data.mode === 'himno' || data.mode === 'bible') && data.template) localStorage.setItem('oasis_presentation_template', String(data.template).toLowerCase());
+                } catch(e){}
                 if (data.mode === 'himno' && data.title) {
                     const match = data.title.match(/Himno\s+(\d+)/i);
                     if (match) {
