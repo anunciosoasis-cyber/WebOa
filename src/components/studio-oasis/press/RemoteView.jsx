@@ -81,9 +81,8 @@ export const RemoteView = () => {
             ...prev,
             ...payload,
             serverSlide: payload.currentSlide,
-            slidesSummary: Array.isArray(payload.slidesSummary) && payload.slidesSummary.length > 0
-              ? payload.slidesSummary
-              : prev.slidesSummary,
+            // Una lista vacía es real (presentación vaciada en el Estudio): antes se ignoraba y quedaban las viejas
+            slidesSummary: Array.isArray(payload.slidesSummary) ? payload.slidesSummary : prev.slidesSummary,
           }));
           setStatus('conectado');
           clearTimeout(waitTimer);
@@ -208,6 +207,7 @@ export const RemoteView = () => {
   const live = status === 'conectado';
   const { currentSlide, totalSlides, isBlank } = sessionData;
   const progress = totalSlides > 0 ? Math.min(100, (currentSlide / totalSlides) * 100) : 0;
+  const empty = live && totalSlides === 0;
   const atStart = currentSlide <= 1;
   const atEnd = currentSlide >= totalSlides;
   const summary = sessionData.slidesSummary || [];
@@ -272,7 +272,17 @@ export const RemoteView = () => {
             onPointerCancel={() => { swipeRef.current = null; }}
             onDragStart={(e) => e.preventDefault()}
           >
-            <SlideCanvasView slide={liveSlide} background={background} rounded={false} />
+            {empty ? (
+              <div className="w-full h-full bg-slate-900 grid place-items-center text-center px-6">
+                <div>
+                  <Images size={28} className="mx-auto text-slate-500" aria-hidden="true" />
+                  <p className="m-0 mt-2 text-[13px] font-bold text-slate-300">No hay diapositivas</p>
+                  <p className="m-0 mt-1 text-[11px] text-slate-500">Carga una presentación en el Estudio o desde la app</p>
+                </div>
+              </div>
+            ) : (
+              <SlideCanvasView slide={liveSlide} background={background} rounded={false} />
+            )}
             {isBlank && (
               <div className="absolute inset-0 bg-black/85 grid place-items-center" aria-label="Pantalla negra">
                 <span className="inline-flex items-center gap-2 h-9 px-4 rounded-full bg-white/10 text-white/90 text-[12px] font-bold">
@@ -288,11 +298,11 @@ export const RemoteView = () => {
               {currentSlide}/{totalSlides}
             </span>
           </div>
-          <p className="m-0 mt-2 px-1 text-[14px] font-bold text-slate-800 truncate text-center">{liveSlide?.title || `Diapositiva ${currentSlide}`}</p>
+          <p className="m-0 mt-2 px-1 text-[14px] font-bold text-slate-800 truncate text-center">{empty ? 'Presentación vacía' : liveSlide?.title || `Diapositiva ${currentSlide}`}</p>
         </section>
 
         {/* Siguiente: tocarla la proyecta */}
-        <button
+        {!empty && <button
           type="button"
           onClick={() => go('NEXT')}
           disabled={atEnd}
@@ -317,7 +327,7 @@ export const RemoteView = () => {
             </span>
           </span>
           {!atEnd && <ChevronRight size={20} className="text-slate-300 shrink-0" aria-hidden="true" />}
-        </button>
+        </button>}
 
         {/* Todas las diapositivas: tocar una la pone al aire */}
         {summary.length > 0 && (
@@ -389,6 +399,7 @@ export const RemoteView = () => {
               label={isBlank ? 'Volver a proyectar' : 'Pantalla negra'}
               variant={isBlank ? 'danger' : 'soft'}
               onClick={() => sendCommand('TOGGLE_BLANK')}
+              disabled={empty}
             >
               {isBlank ? <Monitor size={22} aria-hidden="true" /> : <MonitorOff size={22} aria-hidden="true" />}
             </ControlButton>

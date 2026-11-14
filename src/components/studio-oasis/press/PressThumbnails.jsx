@@ -123,7 +123,6 @@ export const PressThumbnails = ({
                 <ActionButton
                   label={askingDelete ? 'Confirmar: borrar diapositiva' : 'Borrar diapositiva'}
                   danger={askingDelete}
-                  disabled={slides.length <= 1}
                   onClick={() => (askingDelete ? (setConfirmDeleteId(null), onDelete?.(idx)) : setConfirmDeleteId(key))}
                 >
                   <Trash2 size={13} />

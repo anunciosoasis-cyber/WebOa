@@ -1,7 +1,7 @@
 // PressStudio.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cast, Square, Check, Image as ImageIcon, Plus, X, Presentation } from 'lucide-react';
+import { Cast, Square, Check, Image as ImageIcon, Plus, X, Presentation, Trash2 } from 'lucide-react';
 import { useToast } from '../../../react-ui/components/Toast';
 import { PresentationManager } from './presentations';
 import PressFileManager, { imageFileToDataUrl } from './PressFileManager';
@@ -17,14 +17,6 @@ import { useLiveKey, liveUrl, pressChannel, overlayChannel, shareableUrl, loadCu
 import apiClient from '../../../api/client';
 
 const SLIDES_KEY = 'oasis_press_slides';
-// Ejemplo inicial: se puede editar, reordenar o borrar desde la tira de diapositivas
-const DEFAULT_SLIDES = [
-  { id: 1, title: 'Bienvenida al Culto Divino', subtitle: 'Iglesia Adventista Oasis', type: 'styled' },
-  { id: 2, title: 'Himno de Alabanza #12', subtitle: 'Señor mi Dios al contemplar', type: 'styled' },
-  { id: 3, title: 'Lectura Bíblica: Salmos 23:1', subtitle: 'Jehová es mi pastor; nada me faltará.', type: 'styled' },
-  { id: 4, title: 'Sermón: La Esperanza que Transforma', subtitle: 'Pr. Felipe Miranda', type: 'styled' },
-  { id: 5, title: 'Himno Final #340 & Bendición', subtitle: 'En celestial morada', type: 'styled' },
-];
 // Presentaciones de la app ya insertadas aquí (no se repiten al recuperar las pendientes)
 const IMPORTED_KEY = 'oasis_press_imported_decks';
 const APPLIED_OPS_KEY = 'oasis_press_applied_ops';
@@ -123,7 +115,7 @@ const createRemotePayload = (allSlides, activeIndex, currentTitle, currentBlank,
   const nextImg = getSafeRemoteImage(next);
 
   return {
-    currentSlide: activeIndex + 1,
+    currentSlide: allSlides.length ? activeIndex + 1 : 0,
     totalSlides: allSlides.length,
     isBlank: Boolean(currentBlank),
     title: currentTitle || 'Oasis Press',
@@ -182,9 +174,10 @@ export const PressStudio = () => {
   const [slides, setSlides] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(SLIDES_KEY));
-      if (Array.isArray(saved) && saved.length) return saved;
+      // Una lista vacía también se respeta: antes volvían 5 diapositivas de ejemplo
+      if (Array.isArray(saved)) return saved;
     } catch { /* sin datos guardados */ }
-    return DEFAULT_SLIDES;
+    return [];
   });
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
@@ -272,6 +265,7 @@ export const PressStudio = () => {
   const pushRef = useRef(pushSlideToScreens);
   pushRef.current = pushSlideToScreens;
   const handleProjectSlide = () => {
+    if (!slides.length) return showToast('No hay diapositivas para proyectar', 'info', 2500);
     onAirRef.current = true;
     pushSlideToScreens();
     setJustSent(true);
@@ -280,13 +274,15 @@ export const PressStudio = () => {
   };
 
   // Detener: saca la presentación del aire y deja el proyector limpio (también lo que mandó la app).
-  const handleStopAll = () => {
+  const handleStopAll = (notify = true) => {
     onAirRef.current = false;
     const payload = { mode: 'hidden', target: 'proyector', timestamp: Date.now() };
     try { localStorage.setItem('obs_overlay_data', JSON.stringify(payload)); } catch { /* sin espacio: el canal basta */ }
     pressChannelRef.current?.send({ type: 'broadcast', event: 'ppt_slide', payload });
-    showToast('Presentación detenida: proyector limpio', 'info', 2500);
+    if (notify) showToast('Presentación detenida: proyector limpio', 'info', 2500);
   };
+  const stopRef = useRef(handleStopAll);
+  stopRef.current = handleStopAll;
 
   // Solo cuando el operador cambia de diapositiva o activa la pantalla negra: abrir Studio o añadir
   // diapositivas ya no se adueña del proyector. Comparar con el valor anterior es idempotente en StrictMode.
@@ -402,6 +398,7 @@ export const PressStudio = () => {
     channel
       .on('broadcast', { event: 'ppt_command' }, ({ payload }) => {
         const action = payload?.action;
+        if (!slideCountRef.current) return; // presentación vacía: nada que mover ni proyectar
         // El control de la app es una orden de proyectar: la diapositiva elegida sale al aire
         if (['NEXT', 'PREV', 'FIRST', 'LAST', 'TOGGLE_BLANK', 'GOTO'].includes(action)) {
           const wasOnAir = onAirRef.current;
@@ -462,10 +459,11 @@ export const PressStudio = () => {
         applyOnce(payload.opId ?? newSlideId(), () => {
           const current = slidesRef.current;
           const idx = current.findIndex((sl) => String(sl.id) === String(payload.id));
-          if (idx < 0 || current.length <= 1) return;
+          if (idx < 0) return;
           setSlides(current.filter((_, i) => i !== idx));
           // La que está al aire no cambia: si se borra una anterior, el índice se corre
           setCurrentSlideIndex((cur) => Math.max(0, Math.min(current.length - 2, idx < cur ? cur - 1 : cur)));
+          if (current.length === 1 && onAirRef.current) stopRef.current?.(false);
           showToast('Diapositiva eliminada desde la app', 'info', 3000);
         });
         sendState();
@@ -644,8 +642,27 @@ export const PressStudio = () => {
     setCurrentSlideIndex((cur) => (cur === idx ? to : cur === to ? idx : cur));
   };
   const deleteSlide = (idx) => {
-    setSlides((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
+    setSlides((prev) => prev.filter((_, i) => i !== idx));
     setCurrentSlideIndex((cur) => Math.max(0, cur > idx || cur === slides.length - 1 ? cur - 1 : cur));
+    if (slides.length === 1 && onAirRef.current) handleStopAll(false);
+  };
+
+  // Vaciar toda la presentación (p. ej. un pack que llegó de la app): dos toques para confirmar, como borrar una
+  const [confirmClear, setConfirmClear] = useState(false);
+  useEffect(() => {
+    if (!confirmClear) return undefined;
+    const t = setTimeout(() => setConfirmClear(false), 3500);
+    return () => clearTimeout(t);
+  }, [confirmClear]);
+  const clearPresentation = () => {
+    if (!confirmClear) return setConfirmClear(true);
+    setConfirmClear(false);
+    if (onAirRef.current) handleStopAll(false);
+    setSlides([]);
+    setCurrentSlideIndex(0);
+    setIsBlank(false);
+    setPresentationTitle('Oasis Press');
+    showToast('Presentación vacía: también se quitó del control remoto y de la app', 'info', 3000);
   };
 
   // Guardar en este equipo. Los vídeos (blob:) no sobreviven a una recarga, por eso no se guardan.
@@ -683,7 +700,7 @@ export const PressStudio = () => {
           >
             {justSent ? <Check size={17} strokeWidth={3} /> : <Cast size={17} strokeWidth={2.5} />}
           </motion.button>
-          <button type="button" onClick={handleStopAll} title="Detener la presentación y limpiar el proyector" aria-label="Detener presentación"
+          <button type="button" onClick={() => handleStopAll()} title="Detener la presentación y limpiar el proyector" aria-label="Detener presentación"
             className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 bg-white text-oasis-red shadow-sm border border-gray-100 hover:shadow-md">
             <Square size={14} strokeWidth={3} fill="currentColor" />
           </button>
@@ -709,6 +726,14 @@ export const PressStudio = () => {
             <Plus size={17} strokeWidth={2.5} />
           </button>
           <PressUploader isLoading={isLoading} onFileUpload={handleFileUpload} />
+          <button type="button" onClick={clearPresentation} disabled={!slides.length}
+            title={confirmClear ? 'Toca de nuevo para borrar todas las diapositivas' : 'Vaciar la presentación (borra todas las diapositivas)'}
+            aria-label={confirmClear ? 'Confirmar: vaciar presentación' : 'Vaciar presentación'}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-sm border disabled:opacity-40 disabled:pointer-events-none ${
+              confirmClear ? 'bg-oasis-red text-white border-oasis-red' : 'bg-white text-slate-700 border-gray-100 hover:shadow-md hover:text-oasis-red'
+            }`}>
+            <Trash2 size={16} strokeWidth={2.3} />
+          </button>
         </div>
       </div>
 
