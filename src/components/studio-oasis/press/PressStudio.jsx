@@ -12,7 +12,7 @@ import PressEditModal from './PressEditModal';
 import { DEFAULT_SLIDE_STYLE } from './SlideCanvasView';
 import QRCode from 'qrcode';
 import { realtime } from '../../../api/realtime';
-import { useLiveKey, liveUrl, pressChannel, shareableUrl, loadCurrentRoom } from '../../../api/liveChannel';
+import { useLiveKey, liveUrl, pressChannel, overlayChannel, shareableUrl, loadCurrentRoom } from '../../../api/liveChannel';
 import apiClient from '../../../api/client';
 
 const SLIDES_KEY = 'oasis_press_slides';
@@ -234,7 +234,15 @@ export const PressStudio = () => {
   // el proyector se abre una vez con "Full" en Pantalla Proyector).
   const { showToast } = useToast();
   const [justSent, setJustSent] = useState(false);
+  // La presentación solo está al aire tras una orden (botón Proyectar o el control de la app);
+  // mientras lo está, cambiar de diapositiva la sigue en pantalla. Otro overlay (himno, Biblia…) la saca del aire.
+  const onAirRef = useRef(false);
+  const [airTick, setAirTick] = useState(0);
+  // Los oyentes del canal se crean una vez: llaman a la versión actual (si no, enviarían la lista del primer render)
+  const pushRef = useRef(pushSlideToScreens);
+  pushRef.current = pushSlideToScreens;
   const handleProjectSlide = () => {
+    onAirRef.current = true;
     pushSlideToScreens();
     setJustSent(true);
     setTimeout(() => setJustSent(false), 1600);
@@ -244,14 +252,26 @@ export const PressStudio = () => {
   // Solo cuando el operador cambia de diapositiva o activa la pantalla negra: abrir Studio o añadir
   // diapositivas ya no se adueña del proyector. Comparar con el valor anterior es idempotente en StrictMode.
   const activeBackground = slides[currentSlideIndex]?.background || null;
-  const prevSync = useRef({ currentSlideIndex, isBlank, pressBackground, activeBackground });
+  const prevSync = useRef({ currentSlideIndex, isBlank, pressBackground, activeBackground, airTick });
   useEffect(() => {
     const prev = prevSync.current;
     if (prev.currentSlideIndex === currentSlideIndex && prev.isBlank === isBlank
-      && prev.pressBackground === pressBackground && prev.activeBackground === activeBackground) return;
-    prevSync.current = { currentSlideIndex, isBlank, pressBackground, activeBackground };
-    pushSlideToScreens();
-  }, [currentSlideIndex, isBlank, pressBackground, activeBackground]);
+      && prev.pressBackground === pressBackground && prev.activeBackground === activeBackground && prev.airTick === airTick) return;
+    prevSync.current = { currentSlideIndex, isBlank, pressBackground, activeBackground, airTick };
+    if (onAirRef.current) pushSlideToScreens();
+  }, [currentSlideIndex, isBlank, pressBackground, activeBackground, airTick]);
+
+  useEffect(() => {
+    if (!liveKey) return;
+    const overlay = overlayChannel(liveKey);
+    let lastTs = 0; // al reconectar, el servidor repite el último overlay con su hora original: no es una orden nueva
+    overlay.on('broadcast', { event: 'update_overlay' }, ({ payload, ts }) => {
+      if (ts && ts <= lastTs) return;
+      if (ts) lastTs = ts;
+      if (payload && !payload._sync && payload.mode && payload.mode !== 'hidden') onAirRef.current = false;
+    }).subscribe();
+    return () => { realtime.removeChannel(overlay); };
+  }, [liveKey]);
 
   // Operaciones de la app ya aplicadas (opId): la app las reenvía hasta verlas en ppt_state, así nunca se duplican.
   // Se guardan para que una recarga del Estudio no vuelva a aplicar algo que la app aún no vio confirmado.
@@ -343,6 +363,13 @@ export const PressStudio = () => {
     channel
       .on('broadcast', { event: 'ppt_command' }, ({ payload }) => {
         const action = payload?.action;
+        // El control de la app es una orden de proyectar: la diapositiva elegida sale al aire
+        if (['NEXT', 'PREV', 'FIRST', 'LAST', 'TOGGLE_BLANK', 'GOTO'].includes(action)) {
+          const wasOnAir = onAirRef.current;
+          onAirRef.current = true;
+          // Si no cambia de diapositiva (p. ej. GOTO a la actual), el efecto se dispara igual y la envía una sola vez
+          if (!wasOnAir) setAirTick((t) => t + 1);
+        }
         if (action === 'NEXT') {
           setCurrentSlideIndex((prev) => Math.min(slideCountRef.current - 1, prev + 1));
           setIsBlank(false);
@@ -425,7 +452,7 @@ export const PressStudio = () => {
         sendState();
       })
       .on('broadcast', { event: 'ppt_request_slide' }, () => {
-        pushSlideToScreens();
+        if (onAirRef.current) pushRef.current();
       })
       // Diapositivas subidas desde la app (las convierte el servidor y llegan ya como imágenes)
       .on('broadcast', { event: 'press_progress' }, ({ payload }) => {
