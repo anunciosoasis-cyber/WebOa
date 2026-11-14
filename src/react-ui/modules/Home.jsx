@@ -20,6 +20,7 @@ const Home = () => {
     });
     const [announcements, setAnnouncements] = useState([]);
     const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
+    const [activeHubTab, setActiveHubTab] = useState('all'); // 'all' | 'announcements' | 'events'
 
     useEffect(() => {
         // Carga centralizada y eficiente de datos iniciales en paralelo
@@ -47,37 +48,93 @@ const Home = () => {
             {/* ISLA DINÁMICA DE ACCESOS RÁPIDOS */}
             <DynamicIsland settings={settings} />
 
-            {/* 2. NOVEDADES (CARRUSEL DE ANUNCIOS FLUIDO) */}
-            <section id="novedades" style={{ padding: '40px 20px', maxWidth: '1240px', margin: '0 auto' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px', textAlign: 'center' }}>
-                    <span style={{ 
-                        color: '#F59E0B', 
-                        fontWeight: '900', 
-                        textTransform: 'uppercase', 
-                        letterSpacing: '4px', 
-                        fontSize: '0.75rem', 
-                        marginBottom: '12px' 
+            {/* 2. HUB UNIFICADO: NOVEDADES + INSCRIPCIÓN RÁPIDA */}
+            <section id="novedades" style={{ padding: '36px 20px 44px', maxWidth: '1240px', margin: '0 auto', scrollMarginTop: '95px' }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginBottom: '26px',
+                    textAlign: 'center'
+                }}>
+                    <span style={{
+                        color: '#F59E0B',
+                        fontWeight: '900',
+                        textTransform: 'uppercase',
+                        letterSpacing: '4px',
+                        fontSize: '0.72rem',
+                        marginBottom: '10px'
                     }}>
-                        Actualidad
+                        Actualidad & Eventos
                     </span>
-                    <h2 style={{ 
-                        fontFamily: 'Moonrising, sans-serif', 
-                        color: '#120C1F', 
-                        fontSize: 'clamp(2rem, 5vw, 3rem)', 
+                    <h2 style={{
+                        fontFamily: 'Moonrising, sans-serif',
+                        color: '#120C1F',
+                        fontSize: 'clamp(1.9rem, 4.5vw, 2.8rem)',
                         lineHeight: '1.1',
-                        margin: 0 
+                        margin: '0 0 18px 0'
                     }}>
                         Novedades <span style={{ color: '#F59E0B' }}>Oasis</span>
                     </h2>
-                    <div style={{ height: '4px', width: '40px', backgroundColor: '#F59E0B', marginTop: '16px', borderRadius: '10px', opacity: 0.3 }} />
+
+                    {/* Pills de navegación rápida del Hub */}
+                    <div style={{
+                        display: 'inline-flex',
+                        flexWrap: 'wrap',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '5px',
+                        borderRadius: '999px',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid rgba(18, 12, 31, 0.08)',
+                        boxShadow: '0 10px 28px -12px rgba(18, 12, 31, 0.14)'
+                    }}>
+                        {[
+                            { id: 'all', label: 'Todo' },
+                            { id: 'announcements', label: 'Novedades' },
+                            { id: 'events', label: 'Inscripción Rápida' }
+                        ].map(tab => {
+                            const isActive = activeHubTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setActiveHubTab(tab.id)}
+                                    style={{
+                                        border: 'none',
+                                        borderRadius: '999px',
+                                        padding: '8px 18px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 800,
+                                        letterSpacing: '0.8px',
+                                        textTransform: 'uppercase',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.25s ease',
+                                        backgroundColor: isActive ? '#120C1F' : 'transparent',
+                                        color: isActive ? '#F59E0B' : '#5B556B',
+                                        boxShadow: isActive ? '0 6px 16px -6px rgba(18, 12, 31, 0.45)' : 'none'
+                                    }}
+                                >
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                {/* Carrusel de Anuncios Horizontal y Optimizado */}
-                <Announcements items={announcements} loading={loadingAnnouncements} />
-            </section>
+                {/* Contenido unificado sin espacios muertos */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                    {(activeHubTab === 'all' || activeHubTab === 'announcements') && (
+                        <div>
+                            <Announcements items={announcements} loading={loadingAnnouncements} />
+                        </div>
+                    )}
 
-            {/* SECCIÓN DE EVENTOS (INSCRIPCIÓN RÁPIDA) */}
-            <QuickEvents />
+                    {(activeHubTab === 'all' || activeHubTab === 'events') && (
+                        <QuickEvents embedded />
+                    )}
+                </div>
+            </section>
 
             {/* 3. CINTA SOCIAL (CON SETTINGS COMPARTIDOS) */}
             <SocialRibbon settings={settings} />
