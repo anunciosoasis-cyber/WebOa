@@ -1,0 +1,1 @@
+const c=t=>{const[s,a,r]=[1,3,5].map(e=>{const n=parseInt(t.slice(e,e+2),16)/255;return n<=.03928?n/12.92:((n+.055)/1.055)**2.4});return .2126*s+.7152*a+.0722*r},F=t=>typeof t=="string"&&/^#[0-9a-f]{6}$/i.test(t),i=(t,s="#F59E0B")=>F(t)&&c(t)<=.6?t:s,p=t=>F(t)&&c(t)>.4?"#120C1F":"#FFFFFF";export{i as s,p as t};
