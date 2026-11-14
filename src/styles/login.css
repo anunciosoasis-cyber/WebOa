@@ -1,80 +1,78 @@
 /*
- * Oasis Church Login - Reference Card Design
- * Estilo con fondo atmosférico difuminado, corte diagonal, insignia flotante y paleta Oasis
+ * Oasis Login — cinematográfico
+ * La comunidad a pantalla completa (zoom lento, gradación cálida, viñeta), bienvenida sobre la foto
+ * y una sola tarjeta de vidrio oscuro. Un único acento: el oro Oasis.
  */
 
 .lg {
-    --lg-bg: #f8fafc;
-    --lg-text: #1e293b;
-    --lg-muted: #64748b;
-    --lg-label: #94a3b8;
-    --lg-line: #e2e8f0;
-    --lg-card-bg: #ffffff;
-    --lg-card-shadow: 0 25px 60px -12px rgba(18, 12, 31, 0.22), 0 0 1px rgba(0, 0, 0, 0.08);
+    --lg-text: #f8f5ff;
+    --lg-muted: rgba(248, 245, 255, 0.62);
+    --lg-soft: rgba(248, 245, 255, 0.42);
+    --lg-field: rgba(255, 255, 255, 0.06);
+    --lg-field-hover: rgba(255, 255, 255, 0.09);
     --lg-gold: #f59e0b;
-    --lg-gold-dark: #d97706;
-    --lg-purple: #24124a;
-    --lg-purple-deep: #160b2e;
+    --lg-gold-light: #fbbf24;
+    --lg-night: #0b0614;
 
     position: relative;
     min-height: 100dvh;
     display: grid;
-    place-items: center;
-    padding: 72px 16px 36px;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 410px);
+    align-items: center;
+    gap: clamp(32px, 6vw, 96px);
+    padding: 88px clamp(24px, 6vw, 96px) 48px;
     overflow-x: hidden;
     isolation: isolate;
     color: var(--lg-text);
+    background: var(--lg-night);
     font-family: var(--oasis-font-body, system-ui, -apple-system, sans-serif);
 }
 
-.lg[data-mode='dark'] {
-    --lg-bg: #0f071a;
-    --lg-text: #f8fafc;
-    --lg-muted: rgba(255, 255, 255, 0.65);
-    --lg-label: rgba(255, 255, 255, 0.5);
-    --lg-line: rgba(255, 255, 255, 0.12);
-    --lg-card-bg: rgba(26, 13, 50, 0.92);
-    --lg-card-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(245, 158, 11, 0.2);
-}
-
-/* ── Fondo atmosférico difuminado con la foto de la congregación ────────── */
-.lg-ref-backdrop {
-    position: fixed;
-    inset: -30px;
-    z-index: -3;
-    background-size: cover;
-    background-position: center 30%;
-    filter: blur(28px) saturate(1.2) brightness(0.92);
-    transform: scale(1.08);
-    pointer-events: none;
-    transition: filter 0.3s ease;
-}
-
-.lg[data-mode='dark'] .lg-ref-backdrop {
-    filter: blur(32px) saturate(1.1) brightness(0.42);
-}
-
-.lg-ref-backdrop-overlay {
+/* ── Escena: la foto de la comunidad ──────────────────────────────────── */
+.lg-scene {
     position: fixed;
     inset: 0;
-    z-index: -2;
+    z-index: -1;
+    overflow: hidden;
     pointer-events: none;
-    background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.35) 0%, rgba(241, 245, 249, 0.82) 100%);
 }
 
-.lg[data-mode='dark'] .lg-ref-backdrop-overlay {
-    background: radial-gradient(circle at 50% 40%, rgba(36, 18, 74, 0.45) 0%, rgba(15, 7, 26, 0.94) 100%);
+.lg-scene-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 45% 40%;
+    /* Gradación cálida y algo de contraste: de foto de celular a fotograma */
+    filter: saturate(1.08) contrast(1.06) brightness(0.82) sepia(0.12);
+    transform-origin: 40% 45%;
+    /* animation-name propio: la animación global de <img> (oasisFadeIn) anularía el zoom */
+    animation: lg-kenburns 32s ease-in-out infinite alternate;
 }
 
-/* ── Barra superior mínima ────────────────────────────────────────────── */
+.lg-scene-shade {
+    position: absolute;
+    inset: 0;
+    background:
+        /* hacia la tarjeta (derecha) la escena se oscurece */
+        linear-gradient(90deg, rgba(11, 6, 20, 0.15) 0%, rgba(11, 6, 20, 0.35) 45%, rgba(11, 6, 20, 0.88) 78%, rgba(11, 6, 20, 0.95) 100%),
+        /* base oscura para el titular */
+        linear-gradient(0deg, rgba(11, 6, 20, 0.92) 0%, rgba(11, 6, 20, 0.35) 38%, rgba(11, 6, 20, 0) 60%),
+        /* viñeta y un leve tinte púrpura de la marca */
+        radial-gradient(120% 90% at 35% 40%, rgba(36, 18, 74, 0) 40%, rgba(11, 6, 20, 0.7) 100%);
+}
+
+@keyframes lg-kenburns {
+    from { transform: scale(1.04) translate3d(0, 0, 0); }
+    to { transform: scale(1.14) translate3d(-1.5%, -1%, 0); }
+}
+
+/* ── Barra superior ───────────────────────────────────────────────────── */
 .lg-top {
     position: absolute;
-    top: 16px;
-    left: 16px;
-    right: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    top: 22px;
+    left: clamp(16px, 6vw, 96px);
     z-index: 20;
 }
 
@@ -82,241 +80,221 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 9px 16px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(11, 6, 20, 0.35);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     color: var(--lg-text);
     font: inherit;
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.lg[data-mode='dark'] .lg-chip {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(36, 18, 74, 0.7);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: background 0.25s ease, transform 0.25s ease;
 }
 
 .lg-chip:hover {
-    transform: translateY(-1.5px);
+    background: rgba(11, 6, 20, 0.6);
+    color: var(--lg-text);
+    transform: translateX(-2px);
+}
+
+.lg-chip:focus-visible {
+    outline: 2px solid var(--lg-gold);
+    outline-offset: 3px;
+}
+
+/* ── Bienvenida sobre la foto ─────────────────────────────────────────── */
+.lg-hero {
+    align-self: end;
+    max-width: 560px;
+    padding-bottom: 12px;
+}
+
+.lg-hero-kicker {
+    display: inline-block;
+    margin-bottom: 18px;
+    color: var(--lg-gold);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+}
+
+.lg-hero-title {
+    margin: 0 0 18px;
+    font-family: 'Moonrising', var(--oasis-font-body, sans-serif);
+    font-size: clamp(2.6rem, 6vw, 5rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    color: #fff;
+    text-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+
+.lg-hero-text {
+    margin: 0;
+    max-width: 420px;
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: var(--lg-muted);
+}
+
+/* ── Tarjeta de vidrio ────────────────────────────────────────────────── */
+.lg-card {
+    width: 100%;
+    padding: 30px 30px 26px;
+    border-radius: 28px;
+    background: rgba(16, 10, 28, 0.62);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 40px 90px -20px rgba(0, 0, 0, 0.75);
+}
+
+.lg-card-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 26px;
+}
+
+.lg-card-logo {
+    width: 46px;
+    height: auto;
+    flex-shrink: 0;
+    /* logo a color, con un halo suave de la propia gota */
+    filter: drop-shadow(0 6px 16px rgba(108, 76, 230, 0.45));
+    animation: none;
+}
+
+.lg-card-title {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
     color: var(--lg-text);
 }
 
-/* ── Tarjeta de referencia centrada ───────────────────────────────────── */
-.lg-ref-card {
-    position: relative;
-    width: 100%;
-    max-width: 390px;
-    border-radius: 20px;
-    background: var(--lg-card-bg);
-    box-shadow: var(--lg-card-shadow);
-    overflow: visible;
-    transition: box-shadow 0.3s ease;
+.lg-card-sub {
+    margin: 2px 0 0;
+    font-size: 0.86rem;
+    color: var(--lg-muted);
 }
 
-@media (min-width: 480px) {
-    .lg-ref-card {
-        max-width: 410px;
-    }
-}
-
-/* ── Cabecera con foto y corte diagonal ───────────────────────────────── */
-.lg-ref-header {
-    position: relative;
-    width: 100%;
-    height: 220px;
-    border-radius: 20px 20px 0 0;
-    overflow: visible;
-}
-
-.lg-ref-header-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center 25%;
-    border-radius: 20px 20px 0 0;
-    /* Corte diagonal de referencia: sube hacia la derecha */
-    clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
-    display: block;
-}
-
-.lg-ref-header-overlay {
-    position: absolute;
-    inset: 0;
-    border-radius: 20px 20px 0 0;
-    clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
-    background: linear-gradient(
-        180deg,
-        rgba(15, 7, 26, 0.1) 0%,
-        rgba(15, 7, 26, 0.3) 60%,
-        rgba(15, 7, 26, 0.65) 100%
-    );
-    pointer-events: none;
-}
-
-/* ── Insignia circular superpuesta al corte diagonal ──────────────────── */
-.lg-ref-badge {
-    position: absolute;
-    left: 50%;
-    bottom: -36px;
-    transform: translateX(-50%);
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    background: linear-gradient(145deg, #2a1456 0%, #15092e 100%);
-    border: 3.5px solid #ffffff;
-    box-shadow: 0 10px 24px -4px rgba(36, 18, 74, 0.45), 0 0 0 1.5px rgba(245, 158, 11, 0.4);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    transition: transform 0.25s ease;
-}
-
-.lg[data-mode='dark'] .lg-ref-badge {
-    border-color: #1a0d32;
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.65), 0 0 0 2px #f59e0b;
-}
-
-.lg-ref-badge:hover {
-    transform: translateX(-50%) scale(1.05);
-}
-
-.lg-ref-badge-logo {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-}
-
-.lg-ref-badge-label {
-    font-family: var(--oasis-font-brand, sans-serif);
-    font-size: 8.5px;
-    font-weight: 800;
-    letter-spacing: 0.2em;
-    color: #f59e0b;
-    margin-top: 1px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* ── Cuerpo del formulario ────────────────────────────────────────────── */
-.lg-ref-body {
-    padding: 48px 32px 30px 32px;
-    position: relative;
-    z-index: 2;
-}
-
-@media (max-width: 420px) {
-    .lg-ref-body {
-        padding: 44px 22px 24px 22px;
-    }
-}
-
+/* ── Formulario ───────────────────────────────────────────────────────── */
 .lg-ref-form {
     display: flex;
     flex-direction: column;
 }
 
 .lg-ref-group {
-    margin-bottom: 20px;
-    position: relative;
-    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 16px;
 }
 
 .lg-ref-label {
-    display: block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--lg-label);
-    margin-bottom: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--lg-muted);
 }
 
 .lg-ref-label-row {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 6px;
 }
 
-.lg-ref-label-row .lg-ref-label {
-    margin-bottom: 0;
-}
-
-.lg-ref-forgot-link {
+.lg-ref-forgot-link,
+.lg-ref-link,
+.lg-ref-switch-btn,
+.lg-ref-back-link {
     background: none;
     border: none;
     padding: 0;
-    font-size: 11.5px;
-    font-weight: 500;
-    color: var(--lg-label);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--lg-gold);
     cursor: pointer;
-    transition: color 0.15s ease;
+    text-underline-offset: 3px;
 }
 
-.lg-ref-forgot-link:hover {
-    color: var(--lg-gold);
+.lg-ref-forgot-link { color: var(--lg-soft); font-weight: 600; }
+
+.lg-ref-forgot-link:hover,
+.lg-ref-link:hover,
+.lg-ref-switch-btn:hover,
+.lg-ref-back-link:hover {
+    color: var(--lg-gold-light);
     text-decoration: underline;
 }
 
 .lg-ref-input-wrap {
     position: relative;
-    display: flex;
-    align-items: center;
 }
 
-/* Línea minimalista estilo de referencia */
 .lg-ref-input {
     width: 100%;
-    border: none;
-    border-bottom: 1.5px solid var(--lg-line);
-    border-radius: 0;
-    background: transparent;
-    padding: 6px 0 10px 0;
-    font-size: 14.5px;
-    font-family: inherit;
+    height: 50px;
+    padding: 0 16px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    background: var(--lg-field);
     color: var(--lg-text);
+    font: inherit;
+    font-size: 0.95rem;
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .lg-ref-input::placeholder {
-    color: var(--lg-label);
-    opacity: 0.75;
+    color: rgba(248, 245, 255, 0.3);
+}
+
+.lg-ref-input:hover {
+    background: var(--lg-field-hover);
 }
 
 .lg-ref-input:focus {
-    border-bottom-color: var(--lg-gold);
-    box-shadow: 0 1px 0 var(--lg-gold);
+    background: var(--lg-field-hover);
+    border-color: rgba(245, 158, 11, 0.55);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+}
+
+/* Autocompletado del navegador: mantener el campo oscuro */
+.lg-ref-input:-webkit-autofill {
+    -webkit-text-fill-color: var(--lg-text);
+    -webkit-box-shadow: 0 0 0 1000px #1d1430 inset;
+    caret-color: var(--lg-text);
 }
 
 .lg-ref-input-pass {
-    padding-right: 32px;
+    padding-right: 48px;
+}
+
+.lg-ref-eye,
+.lg-ref-input-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--lg-soft);
 }
 
 .lg-ref-eye {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-60%);
-    background: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    right: 9px;
     border: none;
-    padding: 4px;
-    color: var(--lg-label);
+    border-radius: 8px;
+    background: none;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.15s ease;
 }
 
 .lg-ref-eye:hover {
@@ -324,73 +302,59 @@
 }
 
 .lg-ref-input-icon {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-60%);
-    color: var(--lg-label);
     pointer-events: none;
 }
 
-/* ── Botón de acción principal con paleta Oasis ───────────────────────── */
 .lg-ref-submit-btn {
+    margin-top: 6px;
+    height: 52px;
     width: 100%;
-    height: 48px;
-    margin-top: 14px;
+    display: grid;
+    place-items: center;
     border: none;
-    border-radius: 9px;
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--lg-gold-light), var(--lg-gold));
     color: #1b0d36;
-    font-family: inherit;
-    font-size: 13px;
+    font: inherit;
+    font-size: 0.95rem;
     font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 10px 22px -6px rgba(245, 158, 11, 0.45);
-    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 14px 30px -10px rgba(245, 158, 11, 0.65);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .lg-ref-submit-btn:hover {
-    transform: translateY(-1.5px);
-    box-shadow: 0 14px 26px -6px rgba(245, 158, 11, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 18px 36px -10px rgba(245, 158, 11, 0.75);
 }
 
 .lg-ref-submit-btn:active {
-    transform: scale(0.985);
+    transform: translateY(0);
 }
 
 .lg-ref-submit-btn:disabled {
-    opacity: 0.65;
+    filter: saturate(0.6) brightness(0.85);
     cursor: wait;
+    transform: none;
 }
 
-/* ── Separador ────────────────────────────────────────────────────────── */
+.lg-ref-submit-btn:focus-visible,
+.lg-ref-google-btn:focus-visible,
+.lg-ref-eye:focus-visible {
+    outline: 2px solid var(--lg-gold);
+    outline-offset: 3px;
+}
+
+/* Separador: solo texto, sin líneas */
 .lg-ref-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 18px 0 14px 0;
-    color: var(--lg-label);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    margin: 18px 0 12px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--lg-soft);
 }
 
-.lg-ref-divider::before,
-.lg-ref-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--lg-line);
-}
-
-/* ── Botón de Google personalizado de alta fidelidad ──────────────────── */
+/* ── Botón de Google ──────────────────────────────────────────────────── */
 .lg-ref-google-container {
     display: flex;
     justify-content: center;
@@ -399,174 +363,155 @@
 
 .lg-ref-google-btn {
     width: 100%;
-    height: 44px;
+    height: 48px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    border-radius: 9px;
-    border: 1.5px solid var(--lg-line);
-    background: #ffffff;
-    color: #334155;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--lg-text);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-}
-
-.lg[data-mode='dark'] .lg-ref-google-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.14);
-    color: #f1f5f9;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .lg-ref-google-btn:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    transform: translateY(-1px);
-}
-
-.lg[data-mode='dark'] .lg-ref-google-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .lg-ref-google-icon {
     flex-shrink: 0;
 }
 
-/* ── Pie de tarjeta: alternar cuenta ──────────────────────────────────── */
+/* ── Pie de tarjeta ───────────────────────────────────────────────────── */
 .lg-ref-footer {
     margin-top: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--lg-label);
-}
-
-.lg-ref-switch-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    font: inherit;
-    font-size: 11.5px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--lg-gold);
-    cursor: pointer;
-    transition: text-decoration 0.2s;
-}
-
-.lg-ref-switch-btn:hover {
-    text-decoration: underline;
-}
-
-.lg-ref-back-link {
-    background: none;
-    border: none;
-    padding: 0;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    color: var(--lg-gold);
-    cursor: pointer;
-}
-
-.lg-ref-back-link:hover {
-    text-decoration: underline;
-}
-
-/* ── Introducción de vistas secundarias ───────────────────────────────── */
-.lg-ref-view-intro {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.lg-ref-view-title {
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    margin: 0 0 6px 0;
-    color: var(--lg-text);
-}
-
-.lg-ref-view-desc {
-    font-size: 12.5px;
-    line-height: 1.5;
+    font-size: 0.84rem;
     color: var(--lg-muted);
-    margin: 0;
+}
+
+.lg-ref-switch-btn,
+.lg-ref-back-link {
+    font-size: 0.84rem;
 }
 
 .lg-ref-recovery-done {
     text-align: center;
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--lg-text);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--lg-muted);
     margin-bottom: 16px;
+}
+
+.lg-ref-recovery-done strong {
+    color: var(--lg-text);
 }
 
 .lg-ref-remembered-banner {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
+    gap: 10px;
+    padding: 12px 14px;
     margin-bottom: 16px;
-    border-radius: 8px;
-    background: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.25);
-    font-size: 12px;
+    border-radius: 14px;
+    background: var(--lg-field);
+    font-size: 0.85rem;
+    color: var(--lg-muted);
+}
+
+.lg-ref-remembered-banner strong {
     color: var(--lg-text);
 }
 
-.lg-ref-link {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--lg-gold);
-    cursor: pointer;
-}
-
-.lg-ref-link:hover {
-    text-decoration: underline;
-}
-
-/* ── Alertas y Mensajes ───────────────────────────────────────────────── */
+/* ── Mensajes ─────────────────────────────────────────────────────────── */
 .lg-ref-alert {
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 12.5px;
-    font-weight: 600;
-    text-align: left;
-    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: 11px 14px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: left;
 }
 
 .lg-ref-alert-error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    color: #ef4444;
+    background: rgba(239, 68, 68, 0.14);
+    color: #fca5a5;
 }
 
 .lg-ref-alert-success {
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    color: #10b981;
+    background: rgba(16, 185, 129, 0.14);
+    color: #6ee7b7;
 }
 
-/* ── Animaciones y Estados ────────────────────────────────────────────── */
+/* ── Celular y tableta: la foto arriba, la tarjeta debajo ─────────────── */
+@media (max-width: 900px) {
+    .lg {
+        grid-template-columns: minmax(0, 1fr);
+        align-content: end;
+        gap: 22px;
+        padding: 0 16px 24px;
+        min-height: 100dvh;
+    }
+
+    .lg-scene {
+        position: absolute;
+        bottom: auto;
+        height: 62vh;
+    }
+
+    .lg-scene-shade {
+        background:
+            linear-gradient(0deg, var(--lg-night) 2%, rgba(11, 6, 20, 0.55) 45%, rgba(11, 6, 20, 0.15) 75%, rgba(11, 6, 20, 0.45) 100%);
+    }
+
+    .lg-top {
+        top: 16px;
+        left: 16px;
+    }
+
+    .lg-hero {
+        padding: 24vh 6px 0;
+        text-align: left;
+    }
+
+    .lg-hero-kicker {
+        margin-bottom: 10px;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+    }
+
+    .lg-hero-title {
+        margin-bottom: 10px;
+        font-size: clamp(2.2rem, 11vw, 3rem);
+    }
+
+    .lg-hero-text {
+        font-size: 0.92rem;
+    }
+
+    .lg-card {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 24px 20px 22px;
+        border-radius: 24px;
+        background: rgba(22, 14, 38, 0.92);
+    }
+}
+
+/* ── Animaciones y estados ────────────────────────────────────────────── */
 .lg-spin {
     width: 18px;
     height: 18px;
@@ -591,14 +536,14 @@
 
 .lg-in {
     opacity: 0;
-    animation: lg-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    animation-delay: calc(var(--i, 0) * 70ms + 280ms);
+    animation: lg-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: calc(var(--i, 0) * 110ms + 420ms);
 }
 
 @keyframes lg-rise {
     from {
         opacity: 0;
-        transform: translate3d(0, 16px, 0) scale(0.985);
+        transform: translate3d(0, 18px, 0);
     }
     to {
         opacity: 1;
@@ -606,67 +551,90 @@
     }
 }
 
-/* ── Cortina de navegación al salir ───────────────────────────────────── */
+/* ── Transición: obturador de cine ─────────────────────────────────────
+ * Entrada: dos barras negras se abren desde el centro dejando ver la escena.
+ * Salida: se cierran al centro y el logo brilla un instante. Rápido (~0.6 s).
+ */
 .lg-curtain {
     position: fixed;
     inset: 0;
     z-index: 60;
     pointer-events: none;
-    background: linear-gradient(160deg, #24124a 0%, #170a33 60%, #0d051c 100%);
     display: grid;
     place-items: center;
-    will-change: transform;
-    animation: lg-curtain-up 0.7s cubic-bezier(0.76, 0, 0.24, 1) 0.1s forwards;
 }
 
-.lg-curtain img {
-    width: 64px;
-    filter: brightness(0) invert(1);
-    opacity: 0.9;
-    animation: lg-fade-out 0.3s ease 0.1s forwards;
-}
-
+.lg-curtain::before,
 .lg-curtain::after {
     content: '';
     position: absolute;
     left: 0;
     right: 0;
-    bottom: -1px;
-    height: 4px;
-    background: #f59e0b;
+    height: 50.5%;
+    background: #040207;
+    will-change: transform;
 }
 
-.lg[data-leaving='true'] .lg-curtain {
-    animation: lg-curtain-down 0.5s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+.lg-curtain::before {
+    top: 0;
+    animation: lg-bar-top-open 0.62s cubic-bezier(0.77, 0, 0.18, 1) 0.18s forwards;
+}
+
+.lg-curtain::after {
+    bottom: 0;
+    animation: lg-bar-bottom-open 0.62s cubic-bezier(0.77, 0, 0.18, 1) 0.18s forwards;
+}
+
+.lg-curtain img {
+    position: relative;
+    z-index: 1;
+    width: 58px;
+    filter: drop-shadow(0 0 24px rgba(108, 76, 230, 0.6));
+    animation: lg-logo-out 0.32s ease-in 0.06s forwards;
+}
+
+/* La escena "revela" con un leve enfoque mientras se abre el obturador */
+.lg-scene {
+    animation: lg-scene-reveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+}
+
+.lg[data-leaving='true'] .lg-curtain::before {
+    animation: lg-bar-top-close 0.42s cubic-bezier(0.77, 0, 0.18, 1) forwards;
+}
+
+.lg[data-leaving='true'] .lg-curtain::after {
+    animation: lg-bar-bottom-close 0.42s cubic-bezier(0.77, 0, 0.18, 1) forwards;
 }
 
 .lg[data-leaving='true'] .lg-curtain img {
-    animation: lg-fade-in 0.25s ease 0.3s both;
+    animation: lg-logo-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
 }
 
-@keyframes lg-curtain-up {
-    from { transform: translate3d(0, 0, 0); }
-    to { transform: translate3d(0, -101%, 0); }
+@keyframes lg-bar-top-open { from { transform: translateY(0); } to { transform: translateY(-101%); } }
+@keyframes lg-bar-bottom-open { from { transform: translateY(0); } to { transform: translateY(101%); } }
+@keyframes lg-bar-top-close { from { transform: translateY(-101%); } to { transform: translateY(0); } }
+@keyframes lg-bar-bottom-close { from { transform: translateY(101%); } to { transform: translateY(0); } }
+
+@keyframes lg-logo-out {
+    to { opacity: 0; transform: scale(1.25); filter: drop-shadow(0 0 40px rgba(108, 76, 230, 0)) blur(4px); }
 }
 
-@keyframes lg-curtain-down {
-    from { transform: translate3d(0, 101%, 0); }
-    to { transform: translate3d(0, 0, 0); }
+@keyframes lg-logo-in {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: none; }
 }
 
-@keyframes lg-fade-out {
-    to { opacity: 0; }
+@keyframes lg-scene-reveal {
+    from { opacity: 0.4; transform: scale(1.06); filter: blur(6px) brightness(0.6); }
+    to { opacity: 1; transform: none; filter: none; }
 }
 
-@keyframes lg-fade-in {
-    from { opacity: 0; }
-    to { opacity: 0.9; }
-}
-
-/* ── Accesibilidad / Movimiento Reducido ───────────────────────────────── */
+/* ── Movimiento reducido ──────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
     .lg-in,
-    .lg-shake {
+    .lg-shake,
+    .lg-scene,
+    .lg-scene-img {
         animation: none !important;
         opacity: 1;
     }

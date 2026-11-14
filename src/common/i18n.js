@@ -9,7 +9,7 @@ import { logEvent } from './errorHandler.js';
 const DICTIONARY = {
   es: {
     app: {
-      title: 'OASIS Ecosystem',
+      title: 'Iglesia Adventista Oasis',
       loading: 'Sincronizando Ecosystem...',
       footer_version: 'v1.3.0 © 2026',
     },
@@ -69,7 +69,7 @@ const DICTIONARY = {
   },
   en: {
     app: {
-      title: 'OASIS Ecosystem',
+      title: 'Iglesia Adventista Oasis',
       loading: 'Synchronizing Ecosystem...',
       footer_version: 'v1.3.0 © 2026',
     },

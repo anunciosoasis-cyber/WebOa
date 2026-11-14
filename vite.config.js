@@ -18,9 +18,9 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MiB
       },
       manifest: {
-        name: 'Oasis Ecosystem',
+        name: 'Iglesia Adventista Oasis',
         short_name: 'Oasis',
-        description: 'Ecosistema Digital Oasis',
+        description: 'Iglesia Adventista del Séptimo Día Oasis · Medellín',
         theme_color: '#5b2ea6',
         icons: [
           {

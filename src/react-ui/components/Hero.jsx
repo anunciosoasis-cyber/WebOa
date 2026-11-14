@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, CalendarDays, PlayCircle } from 'lucide-react';
 const LucideIcons = { ChevronLeft, ChevronRight };
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -36,6 +37,8 @@ const Hero = ({ settings }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [bgImage, setBgImage] = useState(settings?.bg_image || null);
     const timerRef = useRef(null);
+    // Los ajustes llegan como texto o booleano según el endpoint
+    const isLive = settings?.stream_is_live === true || settings?.stream_is_live === 'true';
 
     useEffect(() => {
         if (settings?.bg_image) {
@@ -137,6 +140,33 @@ const Hero = ({ settings }) => {
 
                     </motion.div>
                 </AnimatePresence>
+
+                {/* 3. ACCIONES (fuera del carrusel: no se animan con cada diapositiva) */}
+                <div className="flex flex-wrap items-center gap-3">
+                    <a
+                        href="#visitanos"
+                        onClick={(e) => { e.preventDefault(); document.getElementById('visitanos')?.scrollIntoView({ behavior: 'smooth' }); }}
+                        className="inline-flex items-center gap-2 rounded-full bg-[#F59E0B] px-7 py-3.5 text-xs font-black uppercase tracking-[0.15em] text-[#120C1F] no-underline shadow-[0_10px_30px_-8px_rgba(245,158,11,0.7)] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F59E0B]"
+                    >
+                        <CalendarDays size={16} aria-hidden="true" /> Planifica tu visita
+                    </a>
+                    <Link
+                        to="/tv"
+                        className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-7 py-3.5 text-xs font-black uppercase tracking-[0.15em] text-white no-underline backdrop-blur-md transition-colors hover:border-[#F59E0B] hover:text-[#F59E0B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                    >
+                        {isLive ? (
+                            <>
+                                <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                                </span>
+                                En vivo ahora
+                            </>
+                        ) : (
+                            <><PlayCircle size={16} aria-hidden="true" /> Ver transmisión</>
+                        )}
+                    </Link>
+                </div>
             </div>
 
             {/* 4. INDICADORES DE NAVEGACIÓN (MINIMALISTAS) */}

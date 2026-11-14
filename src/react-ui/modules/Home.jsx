@@ -83,7 +83,8 @@ const Home = () => {
             <SocialRibbon settings={settings} />
 
             {/* 4. SECCIÓN MIXTA: MAPA Y CALENDARIO */}
-            <section style={{ 
+            <section id="visitanos" style={{ 
+                scrollMarginTop: '100px',
                 maxWidth: '1240px', 
                 margin: '80px auto', 
                 padding: '0 20px', 
@@ -95,7 +96,7 @@ const Home = () => {
                 <div style={{ width: '100%' }}>
                     <MapSection />
                 </div>
-                <div style={{ width: '100%' }}>
+                <div id="calendario" style={{ width: '100%', scrollMarginTop: '100px' }}>
                     <CalendarSection announcements={announcements} />
                 </div>
             </section>

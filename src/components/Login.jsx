@@ -1,32 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, Moon, Sun, Mail } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../react-ui/ThemeContext';
 import GoogleSignInButton from './GoogleSignInButton';
 import logoImg from '../img/logos/LOGO1.png';
-import oasisCommunityImg from '../img/comunidad-oasis.png';
+import oasisCommunityImg from '../img/comunidad-oasis.jpg';
 import '../styles/login.css';
 
 const STORAGE_KEY = 'oasis_known_accounts';
-const LEAVE_MS = 520;
+const LEAVE_MS = 620; // obturador se cierra (0.42 s) y el logo alcanza a brillar
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Login Oasis estilo tarjeta de referencia:
- * - Fondo atmosférico difuminado con la foto de la comunidad Oasis
- * - Tarjeta centrada con cabecera fotográfica nítida y corte diagonal
- * - Insignia circular central superpuesta con el emblema de Oasis
- * - Formulario minimalista con etiquetas en mayúsculas y trazo limpio
- * - Opción de recuperación de contraseña por email integrada
- * - Inicio de sesión con Google
- * - Paleta y botones oficiales Oasis (Oasis Gold y Royal Midnight Purple)
+ * Login Oasis cinematográfico:
+ * - La foto de la comunidad a pantalla completa, con zoom lento, gradación cálida y viñeta
+ * - Bienvenida sobre la imagen y una sola tarjeta de vidrio oscuro (sin cortes ni cambios de tema)
+ * - Recuperación de contraseña por email e inicio de sesión con Google
  */
 export default function Login() {
     const { signIn, signUp, requestPasswordReset } = useAuth();
-    const { mode, toggleMode } = useTheme();
-    const isDark = mode === 'dark';
     const navigate = useNavigate();
 
     // 'login' | 'register' | 'forgot'
@@ -54,6 +47,12 @@ export default function Login() {
     const leaveTimer = useRef(null);
 
     useEffect(() => () => clearTimeout(leaveTimer.current), []);
+
+    useEffect(() => {
+        const prev = document.title;
+        document.title = 'Acceso miembros · Iglesia Adventista Oasis';
+        return () => { document.title = prev; };
+    }, []);
 
     useEffect(() => {
         try {
@@ -202,14 +201,12 @@ export default function Login() {
     const remembered = view === 'login' && !isManualLogin && selectedUser;
 
     return (
-        <div className="lg" data-mode={mode} data-leaving={leaving}>
-            {/* Fondo atmosférico difuminado con la foto de la comunidad */}
-            <div
-                className="lg-ref-backdrop"
-                style={{ backgroundImage: `url(${oasisCommunityImg})` }}
-                aria-hidden="true"
-            />
-            <div className="lg-ref-backdrop-overlay" aria-hidden="true" />
+        <div className="lg" data-leaving={leaving}>
+            {/* Escena: la comunidad Oasis a pantalla completa */}
+            <div className="lg-scene" aria-hidden="true">
+                <img src={oasisCommunityImg} alt="" className="lg-scene-img" />
+                <div className="lg-scene-shade" />
+            </div>
 
             {/* Cortina de transición */}
             <div className="lg-curtain" aria-hidden="true">
@@ -221,31 +218,25 @@ export default function Login() {
                 <Link to="/" className="lg-chip">
                     <ArrowLeft size={15} /> Volver al sitio
                 </Link>
-                <button
-                    type="button"
-                    className="lg-chip"
-                    onClick={toggleMode}
-                    aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-                >
-                    {isDark ? <Sun size={15} /> : <Moon size={15} />}
-                </button>
             </header>
 
-            {/* Tarjeta de estilo de referencia con cabecera en corte diagonal e insignia */}
-            <main className="lg-ref-card lg-in" style={{ '--i': 1 }}>
-                {/* Cabecera con foto y corte diagonal */}
-                <div className="lg-ref-header">
-                    <img
-                        src={oasisCommunityImg}
-                        alt="Comunidad Iglesia Adventista Oasis"
-                        className="lg-ref-header-img"
-                    />
-                    <div className="lg-ref-header-overlay" />
-                    
-                    {/* Insignia circular centrada flotando sobre el corte diagonal */}
-                    <div className="lg-ref-badge" title="Iglesia Oasis">
-                        <img src={logoImg} alt="Oasis" className="lg-ref-badge-logo" />
-                        <span className="lg-ref-badge-label">OASIS</span>
+            {/* Bienvenida sobre la foto */}
+            <section className="lg-hero lg-in" style={{ '--i': 1 }}>
+                <span className="lg-hero-kicker">Iglesia Adventista Oasis · Medellín</span>
+                <h1 className="lg-hero-title">Bienvenido<br />a casa</h1>
+                <p className="lg-hero-text">El espacio de quienes sirven: ministerios, anuncios, transmisión y más.</p>
+            </section>
+
+            <main className="lg-card lg-in" style={{ '--i': 2 }}>
+                <div className="lg-card-head">
+                    <img src={logoImg} alt="" className="lg-card-logo" />
+                    <div>
+                        <h2 className="lg-card-title">
+                            {view === 'register' ? 'Crear cuenta' : view === 'forgot' ? 'Recuperar contraseña' : 'Acceso miembros'}
+                        </h2>
+                        <p className="lg-card-sub">
+                            {view === 'register' ? 'Únete a la plataforma de la iglesia' : view === 'forgot' ? 'Te enviaremos un enlace a tu correo' : 'Ingresa con tu cuenta de Oasis'}
+                        </p>
                     </div>
                 </div>
 
@@ -282,7 +273,7 @@ export default function Login() {
                                 {!remembered && (
                                     <div className="lg-ref-group">
                                         <label htmlFor="lg-email" className="lg-ref-label">
-                                            CORREO ELECTRÓNICO
+                                            Correo electrónico
                                         </label>
                                         <input
                                             id="lg-email"
@@ -300,7 +291,7 @@ export default function Login() {
                                 <div className="lg-ref-group">
                                     <div className="lg-ref-label-row">
                                         <label htmlFor="lg-pass" className="lg-ref-label">
-                                            CONTRASEÑA
+                                            Contraseña
                                         </label>
                                         <button
                                             type="button"
@@ -341,7 +332,7 @@ export default function Login() {
                                     {loading ? (
                                         <span className="lg-spin" aria-label="Ingresando..." />
                                     ) : (
-                                        'INGRESAR'
+                                        'Ingresar'
                                     )}
                                 </button>
 
@@ -351,20 +342,20 @@ export default function Login() {
 
                                 <div className="lg-ref-google-container">
                                     <GoogleSignInButton
-                                        theme={isDark ? 'filled_black' : 'outline'}
+                                        theme="filled_black"
                                         onSuccess={handleGoogleSuccess}
                                         onError={triggerError}
                                     />
                                 </div>
 
                                 <div className="lg-ref-footer">
-                                    <span>¿NO TIENES UNA CUENTA?</span>
+                                    <span>¿No tienes cuenta?</span>
                                     <button
                                         type="button"
                                         className="lg-ref-switch-btn"
                                         onClick={() => handleSwitchMode('register')}
                                     >
-                                        REGÍSTRATE
+                                        Regístrate
                                     </button>
                                 </div>
                             </form>
@@ -373,18 +364,12 @@ export default function Login() {
                         {/* ── MODO 2: RECUPERACIÓN DE CONTRASEÑA ── */}
                         {view === 'forgot' && (
                             <form className="lg-ref-form" onSubmit={handleForgotPasswordSubmit}>
-                                <div className="lg-ref-view-intro">
-                                    <h2 className="lg-ref-view-title">Recuperar Contraseña</h2>
-                                    <p className="lg-ref-view-desc">
-                                        Ingresa el correo electrónico asociado a tu cuenta de Iglesia Oasis y te enviaremos las instrucciones de recuperación.
-                                    </p>
-                                </div>
 
                                 {!recoverySent ? (
                                     <>
                                         <div className="lg-ref-group">
                                             <label htmlFor="lg-rec-email" className="lg-ref-label">
-                                                CORREO ELECTRÓNICO
+                                                Correo electrónico
                                             </label>
                                             <div className="lg-ref-input-wrap">
                                                 <input
@@ -410,7 +395,7 @@ export default function Login() {
                                             {loading ? (
                                                 <span className="lg-spin" aria-label="Enviando..." />
                                             ) : (
-                                                'ENVIAR ENLACE DE RECUPERACIÓN'
+                                                'Enviar enlace'
                                             )}
                                         </button>
                                     </>
@@ -424,7 +409,7 @@ export default function Login() {
                                             className="lg-ref-submit-btn"
                                             onClick={() => setRecoverySent(false)}
                                         >
-                                            REINTENTAR CON OTRO CORREO
+                                            Usar otro correo
                                         </button>
                                     </div>
                                 )}
@@ -435,7 +420,7 @@ export default function Login() {
                                         className="lg-ref-back-link"
                                         onClick={() => handleSwitchMode('login')}
                                     >
-                                        ← VOLVER AL INICIO DE SESIÓN
+                                        ← Volver a iniciar sesión
                                     </button>
                                 </div>
                             </form>
@@ -444,16 +429,10 @@ export default function Login() {
                         {/* ── MODO 3: REGISTRO ── */}
                         {view === 'register' && (
                             <form className="lg-ref-form" onSubmit={handleSubmit}>
-                                <div className="lg-ref-view-intro">
-                                    <h2 className="lg-ref-view-title">Crear Cuenta</h2>
-                                    <p className="lg-ref-view-desc">
-                                        Únete a la plataforma de gestión de Iglesia Oasis.
-                                    </p>
-                                </div>
 
                                 <div className="lg-ref-group">
                                     <label htmlFor="lg-reg-name" className="lg-ref-label">
-                                        NOMBRE COMPLETO
+                                        Nombre completo
                                     </label>
                                     <input
                                         id="lg-reg-name"
@@ -469,7 +448,7 @@ export default function Login() {
 
                                 <div className="lg-ref-group">
                                     <label htmlFor="lg-reg-email" className="lg-ref-label">
-                                        CORREO ELECTRÓNICO
+                                        Correo electrónico
                                     </label>
                                     <input
                                         id="lg-reg-email"
@@ -485,7 +464,7 @@ export default function Login() {
 
                                 <div className="lg-ref-group">
                                     <label htmlFor="lg-reg-pass" className="lg-ref-label">
-                                        CONTRASEÑA
+                                        Contraseña
                                     </label>
                                     <div className="lg-ref-input-wrap">
                                         <input
@@ -511,7 +490,7 @@ export default function Login() {
 
                                 <div className="lg-ref-group">
                                     <label htmlFor="lg-reg-pass2" className="lg-ref-label">
-                                        CONFIRMAR CONTRASEÑA
+                                        Confirmar contraseña
                                     </label>
                                     <div className="lg-ref-input-wrap">
                                         <input
@@ -543,7 +522,7 @@ export default function Login() {
                                     {loading ? (
                                         <span className="lg-spin" aria-label="Creando cuenta..." />
                                     ) : (
-                                        'CREAR CUENTA'
+                                        'Crear cuenta'
                                     )}
                                 </button>
 
@@ -553,20 +532,20 @@ export default function Login() {
 
                                 <div className="lg-ref-google-container">
                                     <GoogleSignInButton
-                                        theme={isDark ? 'filled_black' : 'outline'}
+                                        theme="filled_black"
                                         onSuccess={handleGoogleSuccess}
                                         onError={triggerError}
                                     />
                                 </div>
 
                                 <div className="lg-ref-footer">
-                                    <span>¿YA TIENES UNA CUENTA?</span>
+                                    <span>¿Ya tienes cuenta?</span>
                                     <button
                                         type="button"
                                         className="lg-ref-switch-btn"
                                         onClick={() => handleSwitchMode('login')}
                                     >
-                                        INICIA SESIÓN
+                                        Inicia sesión
                                     </button>
                                 </div>
                             </form>

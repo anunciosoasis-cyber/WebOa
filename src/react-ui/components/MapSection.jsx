@@ -51,8 +51,13 @@ const MapSection = () => {
                     }}>
                         Templo <span style={{ color: colors.accent }}>Oasis</span>
                     </h3>
-                    <p style={{ color: '#666', marginTop: '10px', fontSize: '0.95rem', fontWeight: '500' }}>
-                        Medellín, Antioquia. Un espacio para ti.
+                    {/* Horario y dirección aquí, junto al mapa: un solo lugar para "cuándo y dónde" */}
+                    <p style={{ display: 'flex', alignItems: 'center', gap: '8px', color: colors.deepPurple, marginTop: '12px', marginBottom: '4px', fontSize: '1rem', fontWeight: '800' }}>
+                        <i className="bi bi-clock-fill" style={{ color: colors.accent }} aria-hidden="true"></i>
+                        Sábados · 9:00 AM – 1:00 PM
+                    </p>
+                    <p style={{ color: '#666', margin: 0, fontSize: '0.92rem', fontWeight: '500' }}>
+                        Diagonal 75C # 32E - 54, Laureles El Nogal · Medellín
                     </p>
                 </div>
 

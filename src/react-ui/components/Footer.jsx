@@ -155,7 +155,6 @@ const Footer = () => {
                                     <h5 style={styles.columnTitle}>Ministerio</h5>
                                     <Link to="/peticiones" className="f-link" style={styles.link}>Oración</Link>
                                     <Link to="/inscripciones" className="f-link" style={styles.link}>Eventos</Link>
-                                    <Link to="/login" className="f-link" style={styles.link}>Admin</Link>
                                 </div>
                             </div>
                         </div>
@@ -178,7 +177,7 @@ const Footer = () => {
 
                     <div style={{ marginTop: isMobile ? '30px' : '70px', paddingTop: isMobile ? '20px' : '30px', borderTop: `1px solid ${colors.crystalBorder}`, textAlign: 'center' }}>
                         <small style={{ color: 'rgba(255,255,255,0.3)', fontWeight: '800', letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.65rem' }}>
-                            © 2026 OASIS ECOSYSTEM
+                            © {new Date().getFullYear()} Iglesia Adventista Oasis · Medellín
                         </small>
                     </div>
                 </div>

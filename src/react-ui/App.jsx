@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 import { routeModules as m, installRoutePrefetch } from './routeModules';
+import logoImg from '../img/logos/LOGO1.png';
 
 // ── Layouts (Síncronos) ──────────────────────────────
 import LayoutMaestro from './components/LayoutMaestro';
@@ -46,6 +47,12 @@ const MobileVotingView = lazy(() => import('../modules/church-board/voting/Mobil
 // ──────────────────────────────────────────────────────
 
 const SuspenseLoader = () => (
+    // En el login, el cargador es el primer cuadro del obturador (negro + logo): la entrada no pasa por blanco
+    window.location.pathname === '/login' ? (
+        <div role="status" style={{ position: 'fixed', inset: 0, background: '#040207', display: 'grid', placeItems: 'center' }}>
+            <img src={logoImg} alt="Cargando…" style={{ width: 58, animation: 'none', filter: 'drop-shadow(0 0 24px rgba(108, 76, 230, 0.6))' }} />
+        </div>
+    ) :
     <div className="d-flex justify-content-center align-items-center vh-100" style={{ background: 'transparent' }}>
         <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
             <span className="visually-hidden">Cargando módulo...</span>
